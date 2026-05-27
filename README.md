@@ -152,40 +152,36 @@ http://localhost:3000/api/escavador
 - `GET /v1/tribunais` — Listar tribunais
 - `GET /v1/orgaos-administrativos` — Órgãos administrativos
 
-### V2 Endpoints (50+ rotas)
+### V2 Endpoints (24 rotas documentadas)
 
 **Consulta de Processos V2**
-- `GET /v2/processos/numero_cnj/:numero` — Obter processo por CNJ
-- `GET /v2/processos/movimentacoes/:numero_cnj` — Movimentações (paginado)
+- `GET /v2/processos/numero_cnj/{numero}` — Obter processo por CNJ
+- `GET /v2/processos/numero_cnj/{numero}/movimentacoes` — Movimentações
 - `GET /v2/processos/envolvido` — Buscar por envolvido
-- `GET /v2/processos/advogado/:oab` — Buscar por advogado
-- `GET /v2/processos/:numero_cnj/documentos` — Documentos do processo
-- `GET /v2/processos/:numero_cnj/autos` — Autos (volumes)
-- `GET /v2/processos/:numero_cnj/envolvidos` — Partes envolvidas
+- `GET /v2/processos/advogado/{oab}` — Buscar por advogado
+- `GET /v2/processos/numero_cnj/{numero}/documentos/{key}` — Documentos
+- `GET /v2/processos/numero_cnj/{numero}/documentos-publicos` — Docs públicos
+- `GET /v2/processos/numero_cnj/{numero}/autos` — Autos (volumes)
+- `GET /v2/processos/numero_cnj/{numero}/envolvidos` — Partes envolvidas
 
-**Atualização de Processos V2**
-- `POST /v2/processos/atualizacao` — Atualizar lote (async)
-- `GET /v2/processos/atualizacao/:id` — Status de atualização
-- `POST /v2/processos/:id/atualizacao` — Atualizar um processo
+**Atualização e Resumo V2**
+- `POST /v2/processos/numero_cnj/{numero}/solicitar-atualizacao` — Atualizar processo
+- `GET /v2/processos/numero_cnj/{numero}/status-atualizacao` — Status de atualização
+- `POST /v2/processos/lote/solicitar-atualizacao` — Atualizar lote
+- `GET /v2/processos/lote/{id}/status` — Status de lote
+- `POST /v2/processos/numero_cnj/{numero}/ia/resumo/solicitar-atualizacao` — Solicitar resumo IA
+- `GET /v2/processos/numero_cnj/{numero}/ia/resumo` — Obter resumo IA
+- `GET /v2/processos/numero_cnj/{numero}/ia/resumo/status` — Status de resumo
 
-**Resumo por IA V2**
-- `POST /v2/processos/:id/resumo` — Solicitar resumo (async)
-- `GET /v2/processos/:id/resumo` — Obter resumo gerado
-- `GET /v2/processos/:id/resumo/status` — Status de geração
-
-**Monitoramentos V2**
-- `GET /v2/monitoramentos/novos-processos` — Monitoramentos (novos)
-- `POST /v2/monitoramentos/novos-processos` — Criar monitoramento (novos)
-- `GET /v2/monitoramentos/processos` — Monitoramentos (processos específicos)
-- `POST /v2/monitoramentos/processos` — Criar monitoramento (processo)
-
-**Callbacks, Certificados e Tribunais V2**
-- `GET /v2/callbacks` — Listar callbacks V2
-- `POST /v2/callbacks/recebidos` — Marcar como recebidos
+**Certificados e Tribunais V2**
 - `GET /v2/certificados` — Listar certificados digitais
 - `POST /v2/certificados` — Cadastrar certificado
+- `GET /v2/certificados/{id}` — Obter certificado
+- `DELETE /v2/certificados/{id}` — Remover certificado
+- `POST /v2/certificados/{id}/autenticacoes` — Configurar autenticações
+- `DELETE /v2/certificados/{id}/autenticacoes/{autenticacaoId}` — Remover autenticação
 - `GET /v2/tribunais/sistemas` — Sistemas de tribunais
-- `GET /v2/tribunais` — Listar tribunais V2
+- `GET /v2/tribunais` — Listar tribunais
 - `GET /v2/documentos/:id/download` — Download de PDF
 
 Para documentação detalhada de cada endpoint (parâmetros, responses, exemplos), veja `src/presentation/api/routes/escavador.ts`.
