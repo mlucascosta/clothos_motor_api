@@ -1269,11 +1269,11 @@ escavador.delete('/v1/monitoramentos/tribunal/:id', async (c) => {
  *
  * Listar callbacks recebidos do Escavador.
  *
- * @route GET /api/escavador/v1/callbacks?page=1
+ * @route GET /api/escavador/v1/callback?page=1
  * @queryParam {number} [page] - Página (padrão: 1)
  * @returns {Array} Array de callbacks
  */
-escavador.get('/v1/callbacks', async (c) => {
+escavador.get('/v1/callback', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
   const op = new ListarCallbacks(buildHttpV1());
   const result = await op.execute({ pagina });
@@ -1285,7 +1285,7 @@ escavador.get('/v1/callbacks', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.post('/v1/callbacks/recebidos', async (c) => {
+escavador.post('/v1/callback', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
@@ -1302,7 +1302,7 @@ escavador.post('/v1/callbacks/recebidos', async (c) => {
   return c.body(null, 204);
 });
 
-escavador.post('/v1/callbacks/reenviar', async (c) => {
+escavador.post('/v1/callback/reenviar', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 

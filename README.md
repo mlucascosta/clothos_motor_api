@@ -146,7 +146,9 @@ http://localhost:3000/api/escavador
 - `POST /v1/monitoramentos/tribunal` — Criar monitoramento (tribunal)
 
 **Callbacks e Auxiliares**
-- `GET /v1/callbacks` — Listar callbacks
+- `GET /v1/callback` — Listar callbacks
+- `POST /v1/callback` — Marcar callbacks como recebidos
+- `POST /v1/callback/reenviar` — Reenviar callback
 - `GET /v1/tribunais` — Listar tribunais
 - `GET /v1/orgaos-administrativos` — Órgãos admin
 
