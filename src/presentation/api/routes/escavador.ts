@@ -386,47 +386,6 @@ escavador.get('/v1/quantidade-creditos', async (c) => {
   return c.json(result.value, 200);
 });
 
-// ──── Buscas Assíncronas ────
-
-escavador.get('/v1/buscas-assincronas', async (c) => {
-  const pagina = Number(c.req.query('page') ?? '1');
-  const op = new ListarBuscasAssincronas(buildHttpV1());
-  const result = await op.execute({ pagina });
-  if (isLeft(result)) {
-    rawStore.save({ gateway: GW_V1, fonte: 'buscas-assincronas', tipo_param: null, param: null, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({ gateway: GW_V1, fonte: 'buscas-assincronas', tipo_param: null, param: null, result: result.value, status: 'success', created_at: new Date() });
-  return c.json(result.value, 200);
-});
-
-/**
- * GET /v1/buscas-assincronas/:id
- *
- * Obter resultado de uma busca assíncrona específica por ID.
- * Se `status !== 'completed'`, busca ainda está processando.
- *
- * @route GET /api/escavador/v1/buscas-assincronas/{id}
- * @param {number} id - ID da busca assíncrona
- * @returns {Object} Resultado da busca (estrutura depende do tipo)
- * @status 200 OK
- * @status 400 ID inválido (não é número)
- * @status 500 Se falhar na API
- */
-escavador.get('/v1/buscas-assincronas/:id', async (c) => {
-  const id = Number(c.req.param('id'));
-  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-
-  const op = new ObterBuscaAssincrona(buildHttpV1());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({ gateway: GW_V1, fonte: 'buscas-assincronas/obter', tipo_param: 'id', param: String(id), result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({ gateway: GW_V1, fonte: 'buscas-assincronas/obter', tipo_param: 'id', param: String(id), result: result.value, status: 'success', created_at: new Date() });
-  return c.json(result.value, 200);
-});
-
 // ──── Processos — Buscas Assíncronas (iniciar) ────
 
 escavador.post('/v1/processos/tribunal/cpf-cnpj', async (c) => {
