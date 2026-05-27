@@ -1,9 +1,210 @@
+/**
+ * @fileoverview Router de Rotas para API Escavador — Motor de Consultas Reduto Finder
+ *
+ * @module escavador
+ *
+ * ## Contexto
+ *
+ * Este arquivo centraliza todas as rotas HTTP que expõem os endpoints da API Escavador
+ * através do motor (`clothos_motor_api`). O Escavador é um provider de dados judiciais
+ * brasileiro que fornece acesso a processos, pessoas, instituições e monitoramentos via
+ * duas versões de API: V1 (legacy, suporta múltiplos recursos) e V2 (moderna, focada em processos).
+ *
+ * ## Arquitetura
+ *
+ * ### Mounting
+ * - Base path no app: `/api/escavador`
+ * - Rotas V1: `/api/escavador/v1/*` (mapeiam para `https://api.escavador.com/api/v1/*`)
+ * - Rotas V2: `/api/escavador/v2/*` (mapeiam para `https://api.escavador.com/api/v2/*`)
+ *
+ * ### Autenticação
+ * - Bearer Token (via env var `ESCAVADOR_API_KEY`)
+ * - Passado automaticamente em todos os requests via `EscavadorHttpClient`
+ * - Header: `Authorization: Bearer <token>`
+ * - Configurado em `buildHttpV1()` e `buildHttpV2()`
+ *
+ * ### Pipeline de Requisição
+ * 1. Cliente bate em `/api/escavador/v1/saldo` (ex)
+ * 2. Handler extrai params, valida com Zod
+ * 3. Instancia operation (`new ObterSaldo(buildHttpV1())`)
+ * 4. Operation executa chamada para `https://api.escavador.com/api/v1/quantidade-creditos`
+ * 5. Response convertida para JSON e retornada (ou erro 500 se falhar)
+ * 6. Resultado persistido em `rawStore` para auditoria
+ *
+ * ### Error Handling
+ * - Either<SourceError, T> pattern para erros tipados
+ * - Erros retornam HTTP 500 com `{ error, kind }`
+ * - Validation errors retornam HTTP 422 com detalhes Zod
+ * - Bad requests retornam HTTP 400
+ *
+ * ### Persistência de Auditoria
+ * - Cada request gravado em `rawStore`: gateway, fonte, tipo_param, param, resultado, status
+ * - Permite rastreabilidade completa de chamadas ao Escavador
+ *
+ * ## Endpoints V1 (42 rotas)
+ *
+ * ### Seção: Saldo
+ * - `GET /v1/saldo` — Consulta saldo e créditos disponíveis na API Escavador
+ *
+ * ### Seção: Buscas Assíncronas (Async Results)
+ * - `GET /v1/buscas-assincronas` — Lista todas as buscas assíncronas iniciadas (com paginação)
+ * - `GET /v1/buscas-assincronas/:id` — Obter resultado de uma busca assíncrona específica por ID
+ *
+ * ### Seção: Processos — Iniciar Buscas (POST, async)
+ * - `POST /v1/processos/tribunal/cpf-cnpj` — Inicia busca de processos por CPF/CNPJ em tribunais (async)
+ * - `POST /v1/processos/tribunal/envolvido` — Inicia busca por nome de envolvido em tribunais (async)
+ * - `POST /v1/processos/tribunal/oab` — Inicia busca por número OAB de advogado (async)
+ * - `POST /v1/processos/administrativo/nup` — Inicia busca por NUP (número único de protocolo) em órgãos admin (async)
+ * - `POST /v1/processos/pesquisar` — Inicia busca de processo por número CNJ no tribunal (async)
+ * - `POST /v1/processos/tribunal/lote` — Inicia busca em lote com múltiplos CPF/CNPJ/OAB/nomes (async)
+ *
+ * ### Seção: Processos — Diários Oficiais
+ * - `GET /v1/processos/diarios-oficiais/numero` — Busca processos em diários oficiais por número
+ * - `GET /v1/processos/diarios-oficiais/oab` — Busca processos em diários oficiais por OAB
+ *
+ * ### Seção: Processos — Detalhes
+ * - `GET /v1/processos/:numero_cnj` — Obter detalhes completos de um processo por número CNJ
+ * - `GET /v1/processos/:numero_cnj/movimentacoes` — Listar movimentações (updates) de um processo
+ * - `GET /v1/processos/:id/envolvidos-diarios` — Listar partes envolvidas extraídas de diários oficiais
+ *
+ * ### Seção: Movimentações
+ * - `GET /v1/movimentacoes/:id` — Obter detalhes de uma movimentação específica
+ *
+ * ### Seção: Busca Geral (Full Text)
+ * - `GET /v1/busca` — Full-text search (query param: `q`, `tipo` opcional, `page` opcional)
+ *
+ * ### Seção: Pessoas
+ * - `GET /v1/pessoas/:id` — Obter dados de uma pessoa específica
+ * - `GET /v1/pessoas/:id/processos` — Listar processos envolvendo uma pessoa (com paginação)
+ * - `GET /v1/pessoas/:id/publicacoes` — Listar publicações em diários oficiais (com paginação)
+ *
+ * ### Seção: Instituições
+ * - `GET /v1/instituicoes/:id` — Obter dados de uma instituição
+ * - `GET /v1/instituicoes/:id/pessoas` — Listar pessoas associadas a uma instituição (com paginação)
+ * - `GET /v1/instituicoes/:id/processos` — Listar processos envolvendo uma instituição (com paginação)
+ *
+ * ### Seção: Monitoramentos Diários Oficiais
+ * - `GET /v1/monitoramentos` — Listar todos os monitoramentos de diários oficiais (com paginação)
+ * - `POST /v1/monitoramentos` — Criar novo monitoramento de diário oficial
+ * - `GET /v1/monitoramentos/:id` — Obter detalhes de um monitoramento específico
+ * - `PUT /v1/monitoramentos/:id` — Editar monitoramento (ativo, callback_url, nome)
+ * - `DELETE /v1/monitoramentos/:id` — Remover monitoramento
+ * - `GET /v1/monitoramentos/:id/aparicoes` — Listar aparições/publicações detectadas por monitoramento
+ * - `POST /v1/monitoramentos/:id/testar-callback` — Testar webhook callback do monitoramento
+ * - `GET /v1/monitoramentos/:id/origens` — Listar origens de diários monitorados
+ *
+ * ### Seção: Monitoramentos Tribunal
+ * - `GET /v1/monitoramentos/tribunal` — Listar monitoramentos de tribunal (site do tribunal)
+ * - `POST /v1/monitoramentos/tribunal` — Criar monitoramento de tribunal
+ * - `GET /v1/monitoramentos/tribunal/:id` — Obter monitoramento de tribunal
+ * - `PUT /v1/monitoramentos/tribunal/:id` — Editar monitoramento de tribunal
+ * - `DELETE /v1/monitoramentos/tribunal/:id` — Remover monitoramento de tribunal
+ *
+ * ### Seção: Callbacks V1
+ * - `GET /v1/callbacks` — Listar callbacks recebidos (com paginação)
+ * - `POST /v1/callbacks/recebidos` — Marcar callbacks como recebidos (idempotente)
+ * - `POST /v1/callbacks/reenviar` — Reenviar um callback específico
+ *
+ * ### Seção: Auxiliares
+ * - `GET /v1/tribunais` — Listar todos os tribunais disponíveis (com filtro `tipo` opcional)
+ * - `GET /v1/tribunais/:id` — Obter detalhes de um tribunal específico
+ * - `GET /v1/orgaos-administrativos` — Listar órgãos administrativos (com paginação)
+ * - `GET /v1/diarios-oficiais/origens` — Listar origens de diários oficiais (com filtro `estado` opcional)
+ *
+ * ## Endpoints V2 (50+ rotas)
+ *
+ * ### Seção: Consulta de Processos
+ * - `GET /v2/processos/numero_cnj/:numero` — Obter processo por número CNJ
+ * - `GET /v2/processos/movimentacoes/:numero_cnj` — Listar movimentações de um processo (paginado)
+ * - `GET /v2/processos/envolvido` — Buscar processos por envolvido (nome ou CPF/CNPJ)
+ * - `GET /v2/processos/envolvido/resumo` — Resumo de processos por envolvido
+ * - `GET /v2/processos/advogado/:oab` — Buscar processos por OAB de advogado (paginado)
+ * - `GET /v2/processos/advogado/:oab/resumo` — Resumo de processos por advogado
+ * - `GET /v2/processos/:numero_cnj/documentos` — Listar documentos públicos de um processo (paginado)
+ * - `GET /v2/processos/:numero_cnj/autos` — Listar autos (case files) de um processo (paginado)
+ * - `GET /v2/processos/:numero_cnj/envolvidos` — Listar partes envolvidas em um processo
+ *
+ * ### Seção: Atualização de Processos
+ * - `POST /v2/processos/atualizacao` — Solicitar atualização em lote de processos (async)
+ * - `GET /v2/processos/atualizacao/:id` — Consultar status de atualização em lote
+ * - `POST /v2/processos/:id/atualizacao` — Solicitar atualização de um processo (async)
+ * - `GET /v2/processos/:id/atualizacao` — Consultar status de atualização de processo
+ *
+ * ### Seção: Resumo de Processos (IA)
+ * - `POST /v2/processos/:id/resumo` — Solicitar resumo inteligente de processo (async, usa IA)
+ * - `GET /v2/processos/:id/resumo` — Obter resumo gerado
+ * - `GET /v2/processos/:id/resumo/status` — Consultar status de geração de resumo
+ *
+ * ### Seção: Monitoramento de Novos Processos
+ * - `POST /v2/monitoramentos/novos-processos` — Criar monitoramento de novos processos
+ * - `GET /v2/monitoramentos/novos-processos` — Listar monitoramentos de novos processos
+ * - `GET /v2/monitoramentos/novos-processos/:id` — Obter monitoramento específico
+ * - `PATCH /v2/monitoramentos/novos-processos/:id` — Editar monitoramento de novos processos
+ * - `DELETE /v2/monitoramentos/novos-processos/:id` — Remover monitoramento
+ * - `GET /v2/monitoramentos/novos-processos/:id/processos` — Listar processos encontrados
+ *
+ * ### Seção: Monitoramento de Processos
+ * - `POST /v2/monitoramentos/processos` — Criar monitoramento de processo específico
+ * - `GET /v2/monitoramentos/processos` — Listar monitoramentos de processos
+ * - `GET /v2/monitoramentos/processos/:id` — Obter monitoramento específico
+ * - `DELETE /v2/monitoramentos/processos/:id` — Remover monitoramento
+ *
+ * ### Seção: Callback V2
+ * - `GET /v2/callbacks` — Listar callbacks V2
+ * - `POST /v2/callbacks/recebidos` — Marcar callbacks como recebidos
+ * - `POST /v2/callbacks/:id/reenviar` — Reenviar callback específico
+ *
+ * ### Seção: Certificados Digitais
+ * - `GET /v2/certificados` — Listar certificados digitais cadastrados
+ * - `POST /v2/certificados` — Criar novo certificado
+ * - `GET /v2/certificados/:id` — Obter certificado específico
+ * - `DELETE /v2/certificados/:id` — Remover certificado
+ * - `POST /v2/certificados/:id/autenticacoes` — Configurar autenticações do certificado
+ * - `DELETE /v2/certificados/:id/autenticacoes/:autenticacaoId` — Remover autenticação
+ *
+ * ### Seção: Tribunais e Sistemas
+ * - `GET /v2/tribunais/sistemas` — Listar sistemas de tribunais disponíveis
+ * - `GET /v2/tribunais` — Listar tribunais (V2)
+ *
+ * ### Seção: Download de Documentos
+ * - `GET /v2/documentos/:id/download` — Download direto de documento PDF
+ *
+ * ## Variáveis de Ambiente Necessárias
+ * - `ESCAVADOR_API_KEY` — Token de autenticação Bearer para API Escavador
+ * - `ESCAVADOR_BASE_URL` — URL base (padrão: `https://api.escavador.com`)
+ *
+ * ## Exemplo de Uso (curl)
+ * ```bash
+ * # V1 — Consultar saldo
+ * curl -X GET http://localhost:3000/api/escavador/v1/saldo \\
+ *   -H "Authorization: Bearer <token>"
+ *
+ * # V1 — Buscar processos por CPF
+ * curl -X POST http://localhost:3000/api/escavador/v1/processos/tribunal/cpf-cnpj \\
+ *   -H "Authorization: Bearer <token>" \\
+ *   -H "Content-Type: application/json" \\
+ *   -d '{ "cpf_cnpj": "12345678901234" }'
+ *
+ * # V2 — Obter processo por CNJ
+ * curl -X GET http://localhost:3000/api/escavador/v2/processos/numero_cnj/0000001-00.0000.0.00.0000 \\
+ *   -H "Authorization: Bearer <token>"
+ * ```
+ *
+ * @see {@link EscavadorHttpClient} — Cliente HTTP para V1
+ * @see {@link EscavadorV2HttpClient} — Cliente HTTP para V2
+ * @see ../../../infrastructure/providers/escavador/operations — Implementations dos operations
+ */
+
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { isLeft } from '../../../shared/domain/Either.js';
 import { EscavadorHttpClient } from '../../../infrastructure/providers/escavador/EscavadorHttpClient.js';
 import { EscavadorV2HttpClient } from '../../../infrastructure/providers/escavador/EscavadorV2HttpClient.js';
 import { rawStore } from '../../../infrastructure/persistence/index.js';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// IMPORTS — Operations V1 e V2
+// ═══════════════════════════════════════════════════════════════════════════
 
 // ──── Operations V1 ────
 import { IniciarBuscaProcessosCpfCnpj } from '../../../infrastructure/providers/escavador/operations/IniciarBuscaProcessosCpfCnpj.js';
@@ -89,29 +290,91 @@ import { RemoverAutenticacaoCertificado } from '../../../infrastructure/provider
 import { ListarSistemasTribunais } from '../../../infrastructure/providers/escavador/operations/v2/ListarSistemasTribunais.js';
 import { ListarTribunaisV2 } from '../../../infrastructure/providers/escavador/operations/v2/ListarTribunaisV2.js';
 
+// ═══════════════════════════════════════════════════════════════════════════
+// CONFIGURAÇÃO E INICIALIZAÇÃO
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Identificador do gateway V1 para auditoria em rawStore */
 const GW_V1 = 'escavador-v1';
+
+/** Identificador do gateway V2 para auditoria em rawStore */
 const GW_V2 = 'escavador-v2';
 
+/**
+ * Constrói cliente HTTP V1 do Escavador com autenticação Bearer
+ *
+ * @returns {EscavadorHttpClient} Cliente configurado para API V1
+ *
+ * @description
+ * - Obtém token de `ESCAVADOR_API_KEY`
+ * - Base URL: `https://api.escavador.com` (ou env `ESCAVADOR_BASE_URL`)
+ * - Configura header automático: `Authorization: Bearer <token>`
+ * - Timeout padrão: 30s
+ */
 function buildHttpV1(): EscavadorHttpClient {
   const apiKey = process.env['ESCAVADOR_API_KEY'] ?? '';
   const baseUrl = process.env['ESCAVADOR_BASE_URL'] ?? 'https://api.escavador.com';
   return new EscavadorHttpClient(apiKey, baseUrl);
 }
 
+/**
+ * Constrói cliente HTTP V2 do Escavador com autenticação Bearer
+ *
+ * @returns {EscavadorV2HttpClient} Cliente configurado para API V2
+ *
+ * @description
+ * - Obtém token de `ESCAVADOR_API_KEY` (mesmo token para V1 e V2)
+ * - Base URL: `https://api.escavador.com`
+ * - Configura header automático: `Authorization: Bearer <token>`
+ * - Timeout padrão: 30s
+ */
 function buildHttpV2(): EscavadorV2HttpClient {
   const apiKey = process.env['ESCAVADOR_API_KEY'] ?? '';
   const baseUrl = process.env['ESCAVADOR_BASE_URL'] ?? 'https://api.escavador.com';
   return new EscavadorV2HttpClient(apiKey, baseUrl);
 }
 
+/** Router Hono que centraliza todas as rotas Escavador (V1 e V2) */
 const escavador = new Hono();
 
 // ═══════════════════════════════════════════════════════════════════════════
-// V1 — Escavador API v1
+// V1 — ESCAVADOR API V1 — 42 ENDPOINTS
 // ═══════════════════════════════════════════════════════════════════════════
+//
+// Rotas legado do Escavador que cobrem: saldo, buscas assíncronas, processos,
+// pessoas, instituições, monitoramentos, callbacks, e dados auxiliares (tribunais).
+//
+// Pattern: Cada rota valida input → executa operation → persiste em rawStore → retorna JSON
+// Erros retornam HTTP 500 com { error, kind } estruturado
+//
 
-// ──── Saldo ────
+// ══════════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: SALDO
+// ══════════════════════════════════════════════════════════════════════════════════
+// Endpoint para consultar créditos/saldo disponível na API Escavador
 
+/**
+ * GET /v1/saldo
+ *
+ * Consulta o saldo de créditos disponíveis na API Escavador.
+ * Retorna quantidade de créditos, saldo em R$ e descrição formatada.
+ *
+ * @route GET /api/escavador/v1/saldo
+ * @returns {Object} { quantidade_creditos: number, saldo: number, saldo_descricao: string }
+ * @status 200 OK
+ * @status 500 Se falhar na API Escavador
+ *
+ * @example
+ * GET /api/escavador/v1/saldo
+ * Authorization: Bearer <token>
+ *
+ * Response:
+ * {
+ *   "quantidade_creditos": 1500,
+ *   "saldo": 15.00,
+ *   "saldo_descricao": "R$ 15,00"
+ * }
+ */
 escavador.get('/v1/saldo', async (c) => {
   const op = new ObterSaldo(buildHttpV1());
   const result = await op.execute();
@@ -137,6 +400,19 @@ escavador.get('/v1/buscas-assincronas', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * GET /v1/buscas-assincronas/:id
+ *
+ * Obter resultado de uma busca assíncrona específica por ID.
+ * Se `status !== 'completed'`, busca ainda está processando.
+ *
+ * @route GET /api/escavador/v1/buscas-assincronas/{id}
+ * @param {number} id - ID da busca assíncrona
+ * @returns {Object} Resultado da busca (estrutura depende do tipo)
+ * @status 200 OK
+ * @status 400 ID inválido (não é número)
+ * @status 500 Se falhar na API
+ */
 escavador.get('/v1/buscas-assincronas/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -176,6 +452,17 @@ escavador.post('/v1/processos/tribunal/cpf-cnpj', async (c) => {
   return c.json(result.value, 202);
 });
 
+/**
+ * POST /v1/processos/tribunal/envolvido
+ *
+ * Inicia busca de processos por nome de envolvido (pessoa) em tribunais.
+ *
+ * @route POST /api/escavador/v1/processos/tribunal/envolvido
+ * @body {string} nome - Nome da pessoa envolvida
+ * @body {string[]} [tribunais] - Array opcional de IDs de tribunais
+ * @returns {Object} { id: number, status: 'pending' }
+ * @status 202 Accepted
+ */
 escavador.post('/v1/processos/tribunal/envolvido', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
@@ -199,6 +486,17 @@ escavador.post('/v1/processos/tribunal/envolvido', async (c) => {
   return c.json(result.value, 202);
 });
 
+/**
+ * POST /v1/processos/tribunal/oab
+ *
+ * Inicia busca de processos por número OAB de advogado em tribunais.
+ *
+ * @route POST /api/escavador/v1/processos/tribunal/oab
+ * @body {string} oab - Número OAB do advogado (ex: "123456/SP")
+ * @body {string[]} [tribunais] - Array opcional de IDs de tribunais
+ * @returns {Object} { id: number, status: 'pending' }
+ * @status 202 Accepted
+ */
 escavador.post('/v1/processos/tribunal/oab', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
@@ -222,6 +520,17 @@ escavador.post('/v1/processos/tribunal/oab', async (c) => {
   return c.json(result.value, 202);
 });
 
+/**
+ * POST /v1/processos/administrativo/nup
+ *
+ * Inicia busca de processo administrativo por NUP (Número Único de Protocolo).
+ * Busca em órgãos administrativos, não em tribunais.
+ *
+ * @route POST /api/escavador/v1/processos/administrativo/nup
+ * @body {string} nup - NUP (número único de protocolo)
+ * @returns {Object} { id: number, status: 'pending' }
+ * @status 202 Accepted
+ */
 escavador.post('/v1/processos/administrativo/nup', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
@@ -239,6 +548,17 @@ escavador.post('/v1/processos/administrativo/nup', async (c) => {
   return c.json(result.value, 202);
 });
 
+/**
+ * POST /v1/processos/pesquisar
+ *
+ * Inicia busca de processo por número CNJ no tribunal.
+ *
+ * @route POST /api/escavador/v1/processos/pesquisar
+ * @body {string} numero_cnj - Número CNJ do processo
+ * @body {string[]} [tribunais] - Array opcional de IDs de tribunais
+ * @returns {Object} { id: number, status: 'pending' }
+ * @status 202 Accepted
+ */
 escavador.post('/v1/processos/pesquisar', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
@@ -297,8 +617,22 @@ escavador.post('/v1/processos/tribunal/lote', async (c) => {
   return c.json(result.value, 202);
 });
 
-// ──── Processos — Diários Oficiais ────
+// ══════════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: PROCESSOS — DIÁRIOS OFICIAIS (2 GET endpoints)
+// ══════════════════════════════════════════════════════════════════════════════════
+// Busca de processos em diários oficiais públicos (pesquisa síncrona).
 
+/**
+ * GET /v1/processos/diarios-oficiais/numero
+ *
+ * Busca processos em diários oficiais por número.
+ *
+ * @route GET /api/escavador/v1/processos/diarios-oficiais/numero?numero=<número>
+ * @queryParam {string} numero - Número do processo (obrigatório)
+ * @returns {Array} Array de processos encontrados em diários
+ * @status 200 OK
+ * @status 400 Parâmetro numero ausente
+ */
 escavador.get('/v1/processos/diarios-oficiais/numero', async (c) => {
   const numero = c.req.query('numero') ?? '';
   if (!numero) return c.json({ error: 'Parâmetro numero obrigatório' }, 400);
@@ -313,6 +647,16 @@ escavador.get('/v1/processos/diarios-oficiais/numero', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * GET /v1/processos/diarios-oficiais/oab
+ *
+ * Busca processos em diários oficiais por número OAB de advogado.
+ *
+ * @route GET /api/escavador/v1/processos/diarios-oficiais/oab?oab=<oab>
+ * @queryParam {string} oab - Número OAB (obrigatório)
+ * @returns {Array} Array de processos encontrados
+ * @status 200 OK
+ */
 escavador.get('/v1/processos/diarios-oficiais/oab', async (c) => {
   const oab = c.req.query('oab') ?? '';
   if (!oab) return c.json({ error: 'Parâmetro oab obrigatório' }, 400);
@@ -327,8 +671,21 @@ escavador.get('/v1/processos/diarios-oficiais/oab', async (c) => {
   return c.json(result.value, 200);
 });
 
-// ──── Processos — Detalhes ────
+// ══════════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: PROCESSOS — DETALHES (3 GET endpoints)
+// ══════════════════════════════════════════════════════════════════════════════════
+// Recuperação de detalhes, movimentações e envolvidos de processos.
 
+/**
+ * GET /v1/processos/:numero_cnj
+ *
+ * Obter detalhes completos de um processo pelo número CNJ.
+ *
+ * @route GET /api/escavador/v1/processos/{numero_cnj}
+ * @param {string} numero_cnj - Número CNJ do processo
+ * @returns {Object} Detalhes completos do processo
+ * @status 200 OK
+ */
 escavador.get('/v1/processos/:numero_cnj', async (c) => {
   const numeroCnj = c.req.param('numero_cnj');
   const op = new ObterDetalhesProcesso(buildHttpV1());
@@ -341,6 +698,17 @@ escavador.get('/v1/processos/:numero_cnj', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * GET /v1/processos/:numero_cnj/movimentacoes
+ *
+ * Listar movimentações (updates) de um processo com paginação.
+ *
+ * @route GET /api/escavador/v1/processos/{numero_cnj}/movimentacoes?page=1
+ * @param {string} numero_cnj - Número CNJ
+ * @queryParam {number} page - Página (padrão: 1)
+ * @returns {Array} Array de movimentações
+ * @status 200 OK
+ */
 escavador.get('/v1/processos/:numero_cnj/movimentacoes', async (c) => {
   const numeroCnj = c.req.param('numero_cnj');
   const pagina = Number(c.req.query('page') ?? '1');
@@ -354,6 +722,17 @@ escavador.get('/v1/processos/:numero_cnj/movimentacoes', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * GET /v1/processos/:id/envolvidos-diarios
+ *
+ * Listar partes envolvidas extraídas de diários oficiais de um processo.
+ *
+ * @route GET /api/escavador/v1/processos/{id}/envolvidos-diarios
+ * @param {number} id - ID do processo
+ * @returns {Array} Array de envolvidos
+ * @status 200 OK
+ * @status 400 ID inválido (não é número)
+ */
 escavador.get('/v1/processos/:id/envolvidos-diarios', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -368,8 +747,20 @@ escavador.get('/v1/processos/:id/envolvidos-diarios', async (c) => {
   return c.json(result.value, 200);
 });
 
-// ──── Movimentações ────
+// ══════════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: MOVIMENTAÇÕES (1 GET endpoint)
+// ══════════════════════════════════════════════════════════════════════════════════
 
+/**
+ * GET /v1/movimentacoes/:id
+ *
+ * Obter detalhes de uma movimentação específica de processo.
+ *
+ * @route GET /api/escavador/v1/movimentacoes/{id}
+ * @param {number} id - ID da movimentação
+ * @returns {Object} Detalhes da movimentação
+ * @status 200 OK
+ */
 escavador.get('/v1/movimentacoes/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -384,8 +775,22 @@ escavador.get('/v1/movimentacoes/:id', async (c) => {
   return c.json(result.value, 200);
 });
 
-// ──── Busca Geral ────
+// ══════════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: BUSCA GERAL (1 GET endpoint — Full Text Search)
+// ══════════════════════════════════════════════════════════════════════════════════
 
+/**
+ * GET /v1/busca
+ *
+ * Full-text search em toda a base do Escavador (processos, pessoas, instituições).
+ *
+ * @route GET /api/escavador/v1/busca?q=<query>&tipo=pessoa&page=1
+ * @queryParam {string} q - Termo de busca (obrigatório)
+ * @queryParam {string} [tipo] - Filtro tipo: 'pessoa', 'processo', 'instituicao' (opcional)
+ * @queryParam {number} [page] - Página (padrão: 1)
+ * @returns {Array} Array de resultados
+ * @status 200 OK
+ */
 escavador.get('/v1/busca', async (c) => {
   const query = c.req.query('q') ?? '';
   if (!query) return c.json({ error: 'Parâmetro q obrigatório' }, 400);
@@ -405,8 +810,21 @@ escavador.get('/v1/busca', async (c) => {
   return c.json(result.value, 200);
 });
 
-// ──── Pessoas ────
+// ══════════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: PESSOAS (3 GET endpoints)
+// ══════════════════════════════════════════════════════════════════════════════════
+// Endpoints para consultar dados de pessoas e seu envolvimento em processos.
 
+/**
+ * GET /v1/pessoas/:id
+ *
+ * Obter dados de uma pessoa específica (nome, dados públicos, etc).
+ *
+ * @route GET /api/escavador/v1/pessoas/{id}
+ * @param {number} id - ID da pessoa
+ * @returns {Object} Dados públicos da pessoa
+ * @status 200 OK
+ */
 escavador.get('/v1/pessoas/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -421,6 +839,16 @@ escavador.get('/v1/pessoas/:id', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * GET /v1/pessoas/:id/processos
+ *
+ * Listar todos os processos envolvendo uma pessoa com paginação.
+ *
+ * @route GET /api/escavador/v1/pessoas/{id}/processos?page=1
+ * @param {number} id - ID da pessoa
+ * @queryParam {number} [page] - Página (padrão: 1)
+ * @returns {Array} Array de processos
+ */
 escavador.get('/v1/pessoas/:id/processos', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -436,6 +864,16 @@ escavador.get('/v1/pessoas/:id/processos', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * GET /v1/pessoas/:id/publicacoes
+ *
+ * Listar publicações em diários oficiais envolvendo uma pessoa.
+ *
+ * @route GET /api/escavador/v1/pessoas/{id}/publicacoes?page=1
+ * @param {number} id - ID da pessoa
+ * @queryParam {number} [page] - Página (padrão: 1)
+ * @returns {Array} Array de publicações
+ */
 escavador.get('/v1/pessoas/:id/publicacoes', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -451,8 +889,20 @@ escavador.get('/v1/pessoas/:id/publicacoes', async (c) => {
   return c.json(result.value, 200);
 });
 
-// ──── Instituições ────
+// ══════════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: INSTITUIÇÕES (3 GET endpoints)
+// ══════════════════════════════════════════════════════════════════════════════════
 
+/**
+ * GET /v1/instituicoes/:id
+ *
+ * Obter dados de uma instituição (nome, tipo, contatos, etc).
+ *
+ * @route GET /api/escavador/v1/instituicoes/{id}
+ * @param {number} id - ID da instituição
+ * @returns {Object} Dados públicos da instituição
+ * @status 200 OK
+ */
 escavador.get('/v1/instituicoes/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -467,6 +917,13 @@ escavador.get('/v1/instituicoes/:id', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * GET /v1/instituicoes/:id/pessoas
+ *
+ * Listar pessoas associadas a uma instituição.
+ *
+ * @route GET /api/escavador/v1/instituicoes/{id}/pessoas?page=1
+ */
 escavador.get('/v1/instituicoes/:id/pessoas', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -482,6 +939,13 @@ escavador.get('/v1/instituicoes/:id/pessoas', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * GET /v1/instituicoes/:id/processos
+ *
+ * Listar processos envolvendo uma instituição.
+ *
+ * @route GET /api/escavador/v1/instituicoes/{id}/processos?page=1
+ */
 escavador.get('/v1/instituicoes/:id/processos', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -497,7 +961,10 @@ escavador.get('/v1/instituicoes/:id/processos', async (c) => {
   return c.json(result.value, 200);
 });
 
-// ──── Monitoramentos Diários Oficiais ────
+// ══════════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: MONITORAMENTOS DIÁRIOS OFICIAIS (8 endpoints: 1 GET, 1 POST, 1 GET:id, etc)
+// ══════════════════════════════════════════════════════════════════════════════════
+// Monitorar publicações em diários oficiais com callbacks automáticos quando detectadas.
 
 const CriarMonitoramentoSchema = z.object({
   nome: z.string().min(1),
@@ -525,6 +992,16 @@ const EditarMonitoramentoTribunalSchema = z.object({
   callback_url: z.string().url().optional(),
 });
 
+/**
+ * GET /v1/monitoramentos
+ *
+ * Listar monitoramentos de diários oficiais com filtro opcional ativo/inativos.
+ *
+ * @route GET /api/escavador/v1/monitoramentos?page=1&ativo=true
+ * @queryParam {number} [page] - Página (padrão: 1)
+ * @queryParam {boolean} [ativo] - Filtro por status ativo (true/false)
+ * @returns {Array} Array de monitoramentos
+ */
 escavador.get('/v1/monitoramentos', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
   const ativoRaw = c.req.query('ativo');
@@ -542,6 +1019,20 @@ escavador.get('/v1/monitoramentos', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * POST /v1/monitoramentos
+ *
+ * Criar novo monitoramento de diário oficial.
+ *
+ * @route POST /api/escavador/v1/monitoramentos
+ * @body {string} nome - Nome do monitoramento
+ * @body {string} tipo - Tipo de monitoramento (ex: "entrada", "publicacao")
+ * @body {string} identificador - Identificador a monitorar
+ * @body {string} [callback_url] - URL para webhook callback
+ * @body {number[]} [tribunais] - Array de IDs de tribunais
+ * @returns {Object} Monitoramento criado
+ * @status 201 Created
+ */
 escavador.post('/v1/monitoramentos', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
@@ -663,8 +1154,18 @@ escavador.get('/v1/monitoramentos/:id/origens', async (c) => {
   return c.json(result.value, 200);
 });
 
-// ──── Monitoramentos Tribunal ────
+// ══════════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: MONITORAMENTOS TRIBUNAL (5 endpoints)
+// ══════════════════════════════════════════════════════════════════════════════════
+// Monitorar website de tribunal para novas publicações/movimentações.
 
+/**
+ * GET /v1/monitoramentos/tribunal
+ *
+ * Listar monitoramentos de tribunal.
+ *
+ * @route GET /api/escavador/v1/monitoramentos/tribunal?page=1
+ */
 escavador.get('/v1/monitoramentos/tribunal', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
   const ativoRaw = c.req.query('ativo');
@@ -758,8 +1259,20 @@ escavador.delete('/v1/monitoramentos/tribunal/:id', async (c) => {
   return c.body(null, 204);
 });
 
-// ──── Callbacks V1 ────
+// ══════════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: CALLBACKS V1 (3 endpoints)
+// ══════════════════════════════════════════════════════════════════════════════════
+// Gerenciar callbacks enviados pelo Escavador (webhooks quando monitoramento detecta).
 
+/**
+ * GET /v1/callbacks
+ *
+ * Listar callbacks recebidos do Escavador.
+ *
+ * @route GET /api/escavador/v1/callbacks?page=1
+ * @queryParam {number} [page] - Página (padrão: 1)
+ * @returns {Array} Array de callbacks
+ */
 escavador.get('/v1/callbacks', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
   const op = new ListarCallbacks(buildHttpV1());
@@ -806,8 +1319,20 @@ escavador.post('/v1/callbacks/reenviar', async (c) => {
   return c.json(result.value, 200);
 });
 
-// ──── Auxiliares ────
+// ══════════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: AUXILIARES (4 GET endpoints)
+// ══════════════════════════════════════════════════════════════════════════════════
+// Dados de suporte: tribunais, órgãos administrativos, diários.
 
+/**
+ * GET /v1/tribunais
+ *
+ * Listar todos os tribunais disponíveis no Escavador.
+ *
+ * @route GET /api/escavador/v1/tribunais?tipo=<tipo>
+ * @queryParam {string} [tipo] - Filtro por tipo de tribunal (opcional)
+ * @returns {Array} Array de tribunais
+ */
 escavador.get('/v1/tribunais', async (c) => {
   const tipo = c.req.query('tipo');
   const op = new ListarTribunais(buildHttpV1());
@@ -868,6 +1393,26 @@ escavador.get('/v1/diarios-oficiais/origens', async (c) => {
 
 // ──── Consulta de Processos ────
 
+/**
+ * @route GET /v2/processos/numero_cnj/:numero
+ * @description Obter detalhes completos de um processo específico por número CNJ
+ * @param {string} numero - Número único CNJ do processo (ex: 0000001-00.0000.0.00.0000)
+ * @returns {Object} Detalhes do processo (número, status, partes, datas importantes, movimentações resumidas)
+ * @status 200 - Processo encontrado e retornado com sucesso
+ * @status 400 - Número de processo inválido
+ * @status 500 - Erro ao consultar API Escavador
+ * @example
+ * // Requisição
+ * GET /api/escavador/v2/processos/numero_cnj/0000001-00.0000.0.00.0000
+ * // Resposta (200)
+ * {
+ *   "numero": "0000001-00.0000.0.00.0000",
+ *   "status": "Ativo",
+ *   "tribunal": "TJ/SP",
+ *   "partes": [...],
+ *   "datas": { "distribuicao": "2022-01-15", "ultima_atualizacao": "2024-05-25" }
+ * }
+ */
 escavador.get('/v2/processos/numero_cnj/:numero', async (c) => {
   const numero = c.req.param('numero');
   const op = new ObterProcessoPorCnj(buildHttpV2());
@@ -880,6 +1425,27 @@ escavador.get('/v2/processos/numero_cnj/:numero', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route GET /v2/processos/movimentacoes/:numero_cnj
+ * @description Listar todas as movimentações (atualizações) de um processo específico com paginação
+ * @param {string} numero_cnj - Número CNJ do processo
+ * @queryParam {number} page - Número da página (padrão: 1)
+ * @returns {Array} Array de movimentações do processo com datas, tipos e descrições
+ * @status 200 - Movimentações encontradas e listadas
+ * @status 400 - Número CNJ inválido
+ * @status 500 - Erro ao consultar API Escavador
+ * @example
+ * // Requisição
+ * GET /api/escavador/v2/processos/movimentacoes/0000001-00.0000.0.00.0000?page=1
+ * // Resposta (200)
+ * {
+ *   "data": [
+ *     { "id": 123, "tipo": "Sentença", "data": "2024-05-20", "descricao": "Sentença prolatada..." },
+ *     { "id": 122, "tipo": "Audiência", "data": "2024-04-15", "descricao": "Audiência realizada..." }
+ *   ],
+ *   "pagination": { "page": 1, "total": 45, "por_pagina": 20 }
+ * }
+ */
 escavador.get('/v2/processos/movimentacoes/:numero_cnj', async (c) => {
   const numero_cnj = c.req.param('numero_cnj');
   const pagina = Number(c.req.query('page') ?? '1');
@@ -893,6 +1459,27 @@ escavador.get('/v2/processos/movimentacoes/:numero_cnj', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route GET /v2/processos/envolvido
+ * @description Buscar processos por envolvido (pessoa ou empresa) — filtro por nome ou CPF/CNPJ com paginação
+ * @queryParam {string} [nome] - Nome da pessoa/empresa a buscar
+ * @queryParam {string} [cpf_cnpj] - CPF ou CNPJ (formato com pontos/hífens)
+ * @queryParam {number} page - Número da página (padrão: 1)
+ * @returns {Array} Array de processos envolvendo a pessoa/empresa
+ * @status 200 - Processos encontrados (pode ser array vazio)
+ * @status 400 - Nome ou CPF/CNPJ inválido
+ * @status 500 - Erro ao consultar API Escavador
+ * @example
+ * // Requisição por nome
+ * GET /api/escavador/v2/processos/envolvido?nome=João%20Silva&page=1
+ * // Requisição por CPF
+ * GET /api/escavador/v2/processos/envolvido?cpf_cnpj=XXX.XXX.XXX-XX
+ * // Resposta (200)
+ * {
+ *   "data": [{ "id": 1, "numero_cnj": "0000001-00...", "tribunal": "TJ/SP", "status": "Ativo" }],
+ *   "pagination": { "page": 1, "total": 25, "por_pagina": 20 }
+ * }
+ */
 escavador.get('/v2/processos/envolvido', async (c) => {
   const op = new BuscarProcessosPorEnvolvido(buildHttpV2());
   const input: Parameters<typeof op.execute>[0] = {};
@@ -913,6 +1500,25 @@ escavador.get('/v2/processos/envolvido', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route GET /v2/processos/envolvido/resumo
+ * @description Obter resumo estatístico de processos envolvendo uma pessoa/empresa (sem listar processos individuais)
+ * @queryParam {string} [nome] - Nome da pessoa/empresa
+ * @queryParam {string} [cpf_cnpj] - CPF ou CNPJ
+ * @returns {Object} Resumo com: total de processos, distribuição por tipo, status, valor total em disputa
+ * @status 200 - Resumo obtido com sucesso
+ * @status 400 - Parâmetros inválidos
+ * @status 500 - Erro ao consultar API Escavador
+ * @example
+ * GET /api/escavador/v2/processos/envolvido/resumo?nome=Empresa%20Ltda
+ * // Resposta (200)
+ * {
+ *   "total_processos": 12,
+ *   "por_tipo": { "cível": 8, "trabalhista": 3, "criminal": 1 },
+ *   "por_status": { "ativo": 10, "finalizado": 2 },
+ *   "valor_total_disputa": 5500000.50
+ * }
+ */
 escavador.get('/v2/processos/envolvido/resumo', async (c) => {
   const op = new ResumoProcessosPorEnvolvido(buildHttpV2());
   const input: Parameters<typeof op.execute>[0] = {};
@@ -931,6 +1537,23 @@ escavador.get('/v2/processos/envolvido/resumo', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route GET /v2/processos/advogado/:oab
+ * @description Listar processos de um advogado específico por número OAB com paginação
+ * @param {string} oab - Número OAB do advogado (formato: XXXXXX/Estado ou XXXXXX)
+ * @queryParam {number} page - Número da página (padrão: 1)
+ * @returns {Array} Array de processos onde o advogado atuou
+ * @status 200 - Processos encontrados
+ * @status 400 - Número OAB inválido
+ * @status 500 - Erro ao consultar API Escavador
+ * @example
+ * GET /api/escavador/v2/processos/advogado/123456/SP?page=1
+ * // Resposta (200)
+ * {
+ *   "data": [{ "id": 1, "numero_cnj": "0000001-00...", "tribunal": "TJ/SP", "atuacao": "Réu" }],
+ *   "pagination": { "page": 1, "total": 45, "por_pagina": 20 }
+ * }
+ */
 escavador.get('/v2/processos/advogado/:oab', async (c) => {
   const oab = c.req.param('oab');
   const pagina = Number(c.req.query('page') ?? '1');
@@ -944,6 +1567,24 @@ escavador.get('/v2/processos/advogado/:oab', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route GET /v2/processos/advogado/:oab/resumo
+ * @description Obter resumo estatístico de processos de um advogado (sem listar individuais)
+ * @param {string} oab - Número OAB do advogado
+ * @returns {Object} Resumo com: total de processos, distribuição por tipo, tribunais principais, valor em disputa
+ * @status 200 - Resumo obtido com sucesso
+ * @status 400 - OAB inválido
+ * @status 500 - Erro ao consultar API Escavador
+ * @example
+ * GET /api/escavador/v2/processos/advogado/123456/SP/resumo
+ * // Resposta (200)
+ * {
+ *   "total_processos": 87,
+ *   "por_tipo": { "cível": 65, "trabalhista": 15, "criminal": 7 },
+ *   "tribunais_principais": ["TJ/SP", "STF", "TST"],
+ *   "valor_total": 12500000.75
+ * }
+ */
 escavador.get('/v2/processos/advogado/:oab/resumo', async (c) => {
   const oab = c.req.param('oab');
   const op = new ResumoProcessosPorAdvogado(buildHttpV2());
@@ -956,6 +1597,26 @@ escavador.get('/v2/processos/advogado/:oab/resumo', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route GET /v2/processos/:numero_cnj/documentos
+ * @description Listar todos os documentos públicos (petições, sentências, etc.) de um processo com paginação
+ * @param {string} numero_cnj - Número CNJ do processo
+ * @queryParam {number} page - Número da página (padrão: 1)
+ * @returns {Array} Array de documentos com metadata (tipo, data, tamanho, URL download)
+ * @status 200 - Documentos encontrados (pode ser array vazio se processo não tem documentos públicos)
+ * @status 400 - CNJ inválido
+ * @status 500 - Erro ao consultar API Escavador
+ * @example
+ * GET /api/escavador/v2/processos/0000001-00.0000.0.00.0000/documentos?page=1
+ * // Resposta (200)
+ * {
+ *   "data": [
+ *     { "id": 1, "tipo": "Sentença", "data": "2024-05-20", "tamanho_kb": 245, "url_download": "/v2/documentos/1/download" },
+ *     { "id": 2, "tipo": "Petição", "data": "2024-04-15", "tamanho_kb": 120, "url_download": "/v2/documentos/2/download" }
+ *   ],
+ *   "pagination": { "page": 1, "total": 8, "por_pagina": 20 }
+ * }
+ */
 escavador.get('/v2/processos/:numero_cnj/documentos', async (c) => {
   const numero_cnj = c.req.param('numero_cnj');
   const pagina = Number(c.req.query('page') ?? '1');
@@ -969,6 +1630,26 @@ escavador.get('/v2/processos/:numero_cnj/documentos', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route GET /v2/processos/:numero_cnj/autos
+ * @description Listar autos (case files/volumes) de um processo com metadados e paginação
+ * @param {string} numero_cnj - Número CNJ do processo
+ * @queryParam {number} page - Número da página (padrão: 1)
+ * @returns {Array} Array de autos com: número do auto, data de abertura, quantidade de folhas, documentos
+ * @status 200 - Autos encontrados
+ * @status 400 - CNJ inválido
+ * @status 500 - Erro ao consultar API Escavador
+ * @example
+ * GET /api/escavador/v2/processos/0000001-00.0000.0.00.0000/autos?page=1
+ * // Resposta (200)
+ * {
+ *   "data": [
+ *     { "id": 1, "numero": "001", "data_abertura": "2022-01-15", "folhas": 45 },
+ *     { "id": 2, "numero": "002", "data_abertura": "2023-06-22", "folhas": 67 }
+ *   ],
+ *   "pagination": { "page": 1, "total": 3, "por_pagina": 20 }
+ * }
+ */
 escavador.get('/v2/processos/:numero_cnj/autos', async (c) => {
   const numero_cnj = c.req.param('numero_cnj');
   const pagina = Number(c.req.query('page') ?? '1');
@@ -982,6 +1663,25 @@ escavador.get('/v2/processos/:numero_cnj/autos', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route GET /v2/processos/:numero_cnj/envolvidos
+ * @description Listar todas as partes envolvidas (litigantes, advogados, terceiros) em um processo
+ * @param {string} numero_cnj - Número CNJ do processo
+ * @returns {Object} Estrutura com: partes, advogados, representantes, terceiros interessados com seus dados de contato
+ * @status 200 - Envolvidos encontrados
+ * @status 400 - CNJ inválido
+ * @status 500 - Erro ao consultar API Escavador
+ * @example
+ * GET /api/escavador/v2/processos/0000001-00.0000.0.00.0000/envolvidos
+ * // Resposta (200)
+ * {
+ *   "partes": [
+ *     { "id": 1, "tipo": "Autor", "nome": "João Silva", "cpf": "XXX.XXX.XXX-XX", "advogado": "Dr. Pedro" },
+ *     { "id": 2, "tipo": "Réu", "nome": "Empresa XYZ LTDA", "cnpj": "XX.XXX.XXX/XXXX-XX" }
+ *   ],
+ *   "terceiros": [{ "id": 3, "tipo": "Interbancário", "nome": "Banco ABC" }]
+ * }
+ */
 escavador.get('/v2/processos/:numero_cnj/envolvidos', async (c) => {
   const numero_cnj = c.req.param('numero_cnj');
   const op = new ObterEnvolvidosProcessoV2(buildHttpV2());
@@ -996,6 +1696,29 @@ escavador.get('/v2/processos/:numero_cnj/envolvidos', async (c) => {
 
 // ──── Atualização de Processos V2 ────
 
+/**
+ * @route POST /v2/processos/atualizacao
+ * @description Solicitar atualização em lote de múltiplos processos (operação assíncrona)
+ * @param {Array<number>} processos_ids - Array de IDs dos processos a atualizar (mínimo 1)
+ * @returns {Object} Status da solicitação de atualização com ID do batch e timestamp
+ * @status 202 - Solicitação aceita e enfileirada
+ * @status 400 - Body inválido
+ * @status 422 - Payload não atende aos critérios de validação
+ * @status 500 - Erro ao processar solicitação
+ * @example
+ * POST /api/escavador/v2/processos/atualizacao
+ * {
+ *   "processos_ids": [123, 456, 789]
+ * }
+ * // Resposta (202)
+ * {
+ *   "id": 1,
+ *   "status": "pending",
+ *   "processados": 0,
+ *   "total": 3,
+ *   "created_at": "2024-05-27T10:30:00Z"
+ * }
+ */
 escavador.post('/v2/processos/atualizacao', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
@@ -1013,6 +1736,26 @@ escavador.post('/v2/processos/atualizacao', async (c) => {
   return c.json(result.value, 202);
 });
 
+/**
+ * @route GET /v2/processos/atualizacao/:id
+ * @description Obter status de uma solicitação de atualização em lote
+ * @param {number} id - ID da solicitação de atualização
+ * @returns {Object} Status do batch: total processados, erros, progresso e timestamp
+ * @status 200 - Status obtido com sucesso
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao consultar status
+ * @example
+ * GET /api/escavador/v2/processos/atualizacao/1
+ * // Resposta (200)
+ * {
+ *   "id": 1,
+ *   "status": "processing",
+ *   "processados": 2,
+ *   "total": 3,
+ *   "erros": [],
+ *   "updated_at": "2024-05-27T10:31:00Z"
+ * }
+ */
 escavador.get('/v2/processos/atualizacao/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -1027,6 +1770,25 @@ escavador.get('/v2/processos/atualizacao/:id', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route GET /v2/processos/:id/atualizacao
+ * @description Obter status de atualização de um processo específico
+ * @param {number} id - ID do processo
+ * @returns {Object} Status de atualização: última sincronização, informações modificadas, timestamp
+ * @status 200 - Status obtido com sucesso
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao consultar status
+ * @example
+ * GET /api/escavador/v2/processos/123/atualizacao
+ * // Resposta (200)
+ * {
+ *   "id": 123,
+ *   "status": "updated",
+ *   "last_sync": "2024-05-27T10:30:00Z",
+ *   "campos_modificados": ["status", "data_sentenca"],
+ *   "updated_at": "2024-05-27T10:31:00Z"
+ * }
+ */
 escavador.get('/v2/processos/:id/atualizacao', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -1041,6 +1803,23 @@ escavador.get('/v2/processos/:id/atualizacao', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route POST /v2/processos/:id/atualizacao
+ * @description Solicitar atualização imediata de um processo específico
+ * @param {number} id - ID do processo
+ * @returns {Object} Confirmação de solicitação com timestamp
+ * @status 202 - Solicitação aceita e enfileirada
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao processar solicitação
+ * @example
+ * POST /api/escavador/v2/processos/123/atualizacao
+ * // Resposta (202)
+ * {
+ *   "id": 123,
+ *   "status": "update_requested",
+ *   "created_at": "2024-05-27T10:30:00Z"
+ * }
+ */
 escavador.post('/v2/processos/:id/atualizacao', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -1057,6 +1836,24 @@ escavador.post('/v2/processos/:id/atualizacao', async (c) => {
 
 // ──── Resumo de Processos (IA) V2 ────
 
+/**
+ * @route POST /v2/processos/:id/resumo
+ * @description Solicitar geração de resumo de processo via IA (operação assíncrona)
+ * @param {number} id - ID do processo
+ * @returns {Object} Confirmação de solicitação com ID do job
+ * @status 202 - Solicitação aceita e enfileirada para processamento IA
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao processar solicitação
+ * @example
+ * POST /api/escavador/v2/processos/123/resumo
+ * // Resposta (202)
+ * {
+ *   "id": 123,
+ *   "job_id": "job_abc123",
+ *   "status": "processing",
+ *   "created_at": "2024-05-27T10:30:00Z"
+ * }
+ */
 escavador.post('/v2/processos/:id/resumo', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -1071,6 +1868,25 @@ escavador.post('/v2/processos/:id/resumo', async (c) => {
   return c.json(result.value, 202);
 });
 
+/**
+ * @route GET /v2/processos/:id/resumo
+ * @description Obter resumo gerado por IA de um processo
+ * @param {number} id - ID do processo
+ * @returns {Object} Resumo estruturado: fatos, decisão, partes envolvidas, análise jurídica
+ * @status 200 - Resumo obtido com sucesso
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao consultar resumo
+ * @example
+ * GET /api/escavador/v2/processos/123/resumo
+ * // Resposta (200)
+ * {
+ *   "id": 123,
+ *   "resumo": "Ação civil por cobrança...",
+ *   "fatos": ["Contrato de empréstimo...", "Inadimplemento em..."],
+ *   "decisao": "Sentença condenatória",
+ *   "generated_at": "2024-05-27T10:31:00Z"
+ * }
+ */
 escavador.get('/v2/processos/:id/resumo', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -1085,6 +1901,24 @@ escavador.get('/v2/processos/:id/resumo', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route GET /v2/processos/:id/resumo/status
+ * @description Verificar status da geração de resumo de um processo
+ * @param {number} id - ID do processo
+ * @returns {Object} Status do processamento de IA: estado, progresso, estimativa de conclusão
+ * @status 200 - Status obtido com sucesso
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao consultar status
+ * @example
+ * GET /api/escavador/v2/processos/123/resumo/status
+ * // Resposta (200)
+ * {
+ *   "id": 123,
+ *   "status": "processing",
+ *   "progress": 65,
+ *   "estimated_completion": "2024-05-27T10:35:00Z"
+ * }
+ */
 escavador.get('/v2/processos/:id/resumo/status', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -1101,6 +1935,19 @@ escavador.get('/v2/processos/:id/resumo/status', async (c) => {
 
 // ──── Download de Documento V2 ────
 
+/**
+ * @route GET /v2/documentos/:id/download
+ * @description Download de documento PDF de um processo
+ * @param {number} id - ID do documento
+ * @returns {Buffer} Conteúdo PDF do documento em base64 ou binário
+ * @status 200 - Documento enviado com sucesso (application/pdf)
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao recuperar documento
+ * @example
+ * GET /api/escavador/v2/documentos/5/download
+ * // Resposta (200) Content-Type: application/pdf
+ * [PDF binary content]
+ */
 escavador.get('/v2/documentos/:id/download', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -1119,6 +1966,23 @@ escavador.get('/v2/documentos/:id/download', async (c) => {
 
 // ──── Monitoramentos V2 — Novos Processos ────
 
+/**
+ * @route GET /v2/monitoramentos/novos-processos
+ * @description Listar monitoramentos de novos processos com paginação
+ * @queryParam {number} page - Número da página (padrão: 1)
+ * @returns {Object} Array de monitoramentos com metadados de paginação
+ * @status 200 - Monitoramentos listados com sucesso
+ * @status 500 - Erro ao consultar API Escavador
+ * @example
+ * GET /api/escavador/v2/monitoramentos/novos-processos?page=1
+ * // Resposta (200)
+ * {
+ *   "data": [
+ *     { "id": 1, "variacao_busca": "Empresa XYZ", "tribunais": [1, 2], "ativo": true }
+ *   ],
+ *   "pagination": { "page": 1, "total": 15, "por_pagina": 10 }
+ * }
+ */
 escavador.get('/v2/monitoramentos/novos-processos', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
   const op = new ListarMonitoramentosNovosProcessos(buildHttpV2());
@@ -1131,6 +1995,33 @@ escavador.get('/v2/monitoramentos/novos-processos', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route POST /v2/monitoramentos/novos-processos
+ * @description Criar novo monitoramento de processos com filtros de busca
+ * @param {string} variacao_busca - Termo de busca ou nome (obrigatório)
+ * @queryParam {Array<number>} tribunais - IDs dos tribunais a monitorar (opcional)
+ * @queryParam {string} callback_url - URL para webhooks de notificação (opcional)
+ * @returns {Object} Monitoramento criado com ID e configuração
+ * @status 201 - Monitoramento criado com sucesso
+ * @status 400 - Body inválido
+ * @status 422 - Payload não atende aos critérios de validação
+ * @status 500 - Erro ao criar monitoramento
+ * @example
+ * POST /api/escavador/v2/monitoramentos/novos-processos
+ * {
+ *   "variacao_busca": "Empresa ABC LTDA",
+ *   "tribunais": [1, 5],
+ *   "callback_url": "https://app.example.com/webhooks/escavador"
+ * }
+ * // Resposta (201)
+ * {
+ *   "id": 25,
+ *   "variacao_busca": "Empresa ABC LTDA",
+ *   "tribunais": [1, 5],
+ *   "ativo": true,
+ *   "created_at": "2024-05-27T10:30:00Z"
+ * }
+ */
 escavador.post('/v2/monitoramentos/novos-processos', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
@@ -1156,6 +2047,27 @@ escavador.post('/v2/monitoramentos/novos-processos', async (c) => {
   return c.json(result.value, 201);
 });
 
+/**
+ * @route GET /v2/monitoramentos/novos-processos/:id
+ * @description Obter detalhes de um monitoramento de novos processos
+ * @param {number} id - ID do monitoramento
+ * @returns {Object} Configuração completa do monitoramento incluindo histórico
+ * @status 200 - Monitoramento obtido com sucesso
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao consultar monitoramento
+ * @example
+ * GET /api/escavador/v2/monitoramentos/novos-processos/25
+ * // Resposta (200)
+ * {
+ *   "id": 25,
+ *   "variacao_busca": "Empresa ABC LTDA",
+ *   "tribunais": [1, 5],
+ *   "callback_url": "https://app.example.com/webhooks/escavador",
+ *   "ativo": true,
+ *   "created_at": "2024-05-27T10:30:00Z",
+ *   "updated_at": "2024-05-27T10:30:00Z"
+ * }
+ */
 escavador.get('/v2/monitoramentos/novos-processos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -1170,6 +2082,34 @@ escavador.get('/v2/monitoramentos/novos-processos/:id', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route PATCH /v2/monitoramentos/novos-processos/:id
+ * @description Atualizar configuração de um monitoramento de novos processos
+ * @param {number} id - ID do monitoramento
+ * @param {string} variacao_busca - Novo termo de busca (opcional)
+ * @param {Array<number>} tribunais - Novos tribunais (opcional)
+ * @param {string} callback_url - Nova URL de webhook (opcional)
+ * @param {boolean} ativo - Ativar/desativar monitoramento (opcional)
+ * @returns {Object} Monitoramento atualizado
+ * @status 200 - Monitoramento atualizado com sucesso
+ * @status 400 - ID inválido ou body inválido
+ * @status 422 - Payload não atende aos critérios de validação
+ * @status 500 - Erro ao atualizar monitoramento
+ * @example
+ * PATCH /api/escavador/v2/monitoramentos/novos-processos/25
+ * {
+ *   "tribunais": [1, 5, 10],
+ *   "ativo": false
+ * }
+ * // Resposta (200)
+ * {
+ *   "id": 25,
+ *   "variacao_busca": "Empresa ABC LTDA",
+ *   "tribunais": [1, 5, 10],
+ *   "ativo": false,
+ *   "updated_at": "2024-05-27T10:31:00Z"
+ * }
+ */
 escavador.patch('/v2/monitoramentos/novos-processos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -1201,6 +2141,18 @@ escavador.patch('/v2/monitoramentos/novos-processos/:id', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route DELETE /v2/monitoramentos/novos-processos/:id
+ * @description Remover um monitoramento de novos processos
+ * @param {number} id - ID do monitoramento
+ * @returns {null} Sem conteúdo
+ * @status 204 - Monitoramento removido com sucesso
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao remover monitoramento
+ * @example
+ * DELETE /api/escavador/v2/monitoramentos/novos-processos/25
+ * // Resposta (204) No Content
+ */
 escavador.delete('/v2/monitoramentos/novos-processos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -1232,6 +2184,23 @@ escavador.get('/v2/monitoramentos/novos-processos/:id/resultados', async (c) => 
 
 // ──── Monitoramentos V2 — Processos ────
 
+/**
+ * @route GET /v2/monitoramentos/processos
+ * @description Listar monitoramentos de processos específicos com paginação
+ * @queryParam {number} page - Número da página (padrão: 1)
+ * @returns {Object} Array de monitoramentos com metadados de paginação
+ * @status 200 - Monitoramentos listados com sucesso
+ * @status 500 - Erro ao consultar API Escavador
+ * @example
+ * GET /api/escavador/v2/monitoramentos/processos?page=1
+ * // Resposta (200)
+ * {
+ *   "data": [
+ *     { "id": 1, "processo_id": 123, "ativo": true, "callback_url": "https://..." }
+ *   ],
+ *   "pagination": { "page": 1, "total": 5, "por_pagina": 10 }
+ * }
+ */
 escavador.get('/v2/monitoramentos/processos', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
   const op = new ListarMonitoramentosProcesso(buildHttpV2());
@@ -1244,6 +2213,31 @@ escavador.get('/v2/monitoramentos/processos', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route POST /v2/monitoramentos/processos
+ * @description Criar novo monitoramento para um processo específico
+ * @param {number} processo_id - ID do processo a monitorar (obrigatório)
+ * @param {string} callback_url - URL para webhooks de notificação (opcional)
+ * @returns {Object} Monitoramento criado com ID e configuração
+ * @status 201 - Monitoramento criado com sucesso
+ * @status 400 - Body inválido
+ * @status 422 - Payload não atende aos critérios de validação
+ * @status 500 - Erro ao criar monitoramento
+ * @example
+ * POST /api/escavador/v2/monitoramentos/processos
+ * {
+ *   "processo_id": 123,
+ *   "callback_url": "https://app.example.com/webhooks/escavador"
+ * }
+ * // Resposta (201)
+ * {
+ *   "id": 10,
+ *   "processo_id": 123,
+ *   "callback_url": "https://app.example.com/webhooks/escavador",
+ *   "ativo": true,
+ *   "created_at": "2024-05-27T10:30:00Z"
+ * }
+ */
 escavador.post('/v2/monitoramentos/processos', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
@@ -1267,6 +2261,26 @@ escavador.post('/v2/monitoramentos/processos', async (c) => {
   return c.json(result.value, 201);
 });
 
+/**
+ * @route GET /v2/monitoramentos/processos/:id
+ * @description Obter detalhes de um monitoramento de processo específico
+ * @param {number} id - ID do monitoramento
+ * @returns {Object} Configuração completa do monitoramento
+ * @status 200 - Monitoramento obtido com sucesso
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao consultar monitoramento
+ * @example
+ * GET /api/escavador/v2/monitoramentos/processos/10
+ * // Resposta (200)
+ * {
+ *   "id": 10,
+ *   "processo_id": 123,
+ *   "callback_url": "https://app.example.com/webhooks/escavador",
+ *   "ativo": true,
+ *   "created_at": "2024-05-27T10:30:00Z",
+ *   "updated_at": "2024-05-27T10:30:00Z"
+ * }
+ */
 escavador.get('/v2/monitoramentos/processos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -1281,6 +2295,18 @@ escavador.get('/v2/monitoramentos/processos/:id', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route DELETE /v2/monitoramentos/processos/:id
+ * @description Remover um monitoramento de processo específico
+ * @param {number} id - ID do monitoramento
+ * @returns {null} Sem conteúdo
+ * @status 204 - Monitoramento removido com sucesso
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao remover monitoramento
+ * @example
+ * DELETE /api/escavador/v2/monitoramentos/processos/10
+ * // Resposta (204) No Content
+ */
 escavador.delete('/v2/monitoramentos/processos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -1297,6 +2323,23 @@ escavador.delete('/v2/monitoramentos/processos/:id', async (c) => {
 
 // ──── Callbacks V2 ────
 
+/**
+ * @route GET /v2/callbacks
+ * @description Listar callbacks pendentes e histórico com paginação
+ * @queryParam {number} page - Número da página (padrão: 1)
+ * @returns {Object} Array de callbacks com metadados de paginação
+ * @status 200 - Callbacks listados com sucesso
+ * @status 500 - Erro ao consultar API Escavador
+ * @example
+ * GET /api/escavador/v2/callbacks?page=1
+ * // Resposta (200)
+ * {
+ *   "data": [
+ *     { "id": 1, "evento": "processo_atualizado", "status": "pending", "tentativas": 1, "created_at": "2024-05-27T10:30:00Z" }
+ *   ],
+ *   "pagination": { "page": 1, "total": 50, "por_pagina": 20 }
+ * }
+ */
 escavador.get('/v2/callbacks', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
   const op = new ListarCallbacksV2(buildHttpV2());
@@ -1309,6 +2352,22 @@ escavador.get('/v2/callbacks', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route POST /v2/callbacks/recebidos
+ * @description Marcar callbacks como recebidos/processados
+ * @param {Array<number>} ids - Array de IDs de callbacks (máximo 20, mínimo 1)
+ * @returns {null} Sem conteúdo
+ * @status 204 - Callbacks marcados com sucesso
+ * @status 400 - Body inválido
+ * @status 422 - Payload não atende aos critérios de validação
+ * @status 500 - Erro ao processar requisição
+ * @example
+ * POST /api/escavador/v2/callbacks/recebidos
+ * {
+ *   "ids": [1, 2, 3, 4, 5]
+ * }
+ * // Resposta (204) No Content
+ */
 escavador.post('/v2/callbacks/recebidos', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
@@ -1326,6 +2385,24 @@ escavador.post('/v2/callbacks/recebidos', async (c) => {
   return c.body(null, 204);
 });
 
+/**
+ * @route POST /v2/callbacks/:id/reenviar
+ * @description Reenviar um callback específico
+ * @param {number} id - ID do callback
+ * @returns {Object} Confirmação de reenvio com novo status
+ * @status 200 - Reenvio processado com sucesso
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao reenviar callback
+ * @example
+ * POST /api/escavador/v2/callbacks/1/reenviar
+ * // Resposta (200)
+ * {
+ *   "id": 1,
+ *   "status": "resent",
+ *   "tentativas": 2,
+ *   "resent_at": "2024-05-27T10:31:00Z"
+ * }
+ */
 escavador.post('/v2/callbacks/:id/reenviar', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -1342,6 +2419,21 @@ escavador.post('/v2/callbacks/:id/reenviar', async (c) => {
 
 // ──── Certificados V2 ────
 
+/**
+ * @route GET /v2/certificados
+ * @description Listar certificados digitais (e-CNPJ/e-CPF) cadastrados
+ * @returns {Array} Array de certificados com metadados
+ * @status 200 - Certificados listados com sucesso
+ * @status 500 - Erro ao consultar API Escavador
+ * @example
+ * GET /api/escavador/v2/certificados
+ * // Resposta (200)
+ * {
+ *   "data": [
+ *     { "id": 1, "nome": "Certificado ABC LTDA", "tipo": "e-CNPJ", "valido_ate": "2025-12-31", "created_at": "2024-01-15T08:00:00Z" }
+ *   ]
+ * }
+ */
 escavador.get('/v2/certificados', async (c) => {
   const op = new ListarCertificados(buildHttpV2());
   const result = await op.execute();
@@ -1353,6 +2445,33 @@ escavador.get('/v2/certificados', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route POST /v2/certificados
+ * @description Fazer upload e registrar novo certificado digital
+ * @param {string} nome - Nome identificador do certificado
+ * @param {string} arquivo_base64 - Arquivo .p12 ou .pfx codificado em base64
+ * @param {string} senha - Senha do certificado
+ * @returns {Object} Certificado registrado com ID e validação
+ * @status 201 - Certificado criado com sucesso
+ * @status 400 - Body inválido
+ * @status 422 - Payload não atende aos critérios de validação
+ * @status 500 - Erro ao processar certificado
+ * @example
+ * POST /api/escavador/v2/certificados
+ * {
+ *   "nome": "Certificado ABC LTDA",
+ *   "arquivo_base64": "MIIG...[truncated]",
+ *   "senha": "senha_certificado_123"
+ * }
+ * // Resposta (201)
+ * {
+ *   "id": 1,
+ *   "nome": "Certificado ABC LTDA",
+ *   "tipo": "e-CNPJ",
+ *   "valido_ate": "2025-12-31",
+ *   "created_at": "2024-05-27T10:30:00Z"
+ * }
+ */
 escavador.post('/v2/certificados', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
@@ -1374,6 +2493,27 @@ escavador.post('/v2/certificados', async (c) => {
   return c.json(result.value, 201);
 });
 
+/**
+ * @route GET /v2/certificados/:id
+ * @description Obter detalhes de um certificado específico
+ * @param {number} id - ID do certificado
+ * @returns {Object} Detalhes completos do certificado incluindo validação
+ * @status 200 - Certificado obtido com sucesso
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao consultar certificado
+ * @example
+ * GET /api/escavador/v2/certificados/1
+ * // Resposta (200)
+ * {
+ *   "id": 1,
+ *   "nome": "Certificado ABC LTDA",
+ *   "tipo": "e-CNPJ",
+ *   "cnpj": "XX.XXX.XXX/XXXX-XX",
+ *   "valido_ate": "2025-12-31",
+ *   "autenticacoes": [],
+ *   "created_at": "2024-01-15T08:00:00Z"
+ * }
+ */
 escavador.get('/v2/certificados/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -1388,6 +2528,18 @@ escavador.get('/v2/certificados/:id', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route DELETE /v2/certificados/:id
+ * @description Remover um certificado digital
+ * @param {number} id - ID do certificado
+ * @returns {null} Sem conteúdo
+ * @status 204 - Certificado removido com sucesso
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao remover certificado
+ * @example
+ * DELETE /api/escavador/v2/certificados/1
+ * // Resposta (204) No Content
+ */
 escavador.delete('/v2/certificados/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -1402,6 +2554,31 @@ escavador.delete('/v2/certificados/:id', async (c) => {
   return c.body(null, 204);
 });
 
+/**
+ * @route POST /v2/certificados/:id/autenticacoes
+ * @description Adicionar método de autenticação a um certificado
+ * @param {number} id - ID do certificado
+ * @param {string} tipo - Tipo de autenticação (obrigatório)
+ * @param {string} valor - Valor específico do tipo (opcional, conforme tipo)
+ * @returns {Object} Autenticação criada com ID
+ * @status 201 - Autenticação criada com sucesso
+ * @status 400 - ID inválido ou body inválido
+ * @status 422 - Payload não atende aos critérios de validação
+ * @status 500 - Erro ao processar autenticação
+ * @example
+ * POST /api/escavador/v2/certificados/1/autenticacoes
+ * {
+ *   "tipo": "password",
+ *   "valor": "senha_123"
+ * }
+ * // Resposta (201)
+ * {
+ *   "id": 5,
+ *   "certificado_id": 1,
+ *   "tipo": "password",
+ *   "created_at": "2024-05-27T10:30:00Z"
+ * }
+ */
 escavador.post('/v2/certificados/:id/autenticacoes', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
@@ -1428,6 +2605,19 @@ escavador.post('/v2/certificados/:id/autenticacoes', async (c) => {
   return c.json(result.value, 201);
 });
 
+/**
+ * @route DELETE /v2/certificados/:id/autenticacoes/:autenticacaoId
+ * @description Remover método de autenticação de um certificado
+ * @param {number} id - ID do certificado
+ * @param {number} autenticacaoId - ID da autenticação
+ * @returns {null} Sem conteúdo
+ * @status 204 - Autenticação removida com sucesso
+ * @status 400 - IDs inválidos
+ * @status 500 - Erro ao remover autenticação
+ * @example
+ * DELETE /api/escavador/v2/certificados/1/autenticacoes/5
+ * // Resposta (204) No Content
+ */
 escavador.delete('/v2/certificados/:id/autenticacoes/:autenticacaoId', async (c) => {
   const id = Number(c.req.param('id'));
   const autenticacaoId = Number(c.req.param('autenticacaoId'));
@@ -1445,6 +2635,22 @@ escavador.delete('/v2/certificados/:id/autenticacoes/:autenticacaoId', async (c)
 
 // ──── Tribunais V2 ────
 
+/**
+ * @route GET /v2/tribunais/sistemas
+ * @description Listar sistemas de tribunais disponíveis (TJ, STF, TST, etc.)
+ * @returns {Array} Array de sistemas com IDs e nomes
+ * @status 200 - Sistemas listados com sucesso
+ * @status 500 - Erro ao consultar API Escavador
+ * @example
+ * GET /api/escavador/v2/tribunais/sistemas
+ * // Resposta (200)
+ * {
+ *   "data": [
+ *     { "id": 1, "nome": "Superior Tribunal de Justiça", "sigla": "STJ" },
+ *     { "id": 2, "nome": "Tribunal de Justiça do Estado de São Paulo", "sigla": "TJ/SP" }
+ *   ]
+ * }
+ */
 escavador.get('/v2/tribunais/sistemas', async (c) => {
   const op = new ListarSistemasTribunais(buildHttpV2());
   const result = await op.execute();
@@ -1456,6 +2662,23 @@ escavador.get('/v2/tribunais/sistemas', async (c) => {
   return c.json(result.value, 200);
 });
 
+/**
+ * @route GET /v2/tribunais
+ * @description Listar tribunais com filtro opcional por sistema
+ * @queryParam {number} sistema_id - ID do sistema de tribunal para filtrar (opcional)
+ * @returns {Array} Array de tribunais com metadados
+ * @status 200 - Tribunais listados com sucesso
+ * @status 500 - Erro ao consultar API Escavador
+ * @example
+ * GET /api/escavador/v2/tribunais?sistema_id=2
+ * // Resposta (200)
+ * {
+ *   "data": [
+ *     { "id": 10, "nome": "1ª Vara Cível", "sistema_id": 2, "estado": "SP", "cidade": "São Paulo" },
+ *     { "id": 11, "nome": "2ª Vara Cível", "sistema_id": 2, "estado": "SP", "cidade": "São Paulo" }
+ *   ]
+ * }
+ */
 escavador.get('/v2/tribunais', async (c) => {
   const sistemaIdRaw = c.req.query('sistema_id');
   const op = new ListarTribunaisV2(buildHttpV2());
