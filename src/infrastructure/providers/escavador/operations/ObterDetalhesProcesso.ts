@@ -1,8 +1,11 @@
-import { left, right, type Either } from '../../../../shared/domain/Either.js';
+import { type Either, left, right } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
-import type { IObterDetalhesProcesso, ObterDetalhesProcessoInput } from '../ports/IObterDetalhesProcesso.js';
-import { ProcessoDtoSchema, type ProcessoDto } from '../dtos/ProcessoDto.js';
+import { type ProcessoDto, ProcessoDtoSchema } from '../dtos/ProcessoDto.js';
+import type {
+  IObterDetalhesProcesso,
+  ObterDetalhesProcessoInput,
+} from '../ports/IObterDetalhesProcesso.js';
 
 export class ObterDetalhesProcesso implements IObterDetalhesProcesso {
   constructor(private readonly http: IHttpClient) {}

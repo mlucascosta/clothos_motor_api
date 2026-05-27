@@ -8,5 +8,7 @@ export interface ObterMonitoramentoTribunalInput {
 }
 
 export interface IObterMonitoramentoTribunal {
-  execute(input: ObterMonitoramentoTribunalInput): Promise<Either<SourceError, MonitoramentoTribunalDto>>;
+  execute(
+    input: ObterMonitoramentoTribunalInput,
+  ): Promise<Either<SourceError, MonitoramentoTribunalDto>>;
 }

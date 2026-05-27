@@ -67,5 +67,7 @@ export interface IObterEnvolvidosProcesso {
    * }
    * ```
    */
-  execute(input: ObterEnvolvidosProcessoInput): Promise<Either<SourceError, ProcessoEnvolvidosResponse>>;
+  execute(
+    input: ObterEnvolvidosProcessoInput,
+  ): Promise<Either<SourceError, ProcessoEnvolvidosResponse>>;
 }

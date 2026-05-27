@@ -91,13 +91,17 @@ export type MonitoramentoNovosProcessosDto = z.infer<typeof MonitoramentoNovosPr
  * Resposta de listagem de monitoramentos de novos processos.
  * @typedef {Object} ListarMonitoramentosNovosProcessosResponse
  */
-export type ListarMonitoramentosNovosProcessosResponse = z.infer<typeof ListarMonitoramentosNovosProcessosResponseSchema>;
+export type ListarMonitoramentosNovosProcessosResponse = z.infer<
+  typeof ListarMonitoramentosNovosProcessosResponseSchema
+>;
 
 /**
  * Resposta com resultados (processos encontrados) de monitoramento de novos processos.
  * @typedef {Object} ResultadosMonitoramentoNovosProcessosResponse
  */
-export type ResultadosMonitoramentoNovosProcessosResponse = z.infer<typeof ResultadosMonitoramentoNovosProcessosResponseSchema>;
+export type ResultadosMonitoramentoNovosProcessosResponse = z.infer<
+  typeof ResultadosMonitoramentoNovosProcessosResponseSchema
+>;
 
 /**
  * DTO de monitoramento de processo específico.
@@ -110,4 +114,6 @@ export type MonitoramentoProcessoDto = z.infer<typeof MonitoramentoProcessoDtoSc
  * Resposta de listagem de monitoramentos de processos específicos.
  * @typedef {Object} ListarMonitoramentosProcessoResponse
  */
-export type ListarMonitoramentosProcessoResponse = z.infer<typeof ListarMonitoramentosProcessoResponseSchema>;
+export type ListarMonitoramentosProcessoResponse = z.infer<
+  typeof ListarMonitoramentosProcessoResponseSchema
+>;

@@ -6,7 +6,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { MongoClient, type Collection } from 'mongodb';
+import { type Collection, MongoClient } from 'mongodb';
 import type { RawResultDoc } from './RawResultDoc.js';
 
 /**
@@ -94,13 +94,15 @@ export class MongoRawResultStore {
       param: this.maybeHashCpf(doc.tipo_param, doc.param),
     };
 
-    this.connect().then((col) => {
-      if (!col) return;
-      col.insertOne(safeDoc).catch((err) => {
-        console.error('[MongoRawResultStore] insertOne failed:', err);
+    this.connect()
+      .then((col) => {
+        if (!col) return;
+        col.insertOne(safeDoc).catch((err) => {
+          console.error('[MongoRawResultStore] insertOne failed:', err);
+        });
+      })
+      .catch((err) => {
+        console.error('[MongoRawResultStore] save failed:', err);
       });
-    }).catch((err) => {
-      console.error('[MongoRawResultStore] save failed:', err);
-    });
   }
 }

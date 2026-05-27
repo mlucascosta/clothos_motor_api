@@ -5,18 +5,22 @@
  * @module infrastructure/providers/escavador/EscavadorExecutor
  */
 
-import { left, right, isLeft, type Either } from '../../../shared/domain/Either.js';
+import type {
+  ISourceExecutor,
+  SourceContext,
+  SourceResult,
+} from '../../../application/queries/ports/ISourceExecutor.js';
+import { type Either, isLeft, left, right } from '../../../shared/domain/Either.js';
 import { SourceError } from '../../../shared/domain/errors/SourceError.js';
-import type { ISourceExecutor, SourceContext, SourceResult } from '../../../application/queries/ports/ISourceExecutor.js';
-import type { IBuscarGeral } from './ports/IBuscarGeral.js';
-import type { IObterPessoa } from './ports/IObterPessoa.js';
-import type { IObterProcessosPessoa } from './ports/IObterProcessosPessoa.js';
-import type { IObterInstituicao } from './ports/IObterInstituicao.js';
-import type { IObterProcessosInstituicao } from './ports/IObterProcessosInstituicao.js';
-import type { IIniciarBuscaProcessosCpfCnpj } from './ports/IIniciarBuscaProcessosCpfCnpj.js';
-import type { IObterBuscaAssincrona } from './ports/IObterBuscaAssincrona.js';
 import type { BuscaResultItem } from './dtos/BuscaGeralDto.js';
 import type { ProcessoResumido } from './dtos/PessoaDto.js';
+import type { IBuscarGeral } from './ports/IBuscarGeral.js';
+import type { IIniciarBuscaProcessosCpfCnpj } from './ports/IIniciarBuscaProcessosCpfCnpj.js';
+import type { IObterBuscaAssincrona } from './ports/IObterBuscaAssincrona.js';
+import type { IObterInstituicao } from './ports/IObterInstituicao.js';
+import type { IObterPessoa } from './ports/IObterPessoa.js';
+import type { IObterProcessosInstituicao } from './ports/IObterProcessosInstituicao.js';
+import type { IObterProcessosPessoa } from './ports/IObterProcessosPessoa.js';
 
 const POLL_INTERVAL_MS = 2_000;
 const MAX_POLL_ATTEMPTS = 10;
@@ -211,7 +215,9 @@ export class EscavadorExecutor implements ISourceExecutor {
       }
 
       if (result.value.status === 'erro') {
-        return left(new SourceError('UPSTREAM_ERROR', this.sourceName, 'Busca assíncrona retornou erro'));
+        return left(
+          new SourceError('UPSTREAM_ERROR', this.sourceName, 'Busca assíncrona retornou erro'),
+        );
       }
 
       await this.sleep(POLL_INTERVAL_MS);
@@ -230,14 +236,9 @@ export class EscavadorExecutor implements ISourceExecutor {
    * @param {string} cnpj - CNPJ a buscar (com ou sem formatação)
    * @returns {BuscaResultItem | undefined} Item encontrado ou undefined se lista vazia
    */
-  private findBestMatch(
-    items: BuscaResultItem[],
-    cnpj: string,
-  ): BuscaResultItem | undefined {
+  private findBestMatch(items: BuscaResultItem[], cnpj: string): BuscaResultItem | undefined {
     const clean = cnpj.replace(/\D/g, '');
-    return (
-      items.find((i) => i.cnpj?.replace(/\D/g, '') === clean) ?? items[0]
-    );
+    return items.find((i) => i.cnpj?.replace(/\D/g, '') === clean) ?? items[0];
   }
 
   /**

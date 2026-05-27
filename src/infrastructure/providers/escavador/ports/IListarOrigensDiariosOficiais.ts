@@ -8,5 +8,7 @@ export interface ListarOrigensDiariosOficiaisInput {
 }
 
 export interface IListarOrigensDiariosOficiais {
-  execute(input: ListarOrigensDiariosOficiaisInput): Promise<Either<SourceError, ListarOrigensDiariosResponse>>;
+  execute(
+    input: ListarOrigensDiariosOficiaisInput,
+  ): Promise<Either<SourceError, ListarOrigensDiariosResponse>>;
 }

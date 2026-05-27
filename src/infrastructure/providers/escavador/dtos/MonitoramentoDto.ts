@@ -157,4 +157,6 @@ export type MonitoramentoTribunalDto = z.infer<typeof MonitoramentoTribunalDtoSc
  * Resposta de listagem de monitoramentos por tribunal.
  * @typedef {Object} ListarMonitoramentosTribunalResponse
  */
-export type ListarMonitoramentosTribunalResponse = z.infer<typeof ListarMonitoramentosTribunalResponseSchema>;
+export type ListarMonitoramentosTribunalResponse = z.infer<
+  typeof ListarMonitoramentosTribunalResponseSchema
+>;

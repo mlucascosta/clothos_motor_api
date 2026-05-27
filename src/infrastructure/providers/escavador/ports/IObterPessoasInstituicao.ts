@@ -9,5 +9,7 @@ export interface ObterPessoasInstituicaoInput {
 }
 
 export interface IObterPessoasInstituicao {
-  execute(input: ObterPessoasInstituicaoInput): Promise<Either<SourceError, InstituicaoPessoasResponse>>;
+  execute(
+    input: ObterPessoasInstituicaoInput,
+  ): Promise<Either<SourceError, InstituicaoPessoasResponse>>;
 }

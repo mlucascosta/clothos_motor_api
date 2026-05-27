@@ -15,5 +15,7 @@ export interface IniciarBuscaProcessosLoteInput {
 }
 
 export interface IIniciarBuscaProcessosLote {
-  execute(input: IniciarBuscaProcessosLoteInput): Promise<Either<SourceError, IniciarBuscaResponse>>;
+  execute(
+    input: IniciarBuscaProcessosLoteInput,
+  ): Promise<Either<SourceError, IniciarBuscaResponse>>;
 }

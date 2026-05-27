@@ -244,23 +244,31 @@ export const EnvolvidoEncontradoSchema = z.object({
  */
 export const ProcessoEnvolvidoResponseSchema = z.object({
   numero_cnj: z.string(),
-  titulo_polo_ativo: z.string().optional(),
-  titulo_polo_passivo: z.string().optional(),
+  titulo_polo_ativo: z.string().nullish(),
+  titulo_polo_passivo: z.string().nullish(),
   ano_inicio: z.number().int(),
-  data_inicio: z.string().optional(),
-  data_ultima_movimentacao: z.string().optional(),
-  data_ultima_verificacao: z.string().optional(),
-  estado_origem: z.object({
-    nome: z.string(),
-    sigla: z.string(),
-  }).optional(),
-  quantidade_movimentacoes: z.number().int().optional(),
-  tipo_match: z.string().optional(),
-  match_documento_por: z.string().optional(),
-  match_fontes: z.object({
-    diario_oficial: z.boolean().optional(),
-    tribunal: z.boolean().optional(),
-  }).optional(),
+  data_inicio: z.string().nullish(),
+  data_ultima_movimentacao: z.string().nullish(),
+  data_ultima_verificacao: z.string().nullish(),
+  tempo_desde_ultima_verificacao: z.string().nullish(),
+  estado_origem: z
+    .object({
+      nome: z.string(),
+      sigla: z.string(),
+    })
+    .nullish(),
+  unidade_origem: z.record(z.unknown()).nullish(),
+  quantidade_movimentacoes: z.number().int().nullish(),
+  fontes_tribunais_estao_arquivadas: z.boolean().nullish(),
+  monitoramento_id: z.number().int().nullish(),
+  tipo_match: z.string().nullish(),
+  match_documento_por: z.string().nullish(),
+  match_fontes: z
+    .object({
+      diario_oficial: z.boolean().optional(),
+      tribunal: z.boolean().optional(),
+    })
+    .nullish(),
   fontes: z.array(z.record(z.unknown())).optional(),
   processos_relacionados: z.array(z.unknown()).optional(),
 });
@@ -274,12 +282,16 @@ export const ProcessoEnvolvidoResponseSchema = z.object({
 export const BuscaProcessosPorEnvolvidoResponseSchema = z.object({
   envolvido_encontrado: EnvolvidoEncontradoSchema,
   items: z.array(ProcessoEnvolvidoResponseSchema),
-  links: z.object({
-    next: z.string().optional(),
-  }).optional(),
-  paginator: z.object({
-    per_page: z.number().int().optional(),
-  }).optional(),
+  links: z
+    .object({
+      next: z.string().optional(),
+    })
+    .optional(),
+  paginator: z
+    .object({
+      per_page: z.number().int().optional(),
+    })
+    .optional(),
 });
 
 /**
@@ -301,4 +313,6 @@ export type ProcessoEnvolvidoResponse = z.infer<typeof ProcessoEnvolvidoResponse
  *
  * @typedef {Object} BuscaProcessosPorEnvolvidoResponse
  */
-export type BuscaProcessosPorEnvolvidoResponse = z.infer<typeof BuscaProcessosPorEnvolvidoResponseSchema>;
+export type BuscaProcessosPorEnvolvidoResponse = z.infer<
+  typeof BuscaProcessosPorEnvolvidoResponseSchema
+>;

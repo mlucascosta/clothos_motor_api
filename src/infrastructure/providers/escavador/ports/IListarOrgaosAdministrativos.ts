@@ -8,5 +8,7 @@ export interface ListarOrgaosAdministrativosInput {
 }
 
 export interface IListarOrgaosAdministrativos {
-  execute(input: ListarOrgaosAdministrativosInput): Promise<Either<SourceError, ListarOrgaosResponse>>;
+  execute(
+    input: ListarOrgaosAdministrativosInput,
+  ): Promise<Either<SourceError, ListarOrgaosResponse>>;
 }

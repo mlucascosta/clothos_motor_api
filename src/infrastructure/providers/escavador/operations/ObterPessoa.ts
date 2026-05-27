@@ -3,11 +3,11 @@
  * @module infrastructure/providers/escavador/operations/ObterPessoa
  */
 
-import { left, right, type Either } from '../../../../shared/domain/Either.js';
+import { type Either, left, right } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
+import { type PessoaDto, PessoaDtoSchema } from '../dtos/PessoaDto.js';
 import type { IObterPessoa, ObterPessoaInput } from '../ports/IObterPessoa.js';
-import { PessoaDtoSchema, type PessoaDto } from '../dtos/PessoaDto.js';
 
 /**
  * Operação de obtenção de dados de pessoa (GET /api/v1/pessoas/{id}).

@@ -60,5 +60,7 @@ export interface IListarBuscasAssincronas {
    * }
    * ```
    */
-  execute(input: ListarBuscasAssincronasInput): Promise<Either<SourceError, ListarBuscasAssincronasResponse>>;
+  execute(
+    input: ListarBuscasAssincronasInput,
+  ): Promise<Either<SourceError, ListarBuscasAssincronasResponse>>;
 }

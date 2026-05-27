@@ -3,11 +3,11 @@
  * @module infrastructure/providers/escavador/operations/ObterInstituicao
  */
 
-import { left, right, type Either } from '../../../../shared/domain/Either.js';
+import { type Either, left, right } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
+import { type InstituicaoDto, InstituicaoDtoSchema } from '../dtos/InstituicaoDto.js';
 import type { IObterInstituicao, ObterInstituicaoInput } from '../ports/IObterInstituicao.js';
-import { InstituicaoDtoSchema, type InstituicaoDto } from '../dtos/InstituicaoDto.js';
 
 /**
  * Operação de obtenção de dados de instituição (GET /api/v1/instituicoes/{id}).

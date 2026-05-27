@@ -1,4 +1,4 @@
-import { left, right, type Either } from '../../../../../shared/domain/Either.js';
+import { type Either, left, right } from '../../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../../shared/domain/errors/SourceError.js';
 
 export interface IDownloadDocumento {
@@ -22,7 +22,8 @@ export class DownloadDocumento implements IDownloadDocumento {
         return left(new SourceError('AUTH_FAILED', 'escavador-v2', `HTTP ${response.status}`));
       }
       if (response.status === 404) return left(new SourceError('NOT_FOUND', 'escavador-v2'));
-      if (!response.ok) return left(new SourceError('UPSTREAM_ERROR', 'escavador-v2', `HTTP ${response.status}`));
+      if (!response.ok)
+        return left(new SourceError('UPSTREAM_ERROR', 'escavador-v2', `HTTP ${response.status}`));
       const bytes = await response.arrayBuffer();
       return right(Buffer.from(bytes));
     } catch (err) {

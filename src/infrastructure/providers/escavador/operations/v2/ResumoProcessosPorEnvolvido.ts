@@ -1,19 +1,23 @@
-import { left, right, type Either } from '../../../../../shared/domain/Either.js';
+import { z } from 'zod';
+import { type Either, left, right } from '../../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../../shared/infrastructure/IHttpClient.js';
-import { z } from 'zod';
 
 const ResumoEnvolvidoSchema = z.record(z.unknown());
 type ResumoEnvolvido = z.infer<typeof ResumoEnvolvidoSchema>;
 
 export interface IResumoProcessosPorEnvolvido {
-  execute(input: { nome?: string; cpf_cnpj?: string }): Promise<Either<SourceError, ResumoEnvolvido>>;
+  execute(input: { nome?: string; cpf_cnpj?: string }): Promise<
+    Either<SourceError, ResumoEnvolvido>
+  >;
 }
 
 export class ResumoProcessosPorEnvolvido implements IResumoProcessosPorEnvolvido {
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(input: { nome?: string; cpf_cnpj?: string }): Promise<Either<SourceError, ResumoEnvolvido>> {
+  async execute(input: { nome?: string; cpf_cnpj?: string }): Promise<
+    Either<SourceError, ResumoEnvolvido>
+  > {
     const params: Record<string, string | number | boolean | undefined> = {};
     if (input.nome !== undefined) params['nome'] = input.nome;
     if (input.cpf_cnpj !== undefined) params['cpf_cnpj'] = input.cpf_cnpj;
@@ -21,7 +25,8 @@ export class ResumoProcessosPorEnvolvido implements IResumoProcessosPorEnvolvido
     const result = await this.http.request<unknown>('/api/v2/envolvido/resumo', { params });
     if (result._tag === 'Left') return result;
     const parsed = ResumoEnvolvidoSchema.safeParse(result.value);
-    if (!parsed.success) return left(new SourceError('SCHEMA_MISMATCH', 'escavador-v2', parsed.error.message));
+    if (!parsed.success)
+      return left(new SourceError('SCHEMA_MISMATCH', 'escavador-v2', parsed.error.message));
     return right(parsed.data);
   }
 }

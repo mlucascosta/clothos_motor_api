@@ -8,5 +8,7 @@ export interface BuscarProcessosDiarioPorNumeroInput {
 }
 
 export interface IBuscarProcessosDiarioPorNumero {
-  execute(input: BuscarProcessosDiarioPorNumeroInput): Promise<Either<SourceError, BuscaGeralResponse>>;
+  execute(
+    input: BuscarProcessosDiarioPorNumeroInput,
+  ): Promise<Either<SourceError, BuscaGeralResponse>>;
 }

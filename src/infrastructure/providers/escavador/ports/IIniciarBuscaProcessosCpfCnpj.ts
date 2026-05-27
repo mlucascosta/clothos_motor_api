@@ -75,5 +75,7 @@ export interface IIniciarBuscaProcessosCpfCnpj {
    * }
    * ```
    */
-  execute(input: IniciarBuscaProcessosCpfCnpjInput): Promise<Either<SourceError, IniciarBuscaResponse>>;
+  execute(
+    input: IniciarBuscaProcessosCpfCnpjInput,
+  ): Promise<Either<SourceError, IniciarBuscaResponse>>;
 }

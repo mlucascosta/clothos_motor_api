@@ -1,4 +1,4 @@
-import { left, right, type Either } from '../../../../shared/domain/Either.js';
+import { type Either, left, right } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 
 export interface IBaixarPdfDiario {
@@ -15,7 +15,8 @@ export class BaixarPdfDiario implements IBaixarPdfDiario {
     try {
       const url = `${this.baseUrl}/api/v1/diarios-oficiais/${input.id}/pdf`;
       const resp = await fetch(url, { headers: { Authorization: `Bearer ${this.apiKey}` } });
-      if (!resp.ok) return left(new SourceError('UPSTREAM_ERROR', 'escavador', `HTTP ${resp.status}`));
+      if (!resp.ok)
+        return left(new SourceError('UPSTREAM_ERROR', 'escavador', `HTTP ${resp.status}`));
       const buffer = Buffer.from(await resp.arrayBuffer());
       return right(buffer);
     } catch (err) {

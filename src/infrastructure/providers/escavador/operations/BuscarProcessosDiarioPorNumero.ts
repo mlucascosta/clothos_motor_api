@@ -1,13 +1,18 @@
-import { left, right, type Either } from '../../../../shared/domain/Either.js';
+import { type Either, left, right } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
-import type { IBuscarProcessosDiarioPorNumero, BuscarProcessosDiarioPorNumeroInput } from '../ports/IBuscarProcessosDiarioPorNumero.js';
-import { BuscaGeralResponseSchema, type BuscaGeralResponse } from '../dtos/BuscaGeralDto.js';
+import { type BuscaGeralResponse, BuscaGeralResponseSchema } from '../dtos/BuscaGeralDto.js';
+import type {
+  BuscarProcessosDiarioPorNumeroInput,
+  IBuscarProcessosDiarioPorNumero,
+} from '../ports/IBuscarProcessosDiarioPorNumero.js';
 
 export class BuscarProcessosDiarioPorNumero implements IBuscarProcessosDiarioPorNumero {
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(input: BuscarProcessosDiarioPorNumeroInput): Promise<Either<SourceError, BuscaGeralResponse>> {
+  async execute(
+    input: BuscarProcessosDiarioPorNumeroInput,
+  ): Promise<Either<SourceError, BuscaGeralResponse>> {
     const result = await this.http.request<unknown>('/api/v1/processos/diarios-oficiais/numero', {
       params: {
         numero: input.numero,

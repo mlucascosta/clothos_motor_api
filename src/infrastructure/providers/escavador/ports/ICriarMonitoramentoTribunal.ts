@@ -11,5 +11,7 @@ export interface CriarMonitoramentoTribunalInput {
 }
 
 export interface ICriarMonitoramentoTribunal {
-  execute(input: CriarMonitoramentoTribunalInput): Promise<Either<SourceError, MonitoramentoTribunalDto>>;
+  execute(
+    input: CriarMonitoramentoTribunalInput,
+  ): Promise<Either<SourceError, MonitoramentoTribunalDto>>;
 }

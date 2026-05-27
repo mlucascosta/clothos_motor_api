@@ -5,11 +5,11 @@
  * @module infrastructure/providers/escavador/operations/BuscarGeral
  */
 
-import { left, right, type Either } from '../../../../shared/domain/Either.js';
+import { type Either, left, right } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
-import type { IBuscarGeral, BuscarGeralInput } from '../ports/IBuscarGeral.js';
-import { BuscaGeralResponseSchema, type BuscaGeralResponse } from '../dtos/BuscaGeralDto.js';
+import { type BuscaGeralResponse, BuscaGeralResponseSchema } from '../dtos/BuscaGeralDto.js';
+import type { BuscarGeralInput, IBuscarGeral } from '../ports/IBuscarGeral.js';
 
 /**
  * Operação de busca genérica no Escavador (GET /api/v1/busca).

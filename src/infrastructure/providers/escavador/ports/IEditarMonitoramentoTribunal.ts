@@ -10,5 +10,7 @@ export interface EditarMonitoramentoTribunalInput {
 }
 
 export interface IEditarMonitoramentoTribunal {
-  execute(input: EditarMonitoramentoTribunalInput): Promise<Either<SourceError, MonitoramentoTribunalDto>>;
+  execute(
+    input: EditarMonitoramentoTribunalInput,
+  ): Promise<Either<SourceError, MonitoramentoTribunalDto>>;
 }

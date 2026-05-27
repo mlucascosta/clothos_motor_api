@@ -1,8 +1,8 @@
-import { left, right, type Either } from '../../../../shared/domain/Either.js';
+import { type Either, left, right } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
-import type { IBuscarPublicacoes, BuscarPublicacoesInput } from '../ports/IBuscarPublicacoes.js';
-import { PublicacoesResponseSchema, type PublicacoesResponse } from '../dtos/PublicacaoDto.js';
+import { type PublicacoesResponse, PublicacoesResponseSchema } from '../dtos/PublicacaoDto.js';
+import type { BuscarPublicacoesInput, IBuscarPublicacoes } from '../ports/IBuscarPublicacoes.js';
 
 export class BuscarPublicacoes implements IBuscarPublicacoes {
   constructor(private readonly http: IHttpClient) {}

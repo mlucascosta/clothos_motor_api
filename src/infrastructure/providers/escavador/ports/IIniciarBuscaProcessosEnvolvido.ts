@@ -9,5 +9,7 @@ export interface IniciarBuscaProcessosEnvolvidoInput {
 }
 
 export interface IIniciarBuscaProcessosEnvolvido {
-  execute(input: IniciarBuscaProcessosEnvolvidoInput): Promise<Either<SourceError, IniciarBuscaResponse>>;
+  execute(
+    input: IniciarBuscaProcessosEnvolvidoInput,
+  ): Promise<Either<SourceError, IniciarBuscaResponse>>;
 }

@@ -1,5 +1,5 @@
-import { right, type Either } from '../../../../../shared/domain/Either.js';
-import { SourceError } from '../../../../../shared/domain/errors/SourceError.js';
+import { type Either, right } from '../../../../../shared/domain/Either.js';
+import type { SourceError } from '../../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../../shared/infrastructure/IHttpClient.js';
 
 export interface IRemoverMonitoramentoProcesso {
@@ -10,7 +10,10 @@ export class RemoverMonitoramentoProcesso implements IRemoverMonitoramentoProces
   constructor(private readonly http: IHttpClient) {}
 
   async execute(input: { id: number }): Promise<Either<SourceError, void>> {
-    const result = await this.http.request<unknown>(`/api/v2/monitoramentos/processos/${input.id}`, { method: 'DELETE' });
+    const result = await this.http.request<unknown>(
+      `/api/v2/monitoramentos/processos/${input.id}`,
+      { method: 'DELETE' },
+    );
     if (result._tag === 'Left') return result;
     return right(undefined);
   }

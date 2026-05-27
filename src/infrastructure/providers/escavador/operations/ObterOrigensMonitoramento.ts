@@ -1,7 +1,7 @@
-import { left, right, type Either } from '../../../../shared/domain/Either.js';
+import { z } from 'zod';
+import { type Either, left, right } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
-import { z } from 'zod';
 
 const OrigemMonitoramentoSchema = z.object({
   id: z.number().int(),
@@ -28,7 +28,8 @@ export class ObterOrigensMonitoramento implements IObterOrigensMonitoramento {
     const result = await this.http.request<unknown>(`/api/v1/monitoramentos/${input.id}/origens`);
     if (result._tag === 'Left') return result;
     const parsed = OrigensMonitoramentoResponseSchema.safeParse(result.value);
-    if (!parsed.success) return left(new SourceError('SCHEMA_MISMATCH', 'escavador', parsed.error.message));
+    if (!parsed.success)
+      return left(new SourceError('SCHEMA_MISMATCH', 'escavador', parsed.error.message));
     return right(parsed.data);
   }
 }

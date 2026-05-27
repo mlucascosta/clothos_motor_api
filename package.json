@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.14.0",
+    "dotenv": "^17.4.2",
     "hono": "^4.7.11",
     "mongodb": "^7.2.0",
     "pino": "^9.7.0",
@@ -29,6 +30,7 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@swc-node/register": "^1.10.10",
+    "@swc/cli": "^0.8.1",
     "@swc/core": "^1.12.7",
     "@swc/jest": "^0.2.39",
     "@types/jest": "^29.5.14",

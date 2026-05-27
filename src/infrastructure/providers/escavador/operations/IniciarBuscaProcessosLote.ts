@@ -1,13 +1,21 @@
-import { left, right, type Either } from '../../../../shared/domain/Either.js';
+import { type Either, left, right } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
-import type { IIniciarBuscaProcessosLote, IniciarBuscaProcessosLoteInput } from '../ports/IIniciarBuscaProcessosLote.js';
-import { IniciarBuscaResponseSchema, type IniciarBuscaResponse } from '../dtos/BuscaAssincronaDto.js';
+import {
+  type IniciarBuscaResponse,
+  IniciarBuscaResponseSchema,
+} from '../dtos/BuscaAssincronaDto.js';
+import type {
+  IIniciarBuscaProcessosLote,
+  IniciarBuscaProcessosLoteInput,
+} from '../ports/IIniciarBuscaProcessosLote.js';
 
 export class IniciarBuscaProcessosLote implements IIniciarBuscaProcessosLote {
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(input: IniciarBuscaProcessosLoteInput): Promise<Either<SourceError, IniciarBuscaResponse>> {
+  async execute(
+    input: IniciarBuscaProcessosLoteInput,
+  ): Promise<Either<SourceError, IniciarBuscaResponse>> {
     const result = await this.http.request<unknown>('/api/v1/processos/pesquisar-em-lote', {
       method: 'POST',
       body: {

@@ -8,5 +8,7 @@ export interface BuscarProcessosDiarioPorOabInput {
 }
 
 export interface IBuscarProcessosDiarioPorOab {
-  execute(input: BuscarProcessosDiarioPorOabInput): Promise<Either<SourceError, BuscaGeralResponse>>;
+  execute(
+    input: BuscarProcessosDiarioPorOabInput,
+  ): Promise<Either<SourceError, BuscaGeralResponse>>;
 }

@@ -60,5 +60,7 @@ export interface IObterProcessosInstituicao {
    * }
    * ```
    */
-  execute(input: ObterProcessosInstituicaoInput): Promise<Either<SourceError, PessoaProcessosResponse>>;
+  execute(
+    input: ObterProcessosInstituicaoInput,
+  ): Promise<Either<SourceError, PessoaProcessosResponse>>;
 }

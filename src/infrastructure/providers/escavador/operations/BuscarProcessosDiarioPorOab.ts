@@ -1,13 +1,18 @@
-import { left, right, type Either } from '../../../../shared/domain/Either.js';
+import { type Either, left, right } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
-import type { IBuscarProcessosDiarioPorOab, BuscarProcessosDiarioPorOabInput } from '../ports/IBuscarProcessosDiarioPorOab.js';
-import { BuscaGeralResponseSchema, type BuscaGeralResponse } from '../dtos/BuscaGeralDto.js';
+import { type BuscaGeralResponse, BuscaGeralResponseSchema } from '../dtos/BuscaGeralDto.js';
+import type {
+  BuscarProcessosDiarioPorOabInput,
+  IBuscarProcessosDiarioPorOab,
+} from '../ports/IBuscarProcessosDiarioPorOab.js';
 
 export class BuscarProcessosDiarioPorOab implements IBuscarProcessosDiarioPorOab {
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(input: BuscarProcessosDiarioPorOabInput): Promise<Either<SourceError, BuscaGeralResponse>> {
+  async execute(
+    input: BuscarProcessosDiarioPorOabInput,
+  ): Promise<Either<SourceError, BuscaGeralResponse>> {
     const result = await this.http.request<unknown>('/api/v1/processos/diarios-oficiais/oab', {
       params: {
         oab: input.oab,

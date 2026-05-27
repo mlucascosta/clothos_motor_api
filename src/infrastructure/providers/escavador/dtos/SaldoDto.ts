@@ -13,14 +13,12 @@ import { z } from 'zod';
  * @type {ZodSchema}
  */
 export const SaldoDtoSchema = z.object({
-  /** Saldo disponível em créditos (número inteiro positivo) */
-  saldo: z.number().int().min(0),
-  /** Saldo já utilizado neste período de renovação (opcional) */
-  saldo_utilizado: z.number().int().min(0).optional(),
-  /** Limite máximo de créditos por período (opcional) */
-  limite: z.number().int().min(0).optional(),
-  /** Data de renovação do saldo (ISO 8601 ou local) (opcional) */
-  renovacao_em: z.string().optional(),
+  /** Créditos disponíveis (inteiro) */
+  quantidade_creditos: z.number().int().min(0),
+  /** Saldo em R$ (float, ex: 590.7) */
+  saldo: z.number().min(0),
+  /** Saldo formatado para exibição */
+  saldo_descricao: z.string().optional(),
 });
 
 /**
@@ -30,17 +28,15 @@ export const SaldoDtoSchema = z.object({
  * **Exemplo:**
  * ```typescript
  * const saldo: SaldoDto = {
- *   saldo: 950,
- *   saldo_utilizado: 50,
- *   limite: 1000,
- *   renovacao_em: "2026-06-01T00:00:00Z"
+ *   quantidade_creditos: 59070,
+ *   saldo: 590.7,
+ *   saldo_descricao: "R$ 590,70"
  * };
  * ```
  *
  * @typedef {Object} SaldoDto
- * @property {number} saldo - Créditos disponíveis
- * @property {number} [saldo_utilizado] - Créditos consumidos
- * @property {number} [limite] - Limite máximo do período
- * @property {string} [renovacao_em] - Data de renovação
+ * @property {number} quantidade_creditos - Total de créditos disponíveis
+ * @property {number} saldo - Saldo em R$ (float)
+ * @property {string} [saldo_descricao] - Saldo formatado para exibição
  */
 export type SaldoDto = z.infer<typeof SaldoDtoSchema>;

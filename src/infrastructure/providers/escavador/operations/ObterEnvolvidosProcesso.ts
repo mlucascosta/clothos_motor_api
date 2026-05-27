@@ -1,13 +1,21 @@
-import { left, right, type Either } from '../../../../shared/domain/Either.js';
+import { type Either, left, right } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
-import type { IObterEnvolvidosProcesso, ObterEnvolvidosProcessoInput } from '../ports/IObterEnvolvidosProcesso.js';
-import { ProcessoEnvolvidosResponseSchema, type ProcessoEnvolvidosResponse } from '../dtos/ProcessoEnvolvidosDto.js';
+import {
+  type ProcessoEnvolvidosResponse,
+  ProcessoEnvolvidosResponseSchema,
+} from '../dtos/ProcessoEnvolvidosDto.js';
+import type {
+  IObterEnvolvidosProcesso,
+  ObterEnvolvidosProcessoInput,
+} from '../ports/IObterEnvolvidosProcesso.js';
 
 export class ObterEnvolvidosProcesso implements IObterEnvolvidosProcesso {
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(input: ObterEnvolvidosProcessoInput): Promise<Either<SourceError, ProcessoEnvolvidosResponse>> {
+  async execute(
+    input: ObterEnvolvidosProcessoInput,
+  ): Promise<Either<SourceError, ProcessoEnvolvidosResponse>> {
     const result = await this.http.request<unknown>(
       `/api/v1/processos/${input.id}/envolvidos-diarios`,
     );

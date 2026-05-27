@@ -9,5 +9,7 @@ export interface ListarMonitoramentosTribunalInput {
 }
 
 export interface IListarMonitoramentosTribunal {
-  execute(input: ListarMonitoramentosTribunalInput): Promise<Either<SourceError, ListarMonitoramentosTribunalResponse>>;
+  execute(
+    input: ListarMonitoramentosTribunalInput,
+  ): Promise<Either<SourceError, ListarMonitoramentosTribunalResponse>>;
 }

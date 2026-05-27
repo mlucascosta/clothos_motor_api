@@ -11,7 +11,7 @@ Motor de processamento e orquestração de requisições ao Escavador (provedor 
 - **Node.js**: ≥ 22.0.0
 - **npm/pnpm**: Gerenciador de pacotes
 - **MongoDB**: Para persistência de auditoria (rawStore)
-- **Variáveis de Ambiente**: `ESCAVADOR_API_KEY`, `ESCAVADOR_BASE_URL`, `MONGODB_URI`
+- **Variáveis de Ambiente**: `ESCAVADOR_API_KEY`, `ESCAVADOR_BASE_URL`, `DATAJUD_APIKEY`, `MONGODB_URI`
 
 ---
 
@@ -32,6 +32,9 @@ Crie um arquivo `.env.local`:
 # Escavador API
 ESCAVADOR_API_KEY=seu_token_aqui
 ESCAVADOR_BASE_URL=https://api.escavador.com
+
+# DataJud (CNJ) — API Pública
+DATAJUD_APIKEY=cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==
 
 # MongoDB para auditoria
 MONGODB_URI=mongodb://localhost:27017/clothos_motor
@@ -185,6 +188,29 @@ http://localhost:3000/api/escavador
 - `GET /v2/documentos/:id/download` — Download de PDF
 
 Para documentação detalhada de cada endpoint (parâmetros, responses, exemplos), veja `src/presentation/api/routes/escavador.ts`.
+
+### DataJud Endpoints (6 rotas)
+
+**Base Path:** `http://localhost:3000/api/datajud`
+
+**Tribunais**
+- `GET /tribunais` — Listar 91 tribunais disponíveis (sigla + nome)
+
+**Buscas**
+- `POST /buscar?tribunal={sigla}` — Busca genérica com DSL Elasticsearch
+- `POST /processo?tribunal={sigla}` — Buscar por número de processo
+- `POST /classe?tribunal={sigla}` — Buscar por classe processual
+- `POST /orgao-julgador?tribunal={sigla}` — Buscar por órgão julgador
+- `POST /envolvido?tribunal={sigla}` — Buscar por nome ou CPF/CNPJ de envolvido
+
+**Exemplo:**
+```bash
+curl -X POST "http://localhost:3000/api/datajud/processo?tribunal=tjsp" \
+  -H "Content-Type: application/json" \
+  -d '{"numeroProcesso": "1002297-51.2024.8.26.0576"}'
+```
+
+Para documentação detalhada, veja `src/presentation/api/routes/datajud.ts`.
 
 ---
 
