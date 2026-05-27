@@ -18,7 +18,7 @@ export class ResumoProcessosPorEnvolvido implements IResumoProcessosPorEnvolvido
     if (input.nome !== undefined) params['nome'] = input.nome;
     if (input.cpf_cnpj !== undefined) params['cpf_cnpj'] = input.cpf_cnpj;
 
-    const result = await this.http.request<unknown>('/api/v2/processos/envolvido/resumo', { params });
+    const result = await this.http.request<unknown>('/api/v2/envolvido/resumo', { params });
     if (result._tag === 'Left') return result;
     const parsed = ResumoEnvolvidoSchema.safeParse(result.value);
     if (!parsed.success) return left(new SourceError('SCHEMA_MISMATCH', 'escavador-v2', parsed.error.message));

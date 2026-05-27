@@ -222,3 +222,83 @@ export type DocumentosV2Response = z.infer<typeof DocumentosV2ResponseSchema>;
  * @typedef {Object} AutosV2Response
  */
 export type AutosV2Response = z.infer<typeof AutosV2ResponseSchema>;
+
+/**
+ * Schema de envolvido encontrado (usado em busca por CPF/CNPJ/nome).
+ *
+ * @type {ZodSchema}
+ */
+export const EnvolvidoEncontradoSchema = z.object({
+  nome: z.string(),
+  tipo_pessoa: z.enum(['FISICA', 'JURIDICA']),
+  quantidade_processos: z.number().int(),
+  cpfs_com_esse_nome: z.number().int().optional(),
+  outros_nomes: z.array(z.string()).optional(),
+});
+
+/**
+ * Schema de processo no contexto de busca por envolvido (informações reduzidas).
+ * Usado pela endpoint GET /api/v2/envolvido/processos.
+ *
+ * @type {ZodSchema}
+ */
+export const ProcessoEnvolvidoResponseSchema = z.object({
+  numero_cnj: z.string(),
+  titulo_polo_ativo: z.string().optional(),
+  titulo_polo_passivo: z.string().optional(),
+  ano_inicio: z.number().int(),
+  data_inicio: z.string().optional(),
+  data_ultima_movimentacao: z.string().optional(),
+  data_ultima_verificacao: z.string().optional(),
+  estado_origem: z.object({
+    nome: z.string(),
+    sigla: z.string(),
+  }).optional(),
+  quantidade_movimentacoes: z.number().int().optional(),
+  tipo_match: z.string().optional(),
+  match_documento_por: z.string().optional(),
+  match_fontes: z.object({
+    diario_oficial: z.boolean().optional(),
+    tribunal: z.boolean().optional(),
+  }).optional(),
+  fontes: z.array(z.record(z.unknown())).optional(),
+  processos_relacionados: z.array(z.unknown()).optional(),
+});
+
+/**
+ * Schema de resposta da busca por envolvido (CPF/CNPJ ou nome).
+ * Retorna informações do envolvido e lista de processos.
+ *
+ * @type {ZodSchema}
+ */
+export const BuscaProcessosPorEnvolvidoResponseSchema = z.object({
+  envolvido_encontrado: EnvolvidoEncontradoSchema,
+  items: z.array(ProcessoEnvolvidoResponseSchema),
+  links: z.object({
+    next: z.string().optional(),
+  }).optional(),
+  paginator: z.object({
+    per_page: z.number().int().optional(),
+  }).optional(),
+});
+
+/**
+ * Tipo de envolvido encontrado em busca.
+ *
+ * @typedef {Object} EnvolvidoEncontrado
+ */
+export type EnvolvidoEncontrado = z.infer<typeof EnvolvidoEncontradoSchema>;
+
+/**
+ * Tipo de processo retornado em busca por envolvido.
+ *
+ * @typedef {Object} ProcessoEnvolvidoResponse
+ */
+export type ProcessoEnvolvidoResponse = z.infer<typeof ProcessoEnvolvidoResponseSchema>;
+
+/**
+ * Tipo de resposta da busca por envolvido.
+ *
+ * @typedef {Object} BuscaProcessosPorEnvolvidoResponse
+ */
+export type BuscaProcessosPorEnvolvidoResponse = z.infer<typeof BuscaProcessosPorEnvolvidoResponseSchema>;
