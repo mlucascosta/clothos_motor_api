@@ -23,10 +23,10 @@ export interface SourceContext {
   identifier: string;
 
   /**
-   * Tipo do identificador: CPF ou CNPJ.
-   * @type {'CPF' | 'CNPJ'}
+   * Tipo do identificador: CPF, CNPJ ou número de processo CNJ.
+   * @type {'CPF' | 'CNPJ' | 'PROCESSO'}
    */
-  identifierKind: 'CPF' | 'CNPJ';
+  identifierKind: 'CPF' | 'CNPJ' | 'PROCESSO';
 
   /**
    * Slug do tenant proprietário da consulta.

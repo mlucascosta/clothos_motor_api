@@ -238,7 +238,7 @@ export class EscavadorExecutor implements ISourceExecutor {
    */
   private findBestMatch(items: BuscaResultItem[], cnpj: string): BuscaResultItem | undefined {
     const clean = cnpj.replace(/\D/g, '');
-    return items.find((i) => i.cnpj?.replace(/\D/g, '') === clean) ?? items[0];
+    return items.find((i) => (i['cnpj'] as string | undefined)?.replace(/\D/g, '') === clean) ?? items[0];
   }
 
   /**
