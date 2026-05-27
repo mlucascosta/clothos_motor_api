@@ -375,7 +375,7 @@ const escavador = new Hono();
  *   "saldo_descricao": "R$ 15,00"
  * }
  */
-escavador.get('/v1/saldo', async (c) => {
+escavador.get('/v1/quantidade-creditos', async (c) => {
   const op = new ObterSaldo(buildHttpV1());
   const result = await op.execute();
   if (isLeft(result)) {
@@ -1273,7 +1273,7 @@ escavador.delete('/v1/monitoramentos/tribunal/:id', async (c) => {
  * @queryParam {number} [page] - Página (padrão: 1)
  * @returns {Array} Array de callbacks
  */
-escavador.get('/v1/callback', async (c) => {
+escavador.get('/v1/callbacks', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
   const op = new ListarCallbacks(buildHttpV1());
   const result = await op.execute({ pagina });
@@ -1285,7 +1285,7 @@ escavador.get('/v1/callback', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.post('/v1/callback', async (c) => {
+escavador.post('/v1/callbacks/marcar-recebidos', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
@@ -1302,20 +1302,17 @@ escavador.post('/v1/callback', async (c) => {
   return c.body(null, 204);
 });
 
-escavador.post('/v1/callback/reenviar', async (c) => {
-  const body = await c.req.json().catch(() => null);
-  if (!body) return c.json({ error: 'Body inválido' }, 400);
-
-  const parsed = z.object({ id: z.number().int() }).safeParse(body);
-  if (!parsed.success) return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+escavador.post('/v1/callbacks/:id/reenviar', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
   const op = new ReenviarCallback(buildHttpV1());
-  const result = await op.execute({ id: parsed.data.id });
+  const result = await op.execute({ id });
   if (isLeft(result)) {
-    rawStore.save({ gateway: GW_V1, fonte: 'callbacks/reenviar', tipo_param: 'id', param: String(parsed.data.id), result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    rawStore.save({ gateway: GW_V1, fonte: 'callbacks/reenviar', tipo_param: 'id', param: String(id), result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
     return c.json({ error: result.value.message, kind: result.value.kind }, 500);
   }
-  rawStore.save({ gateway: GW_V1, fonte: 'callbacks/reenviar', tipo_param: 'id', param: String(parsed.data.id), result: result.value, status: 'success', created_at: new Date() });
+  rawStore.save({ gateway: GW_V1, fonte: 'callbacks/reenviar', tipo_param: 'id', param: String(id), result: result.value, status: 'success', created_at: new Date() });
   return c.json(result.value, 200);
 });
 
