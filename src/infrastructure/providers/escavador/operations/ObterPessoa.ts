@@ -1,12 +1,29 @@
+/**
+ * @fileoverview Operação de obtenção de dados de pessoa física no Escavador.
+ * @module infrastructure/providers/escavador/operations/ObterPessoa
+ */
+
 import { left, right, type Either } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
 import type { IObterPessoa, ObterPessoaInput } from '../ports/IObterPessoa.js';
 import { PessoaDtoSchema, type PessoaDto } from '../dtos/PessoaDto.js';
 
+/**
+ * Operação de obtenção de dados de pessoa (GET /api/v1/pessoas/{id}).
+ *
+ * @class ObterPessoa
+ * @implements {IObterPessoa}
+ */
 export class ObterPessoa implements IObterPessoa {
   constructor(private readonly http: IHttpClient) {}
 
+  /**
+   * Obtém dados completos de pessoa física pelo ID.
+   *
+   * @param {ObterPessoaInput} input - ID da pessoa
+   * @returns {Promise<Either<SourceError, PessoaDto>>} Dados da pessoa ou erro
+   */
   async execute(input: ObterPessoaInput): Promise<Either<SourceError, PessoaDto>> {
     const result = await this.http.request<unknown>(`/api/v1/pessoas/${input.id}`);
 
