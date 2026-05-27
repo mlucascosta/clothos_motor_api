@@ -1,19 +1,69 @@
+/**
+ * @fileoverview DTO de movimentações processuais do Escavador.
+ * Define schemas de validação (Zod) para eventos que ocorrem em processos.
+ * @module infrastructure/providers/escavador/dtos/MovimentacaoDto
+ */
+
 import { z } from 'zod';
 
+/**
+ * Schema de uma movimentação processual individual.
+ * Representa um evento que ocorreu no processo (sentença, apelação, etc.).
+ *
+ * @type {ZodSchema}
+ */
 export const MovimentacaoDtoSchema = z.object({
+  /** ID único da movimentação (opcional) */
   id: z.number().int().optional(),
+  /** Data da movimentação em formato ISO 8601 ou local */
   data: z.string(),
+  /** Tipo/classificação da movimentação (ex: "Sentença", "Apelação") */
   tipo: z.string(),
+  /** Descrição detalhada do evento processual */
   descricao: z.string(),
+  /** URL para download do documento associado (opcional) */
   documento_url: z.string().optional(),
 });
 
+/**
+ * Schema de resposta com listagem de movimentações.
+ * Retornado por operações de obtenção de movimentações de um processo.
+ *
+ * @type {ZodSchema}
+ */
 export const MovimentacoesResponseSchema = z.object({
+  /** Array de movimentações do processo */
   items: z.array(MovimentacaoDtoSchema),
+  /** Total de movimentações encontradas */
   total: z.number().int().min(0),
+  /** Página atual retornada (opcional) */
   pagina: z.number().int().min(1).optional(),
+  /** Total de páginas disponíveis (opcional) */
   paginas: z.number().int().min(0).optional(),
 });
 
+/**
+ * Uma movimentação processual individual.
+ * Representa um evento que ocorreu em um processo jurídico.
+ *
+ * **Exemplo:**
+ * ```typescript
+ * const mov: MovimentacaoDto = {
+ *   id: 999,
+ *   data: "2026-05-20",
+ *   tipo: "Sentença",
+ *   descricao: "Sentença condenatória proferida pelo juiz",
+ *   documento_url: "https://escavador.com.br/docs/..."
+ * };
+ * ```
+ *
+ * @typedef {Object} MovimentacaoDto
+ */
 export type MovimentacaoDto = z.infer<typeof MovimentacaoDtoSchema>;
+
+/**
+ * Resposta paginada de movimentações de um processo.
+ *
+ * @typedef {Object} MovimentacoesResponse
+ */
 export type MovimentacoesResponse = z.infer<typeof MovimentacoesResponseSchema>;
