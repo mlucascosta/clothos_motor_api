@@ -1,3 +1,10 @@
+/**
+ * @fileoverview Executor de consultas ao provedor Escavador.
+ * Implementa o adaptador de integração com a API Escavador (v1)
+ * para busca de dados de pessoas (CPF) e instituições (CNPJ).
+ * @module infrastructure/providers/escavador/EscavadorExecutor
+ */
+
 import { left, right, isLeft, type Either } from '../../../shared/domain/Either.js';
 import { SourceError } from '../../../shared/domain/errors/SourceError.js';
 import type { ISourceExecutor, SourceContext, SourceResult } from '../../../application/queries/ports/ISourceExecutor.js';
@@ -14,6 +21,17 @@ import type { ProcessoResumido } from './dtos/PessoaDto.js';
 const POLL_INTERVAL_MS = 2_000;
 const MAX_POLL_ATTEMPTS = 10;
 
+/**
+ * Dependências do executor Escavador.
+ * @interface EscavadorExecutorDeps
+ * @property {IBuscarGeral} buscarGeral - Operação de busca genérica (por query)
+ * @property {IObterPessoa} obterPessoa - Obter detalhes de pessoa física
+ * @property {IObterProcessosPessoa} obterProcessosPessoa - Listar processos de uma pessoa
+ * @property {IObterInstituicao} obterInstituicao - Obter detalhes de instituição (empresa/CNPJ)
+ * @property {IObterProcessosInstituicao} obterProcessosInstituicao - Listar processos de uma instituição
+ * @property {IIniciarBuscaProcessosCpfCnpj} iniciarBuscaProcessosCpfCnpj - Iniciar busca assíncrona por CPF/CNPJ
+ * @property {IObterBuscaAssincrona} obterBuscaAssincrona - Obter resultado de busca assíncrona
+ */
 export interface EscavadorExecutorDeps {
   buscarGeral: IBuscarGeral;
   obterPessoa: IObterPessoa;
@@ -24,11 +42,35 @@ export interface EscavadorExecutorDeps {
   obterBuscaAssincrona: IObterBuscaAssincrona;
 }
 
+/**
+ * Executor de consultas Escavador.
+ * Implementa `ISourceExecutor` para padronizar integração com provedores de dados.
+ * Suporta dois fluxos:
+ * - CNPJ: busca síncrona direto na API (BuscarGeral + ObterInstituicao + ObterProcessosInstituicao)
+ * - CPF: busca assíncrona com polling (IniciarBuscaProcessosCpfCnpj + poll ObterBuscaAssincrona)
+ *
+ * @class EscavadorExecutor
+ * @implements {ISourceExecutor}
+ */
 export class EscavadorExecutor implements ISourceExecutor {
+  /** @type {string} Nome do provedor (identificador único) */
   readonly sourceName = 'escavador';
 
+  /**
+   * Constrói executor Escavador com dependências injetadas.
+   * @param {EscavadorExecutorDeps} deps - Dependências (operações HTTP ao provedor)
+   */
   constructor(private readonly deps: EscavadorExecutorDeps) {}
 
+  /**
+   * Executa consulta no Escavador (ponto de entrada do ISourceExecutor).
+   * Determina fluxo (CPF assíncrono vs CNPJ síncrono) baseado no tipo de identificador.
+   *
+   * @async
+   * @param {SourceContext} context - Contexto com identificador (CPF ou CNPJ), timeoutMs, etc.
+   * @returns {Promise<Either<SourceError, SourceResult>>} Resultado com dados brutos ou erro
+   * @throws Não lança; retorna Left(SourceError) em falhas
+   */
   async execute(context: SourceContext): Promise<Either<SourceError, SourceResult>> {
     const start = Date.now();
 
@@ -39,6 +81,16 @@ export class EscavadorExecutor implements ISourceExecutor {
     return this.executeForCpf(context, start);
   }
 
+  /**
+   * Executa fluxo de busca para CNPJ (síncrono).
+   * Fases: (1) BuscarGeral por CNPJ, (2) encontrar melhor match, (3) paralelo ObterInstituicao + ObterProcessos
+   *
+   * @async
+   * @private
+   * @param {SourceContext} context - Contexto com CNPJ como identifier
+   * @param {number} start - Timestamp início da execução (para cálculo de latência)
+   * @returns {Promise<Either<SourceError, SourceResult>>} Dados estruturados com detalhes e processos
+   */
   private async executeForCnpj(
     context: SourceContext,
     start: number,
@@ -86,6 +138,16 @@ export class EscavadorExecutor implements ISourceExecutor {
     });
   }
 
+  /**
+   * Executa fluxo de busca para CPF (assíncrono com polling).
+   * Fases: (1) IniciarBuscaProcessosCpfCnpj, (2) poll com timeout até conclusão, (3) extrair resultado
+   *
+   * @async
+   * @private
+   * @param {SourceContext} context - Contexto com CPF como identifier
+   * @param {number} start - Timestamp início da execução
+   * @returns {Promise<Either<SourceError, SourceResult>>} Resultado com busca assíncrona completa
+   */
   private async executeForCpf(
     context: SourceContext,
     start: number,
@@ -122,6 +184,16 @@ export class EscavadorExecutor implements ISourceExecutor {
     });
   }
 
+  /**
+   * Faz poll periódico até conclusão, erro ou timeout da busca assíncrona.
+   * Implementa circuit breaker: MAX_POLL_ATTEMPTS ou deadline (budgetMs).
+   *
+   * @async
+   * @private
+   * @param {number} id - ID da busca assíncrona no Escavador
+   * @param {number} budgetMs - Orçamento de tempo em ms (do timeout original)
+   * @returns {Promise<Either<SourceError, { resultado: unknown }>>} Resultado ou erro (timeout/UPSTREAM_ERROR)
+   */
   private async pollAssincrona(
     id: number,
     budgetMs: number,
@@ -149,6 +221,15 @@ export class EscavadorExecutor implements ISourceExecutor {
     return left(new SourceError('TIMEOUT', this.sourceName, 'Polling esgotado sem conclusão'));
   }
 
+  /**
+   * Encontra melhor match entre resultados de busca genérica.
+   * Estratégia: match exato por CNPJ, fallback para primeiro item.
+   *
+   * @private
+   * @param {BuscaResultItem[]} items - Lista de resultados da busca
+   * @param {string} cnpj - CNPJ a buscar (com ou sem formatação)
+   * @returns {BuscaResultItem | undefined} Item encontrado ou undefined se lista vazia
+   */
   private findBestMatch(
     items: BuscaResultItem[],
     cnpj: string,
@@ -159,6 +240,14 @@ export class EscavadorExecutor implements ISourceExecutor {
     );
   }
 
+  /**
+   * Extrai array de processos do resultado da busca assíncrona.
+   * Acessa campo `resultado.processos` se existir e for array.
+   *
+   * @private
+   * @param {Record<string, unknown> | undefined} resultado - Objeto resultado bruto da API
+   * @returns {ProcessoResumido[]} Array de processos ou array vazio
+   */
   private extractProcessosFromResultado(
     resultado: Record<string, unknown> | undefined,
   ): ProcessoResumido[] {
@@ -168,10 +257,25 @@ export class EscavadorExecutor implements ISourceExecutor {
     return [];
   }
 
+  /**
+   * Calcula custo da consulta baseado em quantidade de processos encontrados.
+   * Custo = min(quantidade_processos, 3) para capping de gastos.
+   *
+   * @private
+   * @param {ProcessoResumido[]} processos - Array de processos
+   * @returns {number} Custo em créditos (0-3)
+   */
   private calcCostProcessos(processos: ProcessoResumido[]): number {
     return Math.min(processos.length, 3);
   }
 
+  /**
+   * Aguarda por tempo especificado em ms.
+   *
+   * @private
+   * @param {number} ms - Milissegundos de espera
+   * @returns {Promise<void>} Promise que resolve após o tempo
+   */
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
