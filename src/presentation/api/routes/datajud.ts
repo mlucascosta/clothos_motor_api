@@ -41,7 +41,7 @@ const GW = 'datajud';
 const BASE_URL = 'https://api-publica.datajud.cnj.jus.br';
 
 function buildHttp(): DataJudHttpClient {
-  const apiKey = process.env['DATAJUD_APIKEY'] ?? '';
+  const apiKey = process.env['DATAJUD_APIKEY'] ?? 'APIKey cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==';
   return new DataJudHttpClient(apiKey, BASE_URL);
 }
 
