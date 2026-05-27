@@ -70,8 +70,14 @@ export const CriarMonitoramentoInputSchema = z.object({
 export const ListarMonitoramentosResponseSchema = z.object({
   /** Array de monitoramentos ativos/inativos */
   items: z.array(MonitoramentoDtoSchema),
-  /** Total de monitoramentos (opcional) */
-  total: z.number().int().min(0).optional(),
+  paginator: z.object({
+    total: z.number().int().nullish(),
+    total_pages: z.number().int().nullish(),
+    current_page: z.number().int().nullish(),
+    per_page: z.number().int().nullish(),
+  }).nullish(),
+  links: z.object({ next: z.string().nullish(), prev: z.string().nullish() }).nullish(),
+  total: z.number().int().nullish(),
 });
 
 /**
@@ -82,8 +88,14 @@ export const ListarMonitoramentosResponseSchema = z.object({
 export const ListarAparicaoResponseSchema = z.object({
   /** Array de aparições encontradas */
   items: z.array(AparicaoDtoSchema),
-  /** Total de aparições (opcional) */
-  total: z.number().int().min(0).optional(),
+  paginator: z.object({
+    total: z.number().int().nullish(),
+    total_pages: z.number().int().nullish(),
+    current_page: z.number().int().nullish(),
+    per_page: z.number().int().nullish(),
+  }).nullish(),
+  links: z.object({ next: z.string().nullish(), prev: z.string().nullish() }).nullish(),
+  total: z.number().int().nullish(),
 });
 
 /**
@@ -113,8 +125,14 @@ export const MonitoramentoTribunalDtoSchema = z.object({
 export const ListarMonitoramentosTribunalResponseSchema = z.object({
   /** Array de monitoramentos por tribunal */
   items: z.array(MonitoramentoTribunalDtoSchema),
-  /** Total de monitoramentos (opcional) */
-  total: z.number().int().min(0).optional(),
+  paginator: z.object({
+    total: z.number().int().nullish(),
+    total_pages: z.number().int().nullish(),
+    current_page: z.number().int().nullish(),
+    per_page: z.number().int().nullish(),
+  }).nullish(),
+  links: z.object({ next: z.string().nullish(), prev: z.string().nullish() }).nullish(),
+  total: z.number().int().nullish(),
 });
 
 /**

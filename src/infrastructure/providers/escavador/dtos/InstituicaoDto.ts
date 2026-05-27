@@ -53,12 +53,14 @@ export const InstituicaoPessoaSchema = z.object({
 export const InstituicaoPessoasResponseSchema = z.object({
   /** Array de pessoas vinculadas */
   items: z.array(InstituicaoPessoaSchema),
-  /** Total de pessoas encontradas */
-  total: z.number().int().min(0),
-  /** Página atual retornada (opcional) */
-  pagina: z.number().int().min(1).optional(),
-  /** Total de páginas disponíveis (opcional) */
-  paginas: z.number().int().min(0).optional(),
+  paginator: z.object({
+    total: z.number().int().nullish(),
+    total_pages: z.number().int().nullish(),
+    current_page: z.number().int().nullish(),
+    per_page: z.number().int().nullish(),
+  }).nullish(),
+  links: z.object({ next: z.string().nullish(), prev: z.string().nullish() }).nullish(),
+  total: z.number().int().nullish(),
 });
 
 /**

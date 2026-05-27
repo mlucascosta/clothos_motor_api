@@ -13,39 +13,41 @@ import { z } from 'zod';
  * @type {ZodSchema}
  */
 export const BuscaResultItemSchema = z.object({
-  /** ID único do resultado no Escavador */
   id: z.number().int().positive(),
-  /** Nome da entidade encontrada */
-  nome: z.string(),
-  /** Tipo de entidade: pessoa física, empresa, processo ou advogado */
-  tipo: z.enum(['pessoa', 'processo', 'instituicao', 'advogado']),
-  /** CPF se tipo='pessoa' */
-  cpf: z.string().optional(),
-  /** CNPJ se tipo='instituicao' */
-  cnpj: z.string().optional(),
-  /** Número de registro na OAB se tipo='advogado' */
-  oab: z.string().optional(),
-  /** Contagem total de processos associados (se disponível) */
-  quantidade_processos: z.number().int().min(0).optional(),
-  /** URL para visualizar entidade no Escavador */
-  url_escavador: z.string().optional(),
-});
+  nome: z.string().nullish(),
+  tipo_resultado: z.string().nullish(),
+  resumo: z.string().nullish(),
+  quantidade_processos: z.number().int().min(0).nullish(),
+  slug: z.string().nullish(),
+  link: z.string().nullish(),
+  link_api: z.string().nullish(),
+  url_id: z.number().nullish(),
+  oab_numero: z.string().nullish(),
+  updated_at: z.string().nullish(),
+}).passthrough();
 
 /**
  * Schema de resposta da operação "Busca Geral".
- * Contém array de resultados com paginação opcional.
  *
  * @type {ZodSchema}
  */
 export const BuscaGeralResponseSchema = z.object({
-  /** Array de itens encontrados */
   items: z.array(BuscaResultItemSchema),
-  /** Total de resultados (pode diferir de items.length se paginado) */
-  total: z.number().int().min(0).optional(),
-  /** Página atual retornada */
-  pagina: z.number().int().min(1).optional(),
-  /** Total de páginas disponíveis */
-  paginas: z.number().int().min(0).optional(),
+  paginator: z
+    .object({
+      total: z.number().int().nullish(),
+      total_pages: z.number().int().nullish(),
+      current_page: z.number().int().nullish(),
+      per_page: z.number().int().nullish(),
+    })
+    .nullish(),
+  links: z
+    .object({
+      next: z.string().nullish(),
+      prev: z.string().nullish(),
+    })
+    .nullish(),
+  total: z.number().int().min(0).nullish(),
 });
 
 /**

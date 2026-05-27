@@ -32,24 +32,26 @@ export const ParteDtoSchema = z.object({
  */
 export const ProcessoDtoSchema = z.object({
   /** ID único do processo no Escavador (opcional) */
-  id: z.number().int().optional(),
+  id: z.number().int().nullish(),
   /** Número CNJ do processo (identificador nacional) */
-  numero_cnj: z.string(),
+  numero_cnj: z.string().nullish(),
+  /** Número novo do processo */
+  numero_novo: z.string().nullish(),
   /** Nome do tribunal (ex: "TJSP", "TST") */
-  tribunal: z.string(),
+  tribunal: z.string().nullish(),
   /** Data de ajuizamento em formato ISO 8601 ou local (opcional) */
-  data_ajuizamento: z.string().optional(),
+  data_ajuizamento: z.string().nullish(),
   /** Tipo de ação judicial (ex: "Ação Ordinária", "Recurso") (opcional) */
-  tipo_acao: z.string().optional(),
+  tipo_acao: z.string().nullish(),
   /** Valor da causa em reais (opcional) */
-  valor_causa: z.number().optional(),
-  /** Se processo está ativo (não encerrado) (opcional, padrão true) */
-  ativo: z.boolean().optional(),
+  valor_causa: z.number().nullish(),
+  /** Se processo está ativo (não encerrado) (opcional) */
+  ativo: z.boolean().nullish(),
   /** Descrição ou data da última movimentação (opcional) */
-  ultima_movimentacao: z.string().optional(),
-  /** Array de partes envolvidas (opcional, padrão []) */
-  partes: z.array(ParteDtoSchema).optional().default([]),
-});
+  ultima_movimentacao: z.string().nullish(),
+  /** Array de partes envolvidas (opcional) */
+  partes: z.array(ParteDtoSchema).nullish(),
+}).passthrough();
 
 /**
  * Schema de resposta de listagem de processos de uma entidade (pessoa ou instituição).
@@ -58,12 +60,14 @@ export const ProcessoDtoSchema = z.object({
 export const ProcessosEntidadeResponseSchema = z.object({
   /** Array de processos com detalhes completos */
   items: z.array(ProcessoDtoSchema),
-  /** Total de processos encontrados */
-  total: z.number().int().min(0),
-  /** Página atual retornada (opcional) */
-  pagina: z.number().int().min(1).optional(),
-  /** Total de páginas disponíveis (opcional) */
-  paginas: z.number().int().min(0).optional(),
+  paginator: z.object({
+    total: z.number().int().nullish(),
+    total_pages: z.number().int().nullish(),
+    current_page: z.number().int().nullish(),
+    per_page: z.number().int().nullish(),
+  }).nullish(),
+  links: z.object({ next: z.string().nullish(), prev: z.string().nullish() }).nullish(),
+  total: z.number().int().nullish(),
 });
 
 /**

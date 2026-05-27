@@ -35,8 +35,14 @@ export const TribunalDtoSchema = z.object({
 export const ListarTribunaisResponseSchema = z.object({
   /** Array de tribunais */
   items: z.array(TribunalDtoSchema),
-  /** Total de tribunais (opcional) */
-  total: z.number().int().min(0).optional(),
+  paginator: z.object({
+    total: z.number().int().nullish(),
+    total_pages: z.number().int().nullish(),
+    current_page: z.number().int().nullish(),
+    per_page: z.number().int().nullish(),
+  }).nullish(),
+  links: z.object({ next: z.string().nullish(), prev: z.string().nullish() }).nullish(),
+  total: z.number().int().nullish(),
 });
 
 /**
@@ -63,8 +69,14 @@ export const OrgaoAdministrativoSchema = z.object({
 export const ListarOrgaosResponseSchema = z.object({
   /** Array de órgãos administrativos */
   items: z.array(OrgaoAdministrativoSchema),
-  /** Total de órgãos (opcional) */
-  total: z.number().int().min(0).optional(),
+  paginator: z.object({
+    total: z.number().int().nullish(),
+    total_pages: z.number().int().nullish(),
+    current_page: z.number().int().nullish(),
+    per_page: z.number().int().nullish(),
+  }).nullish(),
+  links: z.object({ next: z.string().nullish(), prev: z.string().nullish() }).nullish(),
+  total: z.number().int().nullish(),
 });
 
 /**

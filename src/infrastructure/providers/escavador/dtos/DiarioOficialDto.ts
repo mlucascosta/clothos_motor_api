@@ -34,8 +34,14 @@ export const DiarioOficialOrigemSchema = z.object({
 export const ListarOrigensDiariosResponseSchema = z.object({
   /** Array de origens de diários */
   items: z.array(DiarioOficialOrigemSchema),
-  /** Total de origens (opcional) */
-  total: z.number().int().min(0).optional(),
+  paginator: z.object({
+    total: z.number().int().nullish(),
+    total_pages: z.number().int().nullish(),
+    current_page: z.number().int().nullish(),
+    per_page: z.number().int().nullish(),
+  }).nullish(),
+  links: z.object({ next: z.string().nullish(), prev: z.string().nullish() }).nullish(),
+  total: z.number().int().nullish(),
 });
 
 /**

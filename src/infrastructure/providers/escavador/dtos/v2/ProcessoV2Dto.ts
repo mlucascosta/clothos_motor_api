@@ -75,20 +75,25 @@ export const AutoV2DtoSchema = z.object({
  *
  * @type {ZodSchema}
  */
-export const ProcessoV2DtoSchema = z.object({
-  /** ID único do processo no Escavador */
-  id: z.number().int().optional(),
-  /** Número do processo no formato CNJ (00000000-00.0000.0.00.0000) */
-  numero_cnj: z.string(),
-  /** Nome do tribunal (TJSP, TRT, STF, etc.) */
-  tribunal: z.string().optional(),
-  /** Data de ajuizamento (ISO 8601) */
-  data_ajuizamento: z.string().optional(),
-  /** Partes envolvidas no processo */
-  partes: z.array(EnvolvidoV2DtoSchema).optional(),
-  /** Movimentações processuais */
-  movimentacoes: z.array(MovimentacaoV2DtoSchema).optional(),
-});
+export const ProcessoV2DtoSchema = z
+  .object({
+    numero_cnj: z.string(),
+    id: z.number().int().nullish(),
+    titulo_polo_ativo: z.string().nullish(),
+    titulo_polo_passivo: z.string().nullish(),
+    ano_inicio: z.number().int().nullish(),
+    data_inicio: z.string().nullish(),
+    data_ultima_movimentacao: z.string().nullish(),
+    data_ultima_verificacao: z.string().nullish(),
+    tempo_desde_ultima_verificacao: z.string().nullish(),
+    quantidade_movimentacoes: z.number().int().nullish(),
+    fontes_tribunais_estao_arquivadas: z.boolean().nullish(),
+    estado_origem: z.record(z.unknown()).nullish(),
+    unidade_origem: z.record(z.unknown()).nullish(),
+    processos_relacionados: z.array(z.unknown()).nullish(),
+    fontes: z.array(z.record(z.unknown())).nullish(),
+  })
+  .passthrough();
 
 /**
  * Schema de resposta com resumo de processos.
@@ -284,14 +289,20 @@ export const BuscaProcessosPorEnvolvidoResponseSchema = z.object({
   items: z.array(ProcessoEnvolvidoResponseSchema),
   links: z
     .object({
-      next: z.string().optional(),
+      next: z.string().nullish(),
+      prev: z.string().nullish(),
+      first: z.string().nullish(),
+      last: z.string().nullish(),
     })
-    .optional(),
+    .nullish(),
   paginator: z
     .object({
-      per_page: z.number().int().optional(),
+      per_page: z.number().int().nullish(),
+      current_page: z.number().int().nullish(),
+      total: z.number().int().nullish(),
+      total_pages: z.number().int().nullish(),
     })
-    .optional(),
+    .nullish(),
 });
 
 /**
