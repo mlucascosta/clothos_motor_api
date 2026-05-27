@@ -1,12 +1,41 @@
+/**
+ * @fileoverview Persistência de respostas brutas de provedores em MongoDB.
+ * Armazena respostas raw (antes de transformação) para auditoria, debugging e reprocessamento.
+ * CPF em documentos é hash SHA-256; CNPJ é armazenado em texto claro (dado público).
+ * @module infrastructure/persistence/MongoRawResultStore
+ */
+
 import { createHash } from 'node:crypto';
 import { MongoClient, type Collection } from 'mongodb';
 import type { RawResultDoc } from './RawResultDoc.js';
 
+/**
+ * Store de resultados brutos em MongoDB.
+ * Implementa padrão singleton com lazy connection.
+ * Responsabilidades:
+ * - Conexão à coleção `raw_results` em BD `clothos_motor`
+ * - Índices para queries por gateway, tipo_param, status
+ * - Hashing de CPF (LGPD: não armazenar em texto claro)
+ *
+ * @class MongoRawResultStore
+ */
 export class MongoRawResultStore {
+  /** @type {MongoClient | null} Cliente MongoDB (singleton) */
   private client: MongoClient | null = null;
+  /** @type {Collection<RawResultDoc> | null} Collection raw_results */
   private collection: Collection<RawResultDoc> | null = null;
+  /** @type {boolean} Flag para evitar múltiplas conexões concorrentes */
   private connecting = false;
 
+  /**
+   * Realiza hash SHA-256 de CPF se tipo_param for 'cpf_cnpj' e param for CPF válido (11 dígitos).
+   * CNPJ é ignorado (armazenado em texto claro, dado público).
+   *
+   * @private
+   * @param {string | null} tipoParam - Tipo do parâmetro ('cpf_cnpj', 'cnpj_puro', etc.)
+   * @param {string | null} param - Valor do parâmetro
+   * @returns {string | null} Valor original ou hash SHA-256 do CPF
+   */
   private maybeHashCpf(tipoParam: string | null, param: string | null): string | null {
     if (tipoParam === 'cpf_cnpj' && param !== null && /^\d{11}$/.test(param.replace(/\D/g, ''))) {
       return createHash('sha256').update(param.replace(/\D/g, '')).digest('hex');
@@ -14,6 +43,16 @@ export class MongoRawResultStore {
     return param;
   }
 
+  /**
+   * Conecta ao MongoDB na primeira chamada (lazy singleton).
+   * Cria índices na collection se conexão bem-sucedida.
+   * Se já conectado, retorna collection existente.
+   * Se conectando, retorna null (debounce de múltiplas tentativas).
+   *
+   * @async
+   * @private
+   * @returns {Promise<Collection<RawResultDoc> | null>} Collection pronta ou null em falha/desabilitado
+   */
   private async connect(): Promise<Collection<RawResultDoc> | null> {
     if (this.collection) return this.collection;
     if (this.connecting) return null;
@@ -41,6 +80,14 @@ export class MongoRawResultStore {
     }
   }
 
+  /**
+   * Persiste documento de resultado bruto em MongoDB.
+   * Operação fire-and-forget: não aguarda conclusão (async no background).
+   * CPF é hash antes da persistência.
+   *
+   * @param {RawResultDoc} doc - Documento com gateway, fonte, param, result, status, etc.
+   * @returns {void} Não retorna; persiste no background
+   */
   save(doc: RawResultDoc): void {
     const safeDoc: RawResultDoc = {
       ...doc,
