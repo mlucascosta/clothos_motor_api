@@ -1,21 +1,19 @@
-// POST /api/v1/processos/tribunal/lote  (ASYNC — retorna ID para polling)
+// POST /api/v1/tribunal/async/lote — busca em múltiplos tribunais para um único critério
 import type { Either } from '../../../../shared/domain/Either.js';
 import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IniciarBuscaResponse } from '../dtos/BuscaAssincronaDto.js';
-
-export interface LoteItem {
-  cpfCnpj?: string;
-  nome?: string;
-  oab?: string;
-}
+import type { IniciarBuscaLoteResponse } from '../dtos/BuscaAssincronaDto.js';
 
 export interface IniciarBuscaProcessosLoteInput {
-  itens: LoteItem[];
-  tribunais?: string[];
+  tipo: 'busca_por_nome' | 'busca_por_documento' | 'busca_por_oab';
+  tribunais: string[];
+  nome?: string;
+  numero_documento?: string;
+  numero_oab?: string;
+  estado_oab?: string;
 }
 
 export interface IIniciarBuscaProcessosLote {
   execute(
     input: IniciarBuscaProcessosLoteInput,
-  ): Promise<Either<SourceError, IniciarBuscaResponse>>;
+  ): Promise<Either<SourceError, IniciarBuscaLoteResponse>>;
 }

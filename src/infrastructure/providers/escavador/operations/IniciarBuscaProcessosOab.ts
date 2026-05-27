@@ -2,8 +2,8 @@ import { type Either, left, right } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
 import {
-  type IniciarBuscaResponse,
-  IniciarBuscaResponseSchema,
+  type IniciarBuscaLoteResponse,
+  IniciarBuscaLoteResponseSchema,
 } from '../dtos/BuscaAssincronaDto.js';
 import type {
   IIniciarBuscaProcessosOab,
@@ -15,18 +15,22 @@ export class IniciarBuscaProcessosOab implements IIniciarBuscaProcessosOab {
 
   async execute(
     input: IniciarBuscaProcessosOabInput,
-  ): Promise<Either<SourceError, IniciarBuscaResponse>> {
-    const result = await this.http.request<unknown>('/api/v1/processos/pesquisar-por-oab', {
+  ): Promise<Either<SourceError, IniciarBuscaLoteResponse>> {
+    const body: Record<string, unknown> = {
+      tipo: 'busca_por_oab',
+      numero_oab: input.numero_oab,
+      estado_oab: input.estado_oab,
+    };
+    if (input.tribunais !== undefined) body['tribunais'] = input.tribunais;
+
+    const result = await this.http.request<unknown>('/api/v1/tribunal/async/lote', {
       method: 'POST',
-      body: {
-        oab: input.oab,
-        tribunais: input.tribunais,
-      },
+      body,
     });
 
     if (result._tag === 'Left') return result;
 
-    const parsed = IniciarBuscaResponseSchema.safeParse(result.value);
+    const parsed = IniciarBuscaLoteResponseSchema.safeParse(result.value);
     if (!parsed.success) {
       return left(new SourceError('SCHEMA_MISMATCH', 'escavador', parsed.error.message));
     }

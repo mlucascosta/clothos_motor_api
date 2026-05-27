@@ -16,12 +16,11 @@ export class IniciarBuscaProcessoNup implements IIniciarBuscaProcessoNup {
   async execute(
     input: IniciarBuscaProcessoNupInput,
   ): Promise<Either<SourceError, IniciarBuscaResponse>> {
-    const result = await this.http.request<unknown>('/api/v1/processos/pesquisar-nup', {
-      method: 'POST',
-      body: {
-        nup: input.nup,
-      },
-    });
+    const encodedNup = encodeURIComponent(input.nup);
+    const result = await this.http.request<unknown>(
+      `/api/v1/processo-administrativo/${encodedNup}/async`,
+      { method: 'POST', body: {} },
+    );
 
     if (result._tag === 'Left') return result;
 

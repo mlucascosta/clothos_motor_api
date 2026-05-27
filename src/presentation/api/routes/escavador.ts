@@ -207,6 +207,8 @@ import { isLeft } from '../../../shared/domain/Either.js';
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { BuscarGeral } from '../../../infrastructure/providers/escavador/operations/BuscarGeral.js';
+import { ListarBuscasAssincronas } from '../../../infrastructure/providers/escavador/operations/ListarBuscasAssincronas.js';
+import { ObterBuscaAssincrona } from '../../../infrastructure/providers/escavador/operations/ObterBuscaAssincrona.js';
 import { BuscarProcessosDiarioPorNumero } from '../../../infrastructure/providers/escavador/operations/BuscarProcessosDiarioPorNumero.js';
 import { BuscarProcessosDiarioPorOab } from '../../../infrastructure/providers/escavador/operations/BuscarProcessosDiarioPorOab.js';
 import { BuscarPublicacoes } from '../../../infrastructure/providers/escavador/operations/BuscarPublicacoes.js';
@@ -401,6 +403,33 @@ escavador.get('/v1/quantidade-creditos', async (c) => {
   return c.json(result.value, 200);
 });
 
+// ──── Buscas Assíncronas — listar e consultar ────
+
+escavador.get('/v1/buscas-assincronas', async (c) => {
+  const pagina = Number(c.req.query('page') ?? '1');
+  const op = new ListarBuscasAssincronas(buildHttpV1());
+  const result = await op.execute({ pagina });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'buscas-assincronas/listar', tipo_param: null, param: null, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'buscas-assincronas/listar', tipo_param: null, param: null, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+escavador.get('/v1/buscas-assincronas/:id', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+  const op = new ObterBuscaAssincrona(buildHttpV1());
+  const result = await op.execute({ id });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'buscas-assincronas/obter', tipo_param: 'id', param: String(id), result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'buscas-assincronas/obter', tipo_param: 'id', param: String(id), result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
 // ──── Processos — Buscas Assíncronas (iniciar) ────
 
 escavador.post('/v1/processos/tribunal/cpf-cnpj', async (c) => {
@@ -517,7 +546,8 @@ escavador.post('/v1/processos/tribunal/oab', async (c) => {
 
   const parsed = z
     .object({
-      oab: z.string().min(1),
+      numero_oab: z.string().min(1),
+      estado_oab: z.string().length(2),
       tribunais: z.array(z.string()).optional(),
     })
     .safeParse(body);
@@ -525,7 +555,10 @@ escavador.post('/v1/processos/tribunal/oab', async (c) => {
     return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
 
   const op = new IniciarBuscaProcessosOab(buildHttpV1());
-  const input: Parameters<typeof op.execute>[0] = { oab: parsed.data.oab };
+  const input: Parameters<typeof op.execute>[0] = {
+    numero_oab: parsed.data.numero_oab,
+    estado_oab: parsed.data.estado_oab,
+  };
   if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
 
   const result = await op.execute(input);
@@ -533,8 +566,8 @@ escavador.post('/v1/processos/tribunal/oab', async (c) => {
     rawStore.save({
       gateway: GW_V1,
       fonte: 'processos/tribunal/oab',
-      tipo_param: 'oab',
-      param: parsed.data.oab,
+      tipo_param: 'numero_oab',
+      param: `${parsed.data.numero_oab}/${parsed.data.estado_oab}`,
       result: { message: result.value.message },
       status: 'error',
       error_kind: result.value.kind,
@@ -545,8 +578,8 @@ escavador.post('/v1/processos/tribunal/oab', async (c) => {
   rawStore.save({
     gateway: GW_V1,
     fonte: 'processos/tribunal/oab',
-    tipo_param: 'oab',
-    param: parsed.data.oab,
+    tipo_param: 'numero_oab',
+    param: `${parsed.data.numero_oab}/${parsed.data.estado_oab}`,
     result: result.value,
     status: 'success',
     created_at: new Date(),
@@ -618,17 +651,13 @@ escavador.post('/v1/processos/pesquisar', async (c) => {
   const parsed = z
     .object({
       numero_cnj: z.string().min(1),
-      tribunais: z.array(z.string()).optional(),
     })
     .safeParse(body);
   if (!parsed.success)
     return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
 
   const op = new IniciarBuscaProcesso(buildHttpV1());
-  const input: Parameters<typeof op.execute>[0] = { numero_cnj: parsed.data.numero_cnj };
-  if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
-
-  const result = await op.execute(input);
+  const result = await op.execute({ numero_cnj: parsed.data.numero_cnj });
   if (isLeft(result)) {
     rawStore.save({
       gateway: GW_V1,
@@ -658,16 +687,14 @@ escavador.post('/v1/processos/tribunal/lote', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const LoteItemSchema = z.object({
-    cpf_cnpj: z.string().optional(),
-    nome: z.string().optional(),
-    oab: z.string().optional(),
-  });
-
   const parsed = z
     .object({
-      itens: z.array(LoteItemSchema).min(1),
-      tribunais: z.array(z.string()).optional(),
+      tipo: z.enum(['busca_por_nome', 'busca_por_documento', 'busca_por_oab']),
+      tribunais: z.array(z.string()).min(1),
+      nome: z.string().optional(),
+      numero_documento: z.string().optional(),
+      numero_oab: z.string().optional(),
+      estado_oab: z.string().optional(),
     })
     .safeParse(body);
   if (!parsed.success)
@@ -675,13 +702,13 @@ escavador.post('/v1/processos/tribunal/lote', async (c) => {
 
   const op = new IniciarBuscaProcessosLote(buildHttpV1());
   const input: Parameters<typeof op.execute>[0] = {
-    itens: parsed.data.itens.map((i) => ({
-      ...(i.cpf_cnpj !== undefined && { cpfCnpj: i.cpf_cnpj }),
-      ...(i.nome !== undefined && { nome: i.nome }),
-      ...(i.oab !== undefined && { oab: i.oab }),
-    })),
+    tipo: parsed.data.tipo,
+    tribunais: parsed.data.tribunais,
+    ...(parsed.data.nome !== undefined && { nome: parsed.data.nome }),
+    ...(parsed.data.numero_documento !== undefined && { numero_documento: parsed.data.numero_documento }),
+    ...(parsed.data.numero_oab !== undefined && { numero_oab: parsed.data.numero_oab }),
+    ...(parsed.data.estado_oab !== undefined && { estado_oab: parsed.data.estado_oab }),
   };
-  if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
 
   const result = await op.execute(input);
   if (isLeft(result)) {

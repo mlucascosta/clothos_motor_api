@@ -1,13 +1,14 @@
-// POST /api/v1/processos/tribunal/oab  (ASYNC — retorna ID para polling)
+// POST /api/v1/tribunal/async/lote com tipo=busca_por_oab
 import type { Either } from '../../../../shared/domain/Either.js';
 import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IniciarBuscaResponse } from '../dtos/BuscaAssincronaDto.js';
+import type { IniciarBuscaLoteResponse } from '../dtos/BuscaAssincronaDto.js';
 
 export interface IniciarBuscaProcessosOabInput {
-  oab: string;
+  numero_oab: string;
+  estado_oab: string;
   tribunais?: string[];
 }
 
 export interface IIniciarBuscaProcessosOab {
-  execute(input: IniciarBuscaProcessosOabInput): Promise<Either<SourceError, IniciarBuscaResponse>>;
+  execute(input: IniciarBuscaProcessosOabInput): Promise<Either<SourceError, IniciarBuscaLoteResponse>>;
 }

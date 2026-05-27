@@ -2,8 +2,8 @@ import { type Either, left, right } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
 import {
-  type IniciarBuscaResponse,
-  IniciarBuscaResponseSchema,
+  type IniciarBuscaLoteResponse,
+  IniciarBuscaLoteResponseSchema,
 } from '../dtos/BuscaAssincronaDto.js';
 import type {
   IIniciarBuscaProcessosEnvolvido,
@@ -15,18 +15,21 @@ export class IniciarBuscaProcessosEnvolvido implements IIniciarBuscaProcessosEnv
 
   async execute(
     input: IniciarBuscaProcessosEnvolvidoInput,
-  ): Promise<Either<SourceError, IniciarBuscaResponse>> {
-    const result = await this.http.request<unknown>('/api/v1/processos/pesquisar-por-nome', {
+  ): Promise<Either<SourceError, IniciarBuscaLoteResponse>> {
+    const body: Record<string, unknown> = {
+      tipo: 'busca_por_nome',
+      nome: input.nome,
+    };
+    if (input.tribunais !== undefined) body['tribunais'] = input.tribunais;
+
+    const result = await this.http.request<unknown>('/api/v1/tribunal/async/lote', {
       method: 'POST',
-      body: {
-        nome: input.nome,
-        tribunais: input.tribunais,
-      },
+      body,
     });
 
     if (result._tag === 'Left') return result;
 
-    const parsed = IniciarBuscaResponseSchema.safeParse(result.value);
+    const parsed = IniciarBuscaLoteResponseSchema.safeParse(result.value);
     if (!parsed.success) {
       return left(new SourceError('SCHEMA_MISMATCH', 'escavador', parsed.error.message));
     }

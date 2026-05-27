@@ -6,7 +6,7 @@
 
 import type { Either } from '../../../../shared/domain/Either.js';
 import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IniciarBuscaResponse } from '../dtos/BuscaAssincronaDto.js';
+import type { IniciarBuscaLoteResponse } from '../dtos/BuscaAssincronaDto.js';
 
 /**
  * Parâmetros de entrada para iniciar busca assíncrona por identificador.
@@ -40,42 +40,7 @@ export interface IniciarBuscaProcessosCpfCnpjInput {
  * @interface IIniciarBuscaProcessosCpfCnpj
  */
 export interface IIniciarBuscaProcessosCpfCnpj {
-  /**
-   * Inicia busca assíncrona de processos por identificador.
-   *
-   * Operação assíncrona:
-   * - Submete requisição ao servidor
-   * - Retorna ID da busca para monitoramento
-   * - Cliente deve fazer polling com `IObterBuscaAssincrona`
-   *
-   * **Fluxo típico:**
-   * 1. Chamar `iniciarBusca.execute({ cpfCnpj: "xxx" })`
-   * 2. Obter ID da resposta
-   * 3. Fazer polling: `obterBuscaAssincrona.execute({ id })`
-   * 4. Aguardar status='concluido'
-   * 5. Acessar `resultado` com processos encontrados
-   *
-   * @async
-   * @param {IniciarBuscaProcessosCpfCnpjInput} input - Identificador e filtros
-   * @returns {Promise<Either<SourceError, IniciarBuscaResponse>>} ID da busca ou erro
-   *
-   * @example
-   * ```typescript
-   * const result = await iniciarBusca.execute({
-   *   cpfCnpj: "xxxxxxxxxxxxxxx",
-   *   tribunais: ["TJSP", "TST"]
-   * });
-   *
-   * if (isLeft(result)) {
-   *   console.error('Erro ao iniciar busca:', result.value.message);
-   * } else {
-   *   const buscaId = result.value.id;
-   *   console.log('Busca iniciada com ID:', buscaId);
-   *   // Agora fazer polling com obterBuscaAssincrona.execute({ id: buscaId })
-   * }
-   * ```
-   */
   execute(
     input: IniciarBuscaProcessosCpfCnpjInput,
-  ): Promise<Either<SourceError, IniciarBuscaResponse>>;
+  ): Promise<Either<SourceError, IniciarBuscaLoteResponse>>;
 }

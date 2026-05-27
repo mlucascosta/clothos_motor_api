@@ -162,23 +162,34 @@ export class EscavadorExecutor implements ISourceExecutor {
 
     if (isLeft(iniciarResult)) return iniciarResult;
 
-    const buscaId = iniciarResult.value.id;
-    const pollResult = await this.pollAssincrona(buscaId, context.timeoutMs - (Date.now() - start));
+    const buscaIds = iniciarResult.value.items.map((item) => item.id);
+    if (buscaIds.length === 0) {
+      return left(new SourceError('UPSTREAM_ERROR', this.sourceName, 'Nenhuma busca iniciada'));
+    }
 
-    if (isLeft(pollResult)) return pollResult;
+    const budget = context.timeoutMs - (Date.now() - start);
+    const pollResults = await Promise.all(
+      buscaIds.map((id) => this.pollAssincrona(id, budget)),
+    );
 
-    const resultado = pollResult.value.resultado as Record<string, unknown> | undefined;
+    const allResultados: unknown[] = [];
+    for (const pr of pollResults) {
+      if (isLeft(pr)) continue;
+      allResultados.push(pr.value.resultado);
+    }
+
+    const processos = allResultados.flatMap((r) =>
+      this.extractProcessosFromResultado(r as Record<string, unknown> | undefined),
+    );
 
     const data: Record<string, unknown> = {
-      busca_assincrona_id: buscaId,
+      busca_assincrona_ids: buscaIds,
       tipo: 'pessoa',
       sources: ['escavador'],
-      resultado: resultado ?? {},
+      resultados: allResultados,
+      processos,
+      total_processos: processos.length,
     };
-
-    const processos = this.extractProcessosFromResultado(resultado);
-    data['processos'] = processos;
-    data['total_processos'] = processos.length;
 
     return right({
       source: this.sourceName,
@@ -210,13 +221,14 @@ export class EscavadorExecutor implements ISourceExecutor {
 
       if (isLeft(result)) return result;
 
-      if (result.value.status === 'concluido') {
-        return right({ resultado: result.value.resultado });
+      const status = result.value.status?.toUpperCase();
+      if (status === 'SUCESSO' || status === 'CONCLUIDO') {
+        return right({ resultado: result.value.resposta ?? result.value.resultado });
       }
 
-      if (result.value.status === 'erro') {
+      if (status === 'ERRO' || status === 'NAO_ENCONTRADO') {
         return left(
-          new SourceError('UPSTREAM_ERROR', this.sourceName, 'Busca assíncrona retornou erro'),
+          new SourceError('UPSTREAM_ERROR', this.sourceName, `Busca assíncrona: ${result.value.status}`),
         );
       }
 

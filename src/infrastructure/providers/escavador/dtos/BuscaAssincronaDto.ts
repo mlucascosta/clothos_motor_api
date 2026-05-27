@@ -23,33 +23,58 @@ export const BuscaAssincronaStatusSchema = z.enum([
  * Retornado por ObterBuscaAssincrona após polling.
  * @type {ZodSchema}
  */
-export const BuscaAssincronaDtoSchema = z.object({
-  /** ID único da busca assíncrona */
-  id: z.number().int().positive(),
-  /** Status atual (pendente, em_andamento, concluído, erro) */
-  status: BuscaAssincronaStatusSchema,
-  /** Tipo de busca (ex: 'processos_cpf_cnpj') */
-  tipo: z.string(),
-  /** ISO 8601 timestamp de criação (opcional) */
-  criado_em: z.string().optional(),
-  /** ISO 8601 timestamp de última atualização (opcional) */
-  atualizado_em: z.string().optional(),
-  /** Resultado da busca se status='concluido', senão undefined */
-  resultado: z.unknown().optional(),
-});
+export const BuscaAssincronaDtoSchema = z
+  .object({
+    id: z.number().int().positive(),
+    status: z.string(),
+    tipo: z.string().optional(),
+    criado_em: z.string().optional(),
+    atualizado_em: z.string().optional(),
+    resultado: z.unknown().optional(),
+    resposta: z.unknown().optional(),
+    motivo_erro: z.string().nullish(),
+    tribunal: z.record(z.unknown()).optional(),
+    valor: z.string().optional(),
+    link_api: z.string().optional(),
+  })
+  .passthrough();
 
 /**
  * Schema de resposta de iniciação de busca assíncrona.
- * Retornado por IniciarBuscaProcessosCpfCnpj.
+ * Retornado por IniciarBuscaProcesso e IniciarBuscaProcessoNup.
+ * Status retornado pela API em UPPERCASE (PENDENTE, SUCESSO, ERRO, NAO_ENCONTRADO).
  * @type {ZodSchema}
  */
-export const IniciarBuscaResponseSchema = z.object({
-  /** ID único da busca assíncrona criada */
-  id: z.number().int().positive(),
-  /** Status inicial (geralmente 'pendente' ou 'em_andamento') */
-  status: BuscaAssincronaStatusSchema,
-  /** Tipo de busca (opcional) */
-  tipo: z.string().optional(),
+export const IniciarBuscaResponseSchema = z
+  .object({
+    id: z.number().int().positive(),
+    status: z.string(),
+    tipo: z.string().optional(),
+  })
+  .passthrough();
+
+/**
+ * Schema de item individual retornado pela busca em lote (por tribunal).
+ * @type {ZodSchema}
+ */
+export const BuscaAssincronaItemResponseSchema = z
+  .object({
+    id: z.number().int().positive(),
+    status: z.string(),
+    tipo: z.string().optional(),
+    tribunal: z.record(z.unknown()).optional(),
+    valor: z.string().optional(),
+    link_api: z.string().optional(),
+  })
+  .passthrough();
+
+/**
+ * Schema de resposta do endpoint POST /api/v1/tribunal/async/lote.
+ * Retorna array de buscas iniciadas, uma por tribunal.
+ * @type {ZodSchema}
+ */
+export const IniciarBuscaLoteResponseSchema = z.object({
+  items: z.array(BuscaAssincronaItemResponseSchema),
 });
 
 /**
@@ -83,10 +108,16 @@ export type BuscaAssincronaStatus = z.infer<typeof BuscaAssincronaStatusSchema>;
 export type BuscaAssincronaDto = z.infer<typeof BuscaAssincronaDtoSchema>;
 
 /**
- * Resposta de iniciação de busca assíncrona.
+ * Resposta de iniciação de busca assíncrona (single — processo-tribunal, processo-administrativo).
  * @typedef {Object} IniciarBuscaResponse
  */
 export type IniciarBuscaResponse = z.infer<typeof IniciarBuscaResponseSchema>;
+
+/**
+ * Resposta de iniciação de busca em lote por tribunal (nome, documento, oab).
+ * @typedef {Object} IniciarBuscaLoteResponse
+ */
+export type IniciarBuscaLoteResponse = z.infer<typeof IniciarBuscaLoteResponseSchema>;
 
 /**
  * Resposta de listagem de buscas assíncronas.
