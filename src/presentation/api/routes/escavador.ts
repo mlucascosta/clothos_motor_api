@@ -1920,26 +1920,24 @@ escavador.get('/v2/documentos/:id/download', async (c) => {
   return c.body(new Uint8Array(result.value), 200, { 'Content-Type': 'application/pdf' });
 });
 
-// ──── Monitoramentos V2 — Novos Processos ────
+// ──── Certificados V2 ────
 
 /**
- * @route GET /v2/monitoramentos/novos-processos
- * @description Listar monitoramentos de novos processos com paginação
- * @queryParam {number} page - Número da página (padrão: 1)
- * @returns {Object} Array de monitoramentos com metadados de paginação
- * @status 200 - Monitoramentos listados com sucesso
+ * @route GET /v2/certificados
+ * @description Listar certificados digitais (e-CNPJ/e-CPF) cadastrados
+ * @returns {Array} Array de certificados com metadados
+ * @status 200 - Certificados listados com sucesso
  * @status 500 - Erro ao consultar API Escavador
  * @example
- * GET /api/escavador/v2/monitoramentos/novos-processos?page=1
+ * GET /api/escavador/v2/certificados
  * // Resposta (200)
  * {
  *   "data": [
- *     { "id": 1, "variacao_busca": "Empresa XYZ", "tribunais": [1, 2], "ativo": true }
- *   ],
- *   "pagination": { "page": 1, "total": 15, "por_pagina": 10 }
+ *     { "id": 1, "nome": "Certificado ABC LTDA", "tipo": "e-CNPJ", "valido_ate": "2025-12-31", "created_at": "2024-01-15T08:00:00Z" }
+ *   ]
  * }
  */
-escavador.get('/v2/monitoramentos/novos-processos', async (c) => {
+escavador.get('/v2/certificados', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
   const op = new ListarMonitoramentosNovosProcessos(buildHttpV2());
   const result = await op.execute({ pagina });
