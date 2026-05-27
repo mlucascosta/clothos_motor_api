@@ -113,7 +113,7 @@ http://localhost:3000/api/escavador
 ### V1 Endpoints (42 rotas)
 
 **Saldo e Créditos**
-- `GET /v1/saldo` — Consultar saldo de créditos
+- `GET /v1/quantidade-creditos` — Consultar saldo de créditos
 
 **Buscas Assíncronas**
 - `GET /v1/buscas-assincronas` — Listar buscas iniciadas
@@ -146,11 +146,11 @@ http://localhost:3000/api/escavador
 - `POST /v1/monitoramentos/tribunal` — Criar monitoramento (tribunal)
 
 **Callbacks e Auxiliares**
-- `GET /v1/callback` — Listar callbacks
-- `POST /v1/callback` — Marcar callbacks como recebidos
-- `POST /v1/callback/reenviar` — Reenviar callback
+- `GET /v1/callbacks` — Listar callbacks
+- `POST /v1/callbacks/marcar-recebidos` — Marcar callbacks como recebidos
+- `POST /v1/callbacks/:id/reenviar` — Reenviar callback específico
 - `GET /v1/tribunais` — Listar tribunais
-- `GET /v1/orgaos-administrativos` — Órgãos admin
+- `GET /v1/orgaos-administrativos` — Órgãos administrativos
 
 ### V2 Endpoints (50+ rotas)
 
