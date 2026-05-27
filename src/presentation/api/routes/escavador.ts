@@ -385,6 +385,432 @@ escavador.get('/v1/quantidade-creditos', async (c) => {
   rawStore.save({ gateway: GW_V1, fonte: 'saldo', tipo_param: null, param: null, result: result.value, status: 'success', created_at: new Date() });
   return c.json(result.value, 200);
 });
+
+// ──── Buscas Assíncronas ────
+
+escavador.get('/v1/buscas-assincronas', async (c) => {
+  const pagina = Number(c.req.query('page') ?? '1');
+  const op = new ListarBuscasAssincronas(buildHttpV1());
+  const result = await op.execute({ pagina });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'buscas-assincronas', tipo_param: null, param: null, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'buscas-assincronas', tipo_param: null, param: null, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+/**
+ * GET /v1/buscas-assincronas/:id
+ *
+ * Obter resultado de uma busca assíncrona específica por ID.
+ * Se `status !== 'completed'`, busca ainda está processando.
+ *
+ * @route GET /api/escavador/v1/buscas-assincronas/{id}
+ * @param {number} id - ID da busca assíncrona
+ * @returns {Object} Resultado da busca (estrutura depende do tipo)
+ * @status 200 OK
+ * @status 400 ID inválido (não é número)
+ * @status 500 Se falhar na API
+ */
+escavador.get('/v1/buscas-assincronas/:id', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+
+  const op = new ObterBuscaAssincrona(buildHttpV1());
+  const result = await op.execute({ id });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'buscas-assincronas/obter', tipo_param: 'id', param: String(id), result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'buscas-assincronas/obter', tipo_param: 'id', param: String(id), result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+// ──── Processos — Buscas Assíncronas (iniciar) ────
+
+escavador.post('/v1/processos/tribunal/cpf-cnpj', async (c) => {
+  const body = await c.req.json().catch(() => null);
+  if (!body) return c.json({ error: 'Body inválido' }, 400);
+
+  const parsed = z.object({
+    cpf_cnpj: z.string().min(11).max(18),
+    tribunais: z.array(z.string()).optional(),
+  }).safeParse(body);
+  if (!parsed.success) return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+
+  const op = new IniciarBuscaProcessosCpfCnpj(buildHttpV1());
+  const input: Parameters<typeof op.execute>[0] = { cpfCnpj: parsed.data.cpf_cnpj };
+  if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
+
+  const result = await op.execute(input);
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'processos/tribunal/cpf-cnpj', tipo_param: 'cpf_cnpj', param: parsed.data.cpf_cnpj, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'processos/tribunal/cpf-cnpj', tipo_param: 'cpf_cnpj', param: parsed.data.cpf_cnpj, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 202);
+});
+
+/**
+ * POST /v1/processos/tribunal/envolvido
+ *
+ * Inicia busca de processos por nome de envolvido (pessoa) em tribunais.
+ *
+ * @route POST /api/escavador/v1/processos/tribunal/envolvido
+ * @body {string} nome - Nome da pessoa envolvida
+ * @body {string[]} [tribunais] - Array opcional de IDs de tribunais
+ * @returns {Object} { id: number, status: 'pending' }
+ * @status 202 Accepted
+ */
+escavador.post('/v1/processos/tribunal/envolvido', async (c) => {
+  const body = await c.req.json().catch(() => null);
+  if (!body) return c.json({ error: 'Body inválido' }, 400);
+
+  const parsed = z.object({
+    nome: z.string().min(1),
+    tribunais: z.array(z.string()).optional(),
+  }).safeParse(body);
+  if (!parsed.success) return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+
+  const op = new IniciarBuscaProcessosEnvolvido(buildHttpV1());
+  const input: Parameters<typeof op.execute>[0] = { nome: parsed.data.nome };
+  if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
+
+  const result = await op.execute(input);
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'processos/tribunal/envolvido', tipo_param: 'nome', param: parsed.data.nome, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'processos/tribunal/envolvido', tipo_param: 'nome', param: parsed.data.nome, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 202);
+});
+
+/**
+ * POST /v1/processos/tribunal/oab
+ *
+ * Inicia busca de processos por número OAB de advogado em tribunais.
+ *
+ * @route POST /api/escavador/v1/processos/tribunal/oab
+ * @body {string} oab - Número OAB do advogado (ex: "123456/SP")
+ * @body {string[]} [tribunais] - Array opcional de IDs de tribunais
+ * @returns {Object} { id: number, status: 'pending' }
+ * @status 202 Accepted
+ */
+escavador.post('/v1/processos/tribunal/oab', async (c) => {
+  const body = await c.req.json().catch(() => null);
+  if (!body) return c.json({ error: 'Body inválido' }, 400);
+
+  const parsed = z.object({
+    oab: z.string().min(1),
+    tribunais: z.array(z.string()).optional(),
+  }).safeParse(body);
+  if (!parsed.success) return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+
+  const op = new IniciarBuscaProcessosOab(buildHttpV1());
+  const input: Parameters<typeof op.execute>[0] = { oab: parsed.data.oab };
+  if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
+
+  const result = await op.execute(input);
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'processos/tribunal/oab', tipo_param: 'oab', param: parsed.data.oab, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'processos/tribunal/oab', tipo_param: 'oab', param: parsed.data.oab, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 202);
+});
+
+/**
+ * POST /v1/processos/administrativo/nup
+ *
+ * Inicia busca de processo administrativo por NUP (Número Único de Protocolo).
+ * Busca em órgãos administrativos, não em tribunais.
+ *
+ * @route POST /api/escavador/v1/processos/administrativo/nup
+ * @body {string} nup - NUP (número único de protocolo)
+ * @returns {Object} { id: number, status: 'pending' }
+ * @status 202 Accepted
+ */
+escavador.post('/v1/processos/administrativo/nup', async (c) => {
+  const body = await c.req.json().catch(() => null);
+  if (!body) return c.json({ error: 'Body inválido' }, 400);
+
+  const parsed = z.object({ nup: z.string().min(1) }).safeParse(body);
+  if (!parsed.success) return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+
+  const op = new IniciarBuscaProcessoNup(buildHttpV1());
+  const result = await op.execute({ nup: parsed.data.nup });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'processos/administrativo/nup', tipo_param: 'nup', param: parsed.data.nup, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'processos/administrativo/nup', tipo_param: 'nup', param: parsed.data.nup, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 202);
+});
+
+/**
+ * POST /v1/processos/pesquisar
+ *
+ * Inicia busca de processo por número CNJ no tribunal.
+ *
+ * @route POST /api/escavador/v1/processos/pesquisar
+ * @body {string} numero_cnj - Número CNJ do processo
+ * @body {string[]} [tribunais] - Array opcional de IDs de tribunais
+ * @returns {Object} { id: number, status: 'pending' }
+ * @status 202 Accepted
+ */
+escavador.post('/v1/processos/pesquisar', async (c) => {
+  const body = await c.req.json().catch(() => null);
+  if (!body) return c.json({ error: 'Body inválido' }, 400);
+
+  const parsed = z.object({
+    numero_cnj: z.string().min(1),
+    tribunais: z.array(z.string()).optional(),
+  }).safeParse(body);
+  if (!parsed.success) return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+
+  const op = new IniciarBuscaProcesso(buildHttpV1());
+  const input: Parameters<typeof op.execute>[0] = { numero_cnj: parsed.data.numero_cnj };
+  if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
+
+  const result = await op.execute(input);
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'processos/pesquisar', tipo_param: 'numero_cnj', param: parsed.data.numero_cnj, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'processos/pesquisar', tipo_param: 'numero_cnj', param: parsed.data.numero_cnj, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 202);
+});
+
+escavador.post('/v1/processos/tribunal/lote', async (c) => {
+  const body = await c.req.json().catch(() => null);
+  if (!body) return c.json({ error: 'Body inválido' }, 400);
+
+  const LoteItemSchema = z.object({
+    cpf_cnpj: z.string().optional(),
+    nome: z.string().optional(),
+    oab: z.string().optional(),
+  });
+
+  const parsed = z.object({
+    itens: z.array(LoteItemSchema).min(1),
+    tribunais: z.array(z.string()).optional(),
+  }).safeParse(body);
+  if (!parsed.success) return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+
+  const op = new IniciarBuscaProcessosLote(buildHttpV1());
+  const input: Parameters<typeof op.execute>[0] = {
+    itens: parsed.data.itens.map((i) => ({
+      ...(i.cpf_cnpj !== undefined && { cpfCnpj: i.cpf_cnpj }),
+      ...(i.nome !== undefined && { nome: i.nome }),
+      ...(i.oab !== undefined && { oab: i.oab }),
+    })),
+  };
+  if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
+
+  const result = await op.execute(input);
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'processos/tribunal/lote', tipo_param: null, param: null, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'processos/tribunal/lote', tipo_param: null, param: null, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 202);
+});
+
+// ══════════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: PROCESSOS — DIÁRIOS OFICIAIS (2 GET endpoints)
+// ══════════════════════════════════════════════════════════════════════════════════
+// Busca de processos em diários oficiais públicos (pesquisa síncrona).
+
+/**
+ * GET /v1/processos/diarios-oficiais/numero
+ *
+ * Busca processos em diários oficiais por número.
+ *
+ * @route GET /api/escavador/v1/processos/diarios-oficiais/numero?numero=<número>
+ * @queryParam {string} numero - Número do processo (obrigatório)
+ * @returns {Array} Array de processos encontrados em diários
+ * @status 200 OK
+ * @status 400 Parâmetro numero ausente
+ */
+escavador.get('/v1/processos/diarios-oficiais/numero', async (c) => {
+  const numero = c.req.query('numero') ?? '';
+  if (!numero) return c.json({ error: 'Parâmetro numero obrigatório' }, 400);
+
+  const op = new BuscarProcessosDiarioPorNumero(buildHttpV1());
+  const result = await op.execute({ numero });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'processos/diarios-oficiais/numero', tipo_param: 'numero', param: numero, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'processos/diarios-oficiais/numero', tipo_param: 'numero', param: numero, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+/**
+ * GET /v1/processos/diarios-oficiais/oab
+ *
+ * Busca processos em diários oficiais por número OAB de advogado.
+ *
+ * @route GET /api/escavador/v1/processos/diarios-oficiais/oab?oab=<oab>
+ * @queryParam {string} oab - Número OAB (obrigatório)
+ * @returns {Array} Array de processos encontrados
+ * @status 200 OK
+ */
+escavador.get('/v1/processos/diarios-oficiais/oab', async (c) => {
+  const oab = c.req.query('oab') ?? '';
+  if (!oab) return c.json({ error: 'Parâmetro oab obrigatório' }, 400);
+
+  const op = new BuscarProcessosDiarioPorOab(buildHttpV1());
+  const result = await op.execute({ oab });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'processos/diarios-oficiais/oab', tipo_param: 'oab', param: oab, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'processos/diarios-oficiais/oab', tipo_param: 'oab', param: oab, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+// ══════════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: PROCESSOS — DETALHES (3 GET endpoints)
+// ══════════════════════════════════════════════════════════════════════════════════
+// Recuperação de detalhes, movimentações e envolvidos de processos.
+
+/**
+ * GET /v1/processos/:numero_cnj
+ *
+ * Obter detalhes completos de um processo pelo número CNJ.
+ *
+ * @route GET /api/escavador/v1/processos/{numero_cnj}
+ * @param {string} numero_cnj - Número CNJ do processo
+ * @returns {Object} Detalhes completos do processo
+ * @status 200 OK
+ */
+escavador.get('/v1/processos/:numero_cnj', async (c) => {
+  const numeroCnj = c.req.param('numero_cnj');
+  const op = new ObterDetalhesProcesso(buildHttpV1());
+  const result = await op.execute({ numeroCnj });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'processos/obter', tipo_param: 'numero_cnj', param: numeroCnj, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'processos/obter', tipo_param: 'numero_cnj', param: numeroCnj, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+/**
+ * GET /v1/processos/:numero_cnj/movimentacoes
+ *
+ * Listar movimentações (updates) de um processo com paginação.
+ *
+ * @route GET /api/escavador/v1/processos/{numero_cnj}/movimentacoes?page=1
+ * @param {string} numero_cnj - Número CNJ
+ * @queryParam {number} page - Página (padrão: 1)
+ * @returns {Array} Array de movimentações
+ * @status 200 OK
+ */
+escavador.get('/v1/processos/:numero_cnj/movimentacoes', async (c) => {
+  const numeroCnj = c.req.param('numero_cnj');
+  const pagina = Number(c.req.query('page') ?? '1');
+  const op = new ObterMovimentacoesProcesso(buildHttpV1());
+  const result = await op.execute({ numeroCnj, pagina });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'processos/movimentacoes', tipo_param: 'numero_cnj', param: numeroCnj, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'processos/movimentacoes', tipo_param: 'numero_cnj', param: numeroCnj, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+/**
+ * GET /v1/processos/:id/envolvidos-diarios
+ *
+ * Listar partes envolvidas extraídas de diários oficiais de um processo.
+ *
+ * @route GET /api/escavador/v1/processos/{id}/envolvidos-diarios
+ * @param {number} id - ID do processo
+ * @returns {Array} Array de envolvidos
+ * @status 200 OK
+ * @status 400 ID inválido (não é número)
+ */
+escavador.get('/v1/processos/:id/envolvidos-diarios', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+
+  const op = new ObterEnvolvidosProcesso(buildHttpV1());
+  const result = await op.execute({ id });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'processos/envolvidos-diarios', tipo_param: 'id', param: String(id), result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'processos/envolvidos-diarios', tipo_param: 'id', param: String(id), result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+// ══════════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: MOVIMENTAÇÕES (1 GET endpoint)
+// ══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /v1/movimentacoes/:id
+ *
+ * Obter detalhes de uma movimentação específica de processo.
+ *
+ * @route GET /api/escavador/v1/movimentacoes/{id}
+ * @param {number} id - ID da movimentação
+ * @returns {Object} Detalhes da movimentação
+ * @status 200 OK
+ */
+escavador.get('/v1/movimentacoes/:id', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+
+  const op = new ObterMovimentacao(buildHttpV1());
+  const result = await op.execute({ id });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'movimentacoes/obter', tipo_param: 'id', param: String(id), result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'movimentacoes/obter', tipo_param: 'id', param: String(id), result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+// ══════════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: BUSCA GERAL (1 GET endpoint — Full Text Search)
+// ══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /v1/busca
+ *
+ * Full-text search em toda a base do Escavador (processos, pessoas, instituições).
+ *
+ * @route GET /api/escavador/v1/busca?q=<query>&tipo=pessoa&page=1
+ * @queryParam {string} q - Termo de busca (obrigatório)
+ * @queryParam {string} [tipo] - Filtro tipo: 'pessoa', 'processo', 'instituicao' (opcional)
+ * @queryParam {number} [page] - Página (padrão: 1)
+ * @returns {Array} Array de resultados
+ * @status 200 OK
+ */
+escavador.get('/v1/busca', async (c) => {
+  const query = c.req.query('q') ?? '';
+  if (!query) return c.json({ error: 'Parâmetro q obrigatório' }, 400);
+
+  const tipoRaw = c.req.query('tipo');
+  const pagina = Number(c.req.query('page') ?? '1');
+
+  const op = new BuscarGeral(buildHttpV1());
+  const input: Parameters<typeof op.execute>[0] = { query, pagina };
+  if (tipoRaw === 'pessoa' || tipoRaw === 'processo' || tipoRaw === 'instituicao') input.tipo = tipoRaw;
+  const result = await op.execute(input);
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'busca', tipo_param: 'query', param: query, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'busca', tipo_param: 'query', param: query, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+// ══════════════════════════════════════════════════════════════════════════════════
 // SEÇÃO: PESSOAS (3 GET endpoints)
 // ══════════════════════════════════════════════════════════════════════════════════
 // Endpoints para consultar dados de pessoas e seu envolvimento em processos.
@@ -437,6 +863,32 @@ escavador.get('/v1/pessoas/:id/processos', async (c) => {
   rawStore.save({ gateway: GW_V1, fonte: 'pessoas/processos', tipo_param: 'id', param: String(id), result: result.value, status: 'success', created_at: new Date() });
   return c.json(result.value, 200);
 });
+
+/**
+ * GET /v1/pessoas/:id/publicacoes
+ *
+ * Listar publicações em diários oficiais envolvendo uma pessoa.
+ *
+ * @route GET /api/escavador/v1/pessoas/{id}/publicacoes?page=1
+ * @param {number} id - ID da pessoa
+ * @queryParam {number} [page] - Página (padrão: 1)
+ * @returns {Array} Array de publicações
+ */
+escavador.get('/v1/pessoas/:id/publicacoes', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+
+  const pagina = Number(c.req.query('page') ?? '1');
+  const op = new BuscarPublicacoes(buildHttpV1());
+  const result = await op.execute({ entidadeId: id, pagina });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'pessoas/publicacoes', tipo_param: 'id', param: String(id), result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'pessoas/publicacoes', tipo_param: 'id', param: String(id), result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
 // ══════════════════════════════════════════════════════════════════════════════════
 // SEÇÃO: INSTITUIÇÕES (3 GET endpoints)
 // ══════════════════════════════════════════════════════════════════════════════════
@@ -864,7 +1316,75 @@ escavador.post('/v1/callbacks/:id/reenviar', async (c) => {
   return c.json(result.value, 200);
 });
 
+// ══════════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: AUXILIARES (4 GET endpoints)
+// ══════════════════════════════════════════════════════════════════════════════════
+// Dados de suporte: tribunais, órgãos administrativos, diários.
 
+/**
+ * GET /v1/tribunais
+ *
+ * Listar todos os tribunais disponíveis no Escavador.
+ *
+ * @route GET /api/escavador/v1/tribunais?tipo=<tipo>
+ * @queryParam {string} [tipo] - Filtro por tipo de tribunal (opcional)
+ * @returns {Array} Array de tribunais
+ */
+escavador.get('/v1/tribunais', async (c) => {
+  const tipo = c.req.query('tipo');
+  const op = new ListarTribunais(buildHttpV1());
+  const input: { tipo?: string } = {};
+  if (tipo !== undefined) input.tipo = tipo;
+  const result = await op.execute(input);
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'tribunais/listar', tipo_param: null, param: null, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'tribunais/listar', tipo_param: null, param: null, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+escavador.get('/v1/tribunais/:id', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+
+  const op = new ObterTribunal(buildHttpV1());
+  const result = await op.execute({ id });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'tribunais/obter', tipo_param: 'id', param: String(id), result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'tribunais/obter', tipo_param: 'id', param: String(id), result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+escavador.get('/v1/orgaos-administrativos', async (c) => {
+  const pagina = Number(c.req.query('page') ?? '1');
+  const op = new ListarOrgaosAdministrativos(buildHttpV1());
+  const result = await op.execute({ pagina });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'orgaos-administrativos/listar', tipo_param: null, param: null, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'orgaos-administrativos/listar', tipo_param: null, param: null, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+escavador.get('/v1/diarios-oficiais/origens', async (c) => {
+  const estado = c.req.query('estado');
+  const op = new ListarOrigensDiariosOficiais(buildHttpV1());
+  const input: { estado?: string } = {};
+  if (estado !== undefined) input.estado = estado;
+  const result = await op.execute(input);
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V1, fonte: 'diarios-oficiais/origens', tipo_param: null, param: null, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V1, fonte: 'diarios-oficiais/origens', tipo_param: null, param: null, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
 // V2 — Escavador API v2
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -1440,6 +1960,127 @@ escavador.get('/v2/documentos/:id/download', async (c) => {
   rawStore.save({ gateway: GW_V2, fonte: 'v2/processos/documentos/download', tipo_param: 'id', param: String(id), result: { size: result.value.byteLength }, status: 'success', created_at: new Date() });
   return c.body(new Uint8Array(result.value), 200, { 'Content-Type': 'application/pdf' });
 });
+
+// ──── Monitoramentos V2 — Novos Processos ────
+
+/**
+ * @route GET /v2/monitoramentos/novos-processos
+ * @description Listar monitoramentos de novos processos com paginação
+ * @queryParam {number} page - Número da página (padrão: 1)
+ * @returns {Object} Array de monitoramentos com metadados de paginação
+ * @status 200 - Monitoramentos listados com sucesso
+ * @status 500 - Erro ao consultar API Escavador
+ * @example
+ * GET /api/escavador/v2/monitoramentos/novos-processos?page=1
+ * // Resposta (200)
+ * {
+ *   "data": [
+ *     { "id": 1, "variacao_busca": "Empresa XYZ", "tribunais": [1, 2], "ativo": true }
+ *   ],
+ *   "pagination": { "page": 1, "total": 15, "por_pagina": 10 }
+ * }
+ */
+escavador.get('/v2/monitoramentos/novos-processos', async (c) => {
+  const pagina = Number(c.req.query('page') ?? '1');
+  const op = new ListarMonitoramentosNovosProcessos(buildHttpV2());
+  const result = await op.execute({ pagina });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/novos-processos/listar', tipo_param: null, param: null, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/novos-processos/listar', tipo_param: null, param: null, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+/**
+ * @route POST /v2/monitoramentos/novos-processos
+ * @description Criar novo monitoramento de processos com filtros de busca
+ * @param {string} variacao_busca - Termo de busca ou nome (obrigatório)
+ * @queryParam {Array<number>} tribunais - IDs dos tribunais a monitorar (opcional)
+ * @queryParam {string} callback_url - URL para webhooks de notificação (opcional)
+ * @returns {Object} Monitoramento criado com ID e configuração
+ * @status 201 - Monitoramento criado com sucesso
+ * @status 400 - Body inválido
+ * @status 422 - Payload não atende aos critérios de validação
+ * @status 500 - Erro ao criar monitoramento
+ * @example
+ * POST /api/escavador/v2/monitoramentos/novos-processos
+ * {
+ *   "variacao_busca": "Empresa ABC LTDA",
+ *   "tribunais": [1, 5],
+ *   "callback_url": "https://app.example.com/webhooks/escavador"
+ * }
+ * // Resposta (201)
+ * {
+ *   "id": 25,
+ *   "variacao_busca": "Empresa ABC LTDA",
+ *   "tribunais": [1, 5],
+ *   "ativo": true,
+ *   "created_at": "2024-05-27T10:30:00Z"
+ * }
+ */
+escavador.post('/v2/monitoramentos/novos-processos', async (c) => {
+  const body = await c.req.json().catch(() => null);
+  if (!body) return c.json({ error: 'Body inválido' }, 400);
+
+  const parsed = z.object({
+    variacao_busca: z.string().min(1),
+    tribunais: z.array(z.number().int()).optional(),
+    callback_url: z.string().url().optional(),
+  }).safeParse(body);
+  if (!parsed.success) return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+
+  const op = new CriarMonitoramentoNovosProcessos(buildHttpV2());
+  const input: Parameters<typeof op.execute>[0] = { variacao_busca: parsed.data.variacao_busca };
+  if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
+  if (parsed.data.callback_url !== undefined) input.callback_url = parsed.data.callback_url;
+
+  const result = await op.execute(input);
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/novos-processos/criar', tipo_param: null, param: null, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/novos-processos/criar', tipo_param: null, param: null, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 201);
+});
+
+/**
+ * @route GET /v2/monitoramentos/novos-processos/:id
+ * @description Obter detalhes de um monitoramento de novos processos
+ * @param {number} id - ID do monitoramento
+ * @returns {Object} Configuração completa do monitoramento incluindo histórico
+ * @status 200 - Monitoramento obtido com sucesso
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao consultar monitoramento
+ * @example
+ * GET /api/escavador/v2/monitoramentos/novos-processos/25
+ * // Resposta (200)
+ * {
+ *   "id": 25,
+ *   "variacao_busca": "Empresa ABC LTDA",
+ *   "tribunais": [1, 5],
+ *   "callback_url": "https://app.example.com/webhooks/escavador",
+ *   "ativo": true,
+ *   "created_at": "2024-05-27T10:30:00Z",
+ *   "updated_at": "2024-05-27T10:30:00Z"
+ * }
+ */
+escavador.get('/v2/monitoramentos/novos-processos/:id', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+
+  const op = new ObterMonitoramentoNovosProcessos(buildHttpV2());
+  const result = await op.execute({ id });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/novos-processos/obter', tipo_param: 'id', param: String(id), result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/novos-processos/obter', tipo_param: 'id', param: String(id), result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+/**
+ * @route PATCH /v2/monitoramentos/novos-processos/:id
  * @description Atualizar configuração de um monitoramento de novos processos
  * @param {number} id - ID do monitoramento
  * @param {string} variacao_busca - Novo termo de busca (opcional)
@@ -1496,6 +2137,291 @@ escavador.patch('/v2/monitoramentos/novos-processos/:id', async (c) => {
   rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/novos-processos/editar', tipo_param: 'id', param: String(id), result: result.value, status: 'success', created_at: new Date() });
   return c.json(result.value, 200);
 });
+
+/**
+ * @route DELETE /v2/monitoramentos/novos-processos/:id
+ * @description Remover um monitoramento de novos processos
+ * @param {number} id - ID do monitoramento
+ * @returns {null} Sem conteúdo
+ * @status 204 - Monitoramento removido com sucesso
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao remover monitoramento
+ * @example
+ * DELETE /api/escavador/v2/monitoramentos/novos-processos/25
+ * // Resposta (204) No Content
+ */
+escavador.delete('/v2/monitoramentos/novos-processos/:id', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+
+  const op = new RemoverMonitoramentoNovosProcessos(buildHttpV2());
+  const result = await op.execute({ id });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/novos-processos/remover', tipo_param: 'id', param: String(id), result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/novos-processos/remover', tipo_param: 'id', param: String(id), result: null, status: 'success', created_at: new Date() });
+  return c.body(null, 204);
+});
+
+escavador.get('/v2/monitoramentos/novos-processos/:id/resultados', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+
+  const pagina = Number(c.req.query('page') ?? '1');
+  const op = new ObterResultadosMonitoramentoNovosProcessos(buildHttpV2());
+  const result = await op.execute({ id, pagina });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/novos-processos/resultados', tipo_param: 'id', param: String(id), result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/novos-processos/resultados', tipo_param: 'id', param: String(id), result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+// ──── Monitoramentos V2 — Processos ────
+
+/**
+ * @route GET /v2/monitoramentos/processos
+ * @description Listar monitoramentos de processos específicos com paginação
+ * @queryParam {number} page - Número da página (padrão: 1)
+ * @returns {Object} Array de monitoramentos com metadados de paginação
+ * @status 200 - Monitoramentos listados com sucesso
+ * @status 500 - Erro ao consultar API Escavador
+ * @example
+ * GET /api/escavador/v2/monitoramentos/processos?page=1
+ * // Resposta (200)
+ * {
+ *   "data": [
+ *     { "id": 1, "processo_id": 123, "ativo": true, "callback_url": "https://..." }
+ *   ],
+ *   "pagination": { "page": 1, "total": 5, "por_pagina": 10 }
+ * }
+ */
+escavador.get('/v2/monitoramentos/processos', async (c) => {
+  const pagina = Number(c.req.query('page') ?? '1');
+  const op = new ListarMonitoramentosProcesso(buildHttpV2());
+  const result = await op.execute({ pagina });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/processos/listar', tipo_param: null, param: null, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/processos/listar', tipo_param: null, param: null, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+/**
+ * @route POST /v2/monitoramentos/processos
+ * @description Criar novo monitoramento para um processo específico
+ * @param {number} processo_id - ID do processo a monitorar (obrigatório)
+ * @param {string} callback_url - URL para webhooks de notificação (opcional)
+ * @returns {Object} Monitoramento criado com ID e configuração
+ * @status 201 - Monitoramento criado com sucesso
+ * @status 400 - Body inválido
+ * @status 422 - Payload não atende aos critérios de validação
+ * @status 500 - Erro ao criar monitoramento
+ * @example
+ * POST /api/escavador/v2/monitoramentos/processos
+ * {
+ *   "processo_id": 123,
+ *   "callback_url": "https://app.example.com/webhooks/escavador"
+ * }
+ * // Resposta (201)
+ * {
+ *   "id": 10,
+ *   "processo_id": 123,
+ *   "callback_url": "https://app.example.com/webhooks/escavador",
+ *   "ativo": true,
+ *   "created_at": "2024-05-27T10:30:00Z"
+ * }
+ */
+escavador.post('/v2/monitoramentos/processos', async (c) => {
+  const body = await c.req.json().catch(() => null);
+  if (!body) return c.json({ error: 'Body inválido' }, 400);
+
+  const parsed = z.object({
+    processo_id: z.number().int(),
+    callback_url: z.string().url().optional(),
+  }).safeParse(body);
+  if (!parsed.success) return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+
+  const op = new CriarMonitoramentoProcesso(buildHttpV2());
+  const input: Parameters<typeof op.execute>[0] = { processo_id: parsed.data.processo_id };
+  if (parsed.data.callback_url !== undefined) input.callback_url = parsed.data.callback_url;
+
+  const result = await op.execute(input);
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/processos/criar', tipo_param: null, param: null, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/processos/criar', tipo_param: null, param: null, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 201);
+});
+
+/**
+ * @route GET /v2/monitoramentos/processos/:id
+ * @description Obter detalhes de um monitoramento de processo específico
+ * @param {number} id - ID do monitoramento
+ * @returns {Object} Configuração completa do monitoramento
+ * @status 200 - Monitoramento obtido com sucesso
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao consultar monitoramento
+ * @example
+ * GET /api/escavador/v2/monitoramentos/processos/10
+ * // Resposta (200)
+ * {
+ *   "id": 10,
+ *   "processo_id": 123,
+ *   "callback_url": "https://app.example.com/webhooks/escavador",
+ *   "ativo": true,
+ *   "created_at": "2024-05-27T10:30:00Z",
+ *   "updated_at": "2024-05-27T10:30:00Z"
+ * }
+ */
+escavador.get('/v2/monitoramentos/processos/:id', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+
+  const op = new ObterMonitoramentoProcesso(buildHttpV2());
+  const result = await op.execute({ id });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/processos/obter', tipo_param: 'id', param: String(id), result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/processos/obter', tipo_param: 'id', param: String(id), result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+/**
+ * @route DELETE /v2/monitoramentos/processos/:id
+ * @description Remover um monitoramento de processo específico
+ * @param {number} id - ID do monitoramento
+ * @returns {null} Sem conteúdo
+ * @status 204 - Monitoramento removido com sucesso
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao remover monitoramento
+ * @example
+ * DELETE /api/escavador/v2/monitoramentos/processos/10
+ * // Resposta (204) No Content
+ */
+escavador.delete('/v2/monitoramentos/processos/:id', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+
+  const op = new RemoverMonitoramentoProcesso(buildHttpV2());
+  const result = await op.execute({ id });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/processos/remover', tipo_param: 'id', param: String(id), result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V2, fonte: 'v2/monitoramentos/processos/remover', tipo_param: 'id', param: String(id), result: null, status: 'success', created_at: new Date() });
+  return c.body(null, 204);
+});
+
+// ──── Callbacks V2 ────
+
+/**
+ * @route GET /v2/callbacks
+ * @description Listar callbacks pendentes e histórico com paginação
+ * @queryParam {number} page - Número da página (padrão: 1)
+ * @returns {Object} Array de callbacks com metadados de paginação
+ * @status 200 - Callbacks listados com sucesso
+ * @status 500 - Erro ao consultar API Escavador
+ * @example
+ * GET /api/escavador/v2/callbacks?page=1
+ * // Resposta (200)
+ * {
+ *   "data": [
+ *     { "id": 1, "evento": "processo_atualizado", "status": "pending", "tentativas": 1, "created_at": "2024-05-27T10:30:00Z" }
+ *   ],
+ *   "pagination": { "page": 1, "total": 50, "por_pagina": 20 }
+ * }
+ */
+escavador.get('/v2/callbacks', async (c) => {
+  const pagina = Number(c.req.query('page') ?? '1');
+  const op = new ListarCallbacksV2(buildHttpV2());
+  const result = await op.execute({ pagina });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V2, fonte: 'v2/callbacks/listar', tipo_param: null, param: null, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V2, fonte: 'v2/callbacks/listar', tipo_param: null, param: null, result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+/**
+ * @route POST /v2/callbacks/recebidos
+ * @description Marcar callbacks como recebidos/processados
+ * @param {Array<number>} ids - Array de IDs de callbacks (máximo 20, mínimo 1)
+ * @returns {null} Sem conteúdo
+ * @status 204 - Callbacks marcados com sucesso
+ * @status 400 - Body inválido
+ * @status 422 - Payload não atende aos critérios de validação
+ * @status 500 - Erro ao processar requisição
+ * @example
+ * POST /api/escavador/v2/callbacks/recebidos
+ * {
+ *   "ids": [1, 2, 3, 4, 5]
+ * }
+ * // Resposta (204) No Content
+ */
+escavador.post('/v2/callbacks/recebidos', async (c) => {
+  const body = await c.req.json().catch(() => null);
+  if (!body) return c.json({ error: 'Body inválido' }, 400);
+
+  const parsed = z.object({ ids: z.array(z.number().int()).min(1).max(20) }).safeParse(body);
+  if (!parsed.success) return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+
+  const op = new MarcarCallbacksRecebidosV2(buildHttpV2());
+  const result = await op.execute({ ids: parsed.data.ids });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V2, fonte: 'v2/callbacks/recebidos', tipo_param: null, param: null, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V2, fonte: 'v2/callbacks/recebidos', tipo_param: null, param: null, result: null, status: 'success', created_at: new Date() });
+  return c.body(null, 204);
+});
+
+/**
+ * @route POST /v2/callbacks/:id/reenviar
+ * @description Reenviar um callback específico
+ * @param {number} id - ID do callback
+ * @returns {Object} Confirmação de reenvio com novo status
+ * @status 200 - Reenvio processado com sucesso
+ * @status 400 - ID inválido
+ * @status 500 - Erro ao reenviar callback
+ * @example
+ * POST /api/escavador/v2/callbacks/1/reenviar
+ * // Resposta (200)
+ * {
+ *   "id": 1,
+ *   "status": "resent",
+ *   "tentativas": 2,
+ *   "resent_at": "2024-05-27T10:31:00Z"
+ * }
+ */
+escavador.post('/v2/callbacks/:id/reenviar', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+
+  const op = new ReenviarCallbackV2(buildHttpV2());
+  const result = await op.execute({ id });
+  if (isLeft(result)) {
+    rawStore.save({ gateway: GW_V2, fonte: 'v2/callbacks/reenviar', tipo_param: 'id', param: String(id), result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
+  }
+  rawStore.save({ gateway: GW_V2, fonte: 'v2/callbacks/reenviar', tipo_param: 'id', param: String(id), result: result.value, status: 'success', created_at: new Date() });
+  return c.json(result.value, 200);
+});
+
+// ──── Certificados V2 ────
+
+/**
+ * @route GET /v2/certificados
+ * @description Listar certificados digitais (e-CNPJ/e-CPF) cadastrados
+ * @returns {Array} Array de certificados com metadados
+ * @status 200 - Certificados listados com sucesso
+ * @status 500 - Erro ao consultar API Escavador
  * @example
  * GET /api/escavador/v2/certificados
  * // Resposta (200)
