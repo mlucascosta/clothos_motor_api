@@ -112,7 +112,7 @@ const escavador = new Hono();
 
 // ──── Saldo ────
 
-escavador.get('/saldo', async (c) => {
+escavador.get('/v1/saldo', async (c) => {
   const op = new ObterSaldo(buildHttpV1());
   const result = await op.execute();
   if (isLeft(result)) {
@@ -125,7 +125,7 @@ escavador.get('/saldo', async (c) => {
 
 // ──── Buscas Assíncronas ────
 
-escavador.get('/buscas-assincronas', async (c) => {
+escavador.get('/v1/buscas-assincronas', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
   const op = new ListarBuscasAssincronas(buildHttpV1());
   const result = await op.execute({ pagina });
@@ -137,7 +137,7 @@ escavador.get('/buscas-assincronas', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.get('/buscas-assincronas/:id', async (c) => {
+escavador.get('/v1/buscas-assincronas/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -153,7 +153,7 @@ escavador.get('/buscas-assincronas/:id', async (c) => {
 
 // ──── Processos — Buscas Assíncronas (iniciar) ────
 
-escavador.post('/processos/tribunal/cpf-cnpj', async (c) => {
+escavador.post('/v1/processos/tribunal/cpf-cnpj', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
@@ -176,7 +176,7 @@ escavador.post('/processos/tribunal/cpf-cnpj', async (c) => {
   return c.json(result.value, 202);
 });
 
-escavador.post('/processos/tribunal/envolvido', async (c) => {
+escavador.post('/v1/processos/tribunal/envolvido', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
@@ -199,7 +199,7 @@ escavador.post('/processos/tribunal/envolvido', async (c) => {
   return c.json(result.value, 202);
 });
 
-escavador.post('/processos/tribunal/oab', async (c) => {
+escavador.post('/v1/processos/tribunal/oab', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
@@ -222,7 +222,7 @@ escavador.post('/processos/tribunal/oab', async (c) => {
   return c.json(result.value, 202);
 });
 
-escavador.post('/processos/administrativo/nup', async (c) => {
+escavador.post('/v1/processos/administrativo/nup', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
@@ -239,7 +239,7 @@ escavador.post('/processos/administrativo/nup', async (c) => {
   return c.json(result.value, 202);
 });
 
-escavador.post('/processos/pesquisar', async (c) => {
+escavador.post('/v1/processos/pesquisar', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
@@ -262,7 +262,7 @@ escavador.post('/processos/pesquisar', async (c) => {
   return c.json(result.value, 202);
 });
 
-escavador.post('/processos/tribunal/lote', async (c) => {
+escavador.post('/v1/processos/tribunal/lote', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
@@ -299,7 +299,7 @@ escavador.post('/processos/tribunal/lote', async (c) => {
 
 // ──── Processos — Diários Oficiais ────
 
-escavador.get('/processos/diarios-oficiais/numero', async (c) => {
+escavador.get('/v1/processos/diarios-oficiais/numero', async (c) => {
   const numero = c.req.query('numero') ?? '';
   if (!numero) return c.json({ error: 'Parâmetro numero obrigatório' }, 400);
 
@@ -313,7 +313,7 @@ escavador.get('/processos/diarios-oficiais/numero', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.get('/processos/diarios-oficiais/oab', async (c) => {
+escavador.get('/v1/processos/diarios-oficiais/oab', async (c) => {
   const oab = c.req.query('oab') ?? '';
   if (!oab) return c.json({ error: 'Parâmetro oab obrigatório' }, 400);
 
@@ -329,7 +329,7 @@ escavador.get('/processos/diarios-oficiais/oab', async (c) => {
 
 // ──── Processos — Detalhes ────
 
-escavador.get('/processos/:numero_cnj', async (c) => {
+escavador.get('/v1/processos/:numero_cnj', async (c) => {
   const numeroCnj = c.req.param('numero_cnj');
   const op = new ObterDetalhesProcesso(buildHttpV1());
   const result = await op.execute({ numeroCnj });
@@ -341,7 +341,7 @@ escavador.get('/processos/:numero_cnj', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.get('/processos/:numero_cnj/movimentacoes', async (c) => {
+escavador.get('/v1/processos/:numero_cnj/movimentacoes', async (c) => {
   const numeroCnj = c.req.param('numero_cnj');
   const pagina = Number(c.req.query('page') ?? '1');
   const op = new ObterMovimentacoesProcesso(buildHttpV1());
@@ -354,7 +354,7 @@ escavador.get('/processos/:numero_cnj/movimentacoes', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.get('/processos/:id/envolvidos-diarios', async (c) => {
+escavador.get('/v1/processos/:id/envolvidos-diarios', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -370,7 +370,7 @@ escavador.get('/processos/:id/envolvidos-diarios', async (c) => {
 
 // ──── Movimentações ────
 
-escavador.get('/movimentacoes/:id', async (c) => {
+escavador.get('/v1/movimentacoes/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -386,7 +386,7 @@ escavador.get('/movimentacoes/:id', async (c) => {
 
 // ──── Busca Geral ────
 
-escavador.get('/busca', async (c) => {
+escavador.get('/v1/busca', async (c) => {
   const query = c.req.query('q') ?? '';
   if (!query) return c.json({ error: 'Parâmetro q obrigatório' }, 400);
 
@@ -407,7 +407,7 @@ escavador.get('/busca', async (c) => {
 
 // ──── Pessoas ────
 
-escavador.get('/pessoas/:id', async (c) => {
+escavador.get('/v1/pessoas/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -421,7 +421,7 @@ escavador.get('/pessoas/:id', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.get('/pessoas/:id/processos', async (c) => {
+escavador.get('/v1/pessoas/:id/processos', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -436,7 +436,7 @@ escavador.get('/pessoas/:id/processos', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.get('/pessoas/:id/publicacoes', async (c) => {
+escavador.get('/v1/pessoas/:id/publicacoes', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -453,7 +453,7 @@ escavador.get('/pessoas/:id/publicacoes', async (c) => {
 
 // ──── Instituições ────
 
-escavador.get('/instituicoes/:id', async (c) => {
+escavador.get('/v1/instituicoes/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -467,7 +467,7 @@ escavador.get('/instituicoes/:id', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.get('/instituicoes/:id/pessoas', async (c) => {
+escavador.get('/v1/instituicoes/:id/pessoas', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -482,7 +482,7 @@ escavador.get('/instituicoes/:id/pessoas', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.get('/instituicoes/:id/processos', async (c) => {
+escavador.get('/v1/instituicoes/:id/processos', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -525,7 +525,7 @@ const EditarMonitoramentoTribunalSchema = z.object({
   callback_url: z.string().url().optional(),
 });
 
-escavador.get('/monitoramentos', async (c) => {
+escavador.get('/v1/monitoramentos', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
   const ativoRaw = c.req.query('ativo');
   const ativo = ativoRaw === 'true' ? true : ativoRaw === 'false' ? false : undefined;
@@ -542,7 +542,7 @@ escavador.get('/monitoramentos', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.post('/monitoramentos', async (c) => {
+escavador.post('/v1/monitoramentos', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
@@ -567,7 +567,7 @@ escavador.post('/monitoramentos', async (c) => {
   return c.json(result.value, 201);
 });
 
-escavador.get('/monitoramentos/:id', async (c) => {
+escavador.get('/v1/monitoramentos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -581,7 +581,7 @@ escavador.get('/monitoramentos/:id', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.put('/monitoramentos/:id', async (c) => {
+escavador.put('/v1/monitoramentos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -606,7 +606,7 @@ escavador.put('/monitoramentos/:id', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.delete('/monitoramentos/:id', async (c) => {
+escavador.delete('/v1/monitoramentos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -620,7 +620,7 @@ escavador.delete('/monitoramentos/:id', async (c) => {
   return c.body(null, 204);
 });
 
-escavador.get('/monitoramentos/:id/aparicoes', async (c) => {
+escavador.get('/v1/monitoramentos/:id/aparicoes', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -635,7 +635,7 @@ escavador.get('/monitoramentos/:id/aparicoes', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.post('/monitoramentos/:id/testar-callback', async (c) => {
+escavador.post('/v1/monitoramentos/:id/testar-callback', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -649,7 +649,7 @@ escavador.post('/monitoramentos/:id/testar-callback', async (c) => {
   return c.body(null, 204);
 });
 
-escavador.get('/monitoramentos/:id/origens', async (c) => {
+escavador.get('/v1/monitoramentos/:id/origens', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -665,7 +665,7 @@ escavador.get('/monitoramentos/:id/origens', async (c) => {
 
 // ──── Monitoramentos Tribunal ────
 
-escavador.get('/monitoramentos/tribunal', async (c) => {
+escavador.get('/v1/monitoramentos/tribunal', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
   const ativoRaw = c.req.query('ativo');
   const ativo = ativoRaw === 'true' ? true : ativoRaw === 'false' ? false : undefined;
@@ -682,7 +682,7 @@ escavador.get('/monitoramentos/tribunal', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.post('/monitoramentos/tribunal', async (c) => {
+escavador.post('/v1/monitoramentos/tribunal', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
@@ -706,7 +706,7 @@ escavador.post('/monitoramentos/tribunal', async (c) => {
   return c.json(result.value, 201);
 });
 
-escavador.get('/monitoramentos/tribunal/:id', async (c) => {
+escavador.get('/v1/monitoramentos/tribunal/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -720,7 +720,7 @@ escavador.get('/monitoramentos/tribunal/:id', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.put('/monitoramentos/tribunal/:id', async (c) => {
+escavador.put('/v1/monitoramentos/tribunal/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -744,7 +744,7 @@ escavador.put('/monitoramentos/tribunal/:id', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.delete('/monitoramentos/tribunal/:id', async (c) => {
+escavador.delete('/v1/monitoramentos/tribunal/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -760,7 +760,7 @@ escavador.delete('/monitoramentos/tribunal/:id', async (c) => {
 
 // ──── Callbacks V1 ────
 
-escavador.get('/callbacks', async (c) => {
+escavador.get('/v1/callbacks', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
   const op = new ListarCallbacks(buildHttpV1());
   const result = await op.execute({ pagina });
@@ -772,7 +772,7 @@ escavador.get('/callbacks', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.post('/callbacks/recebidos', async (c) => {
+escavador.post('/v1/callbacks/recebidos', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
@@ -789,7 +789,7 @@ escavador.post('/callbacks/recebidos', async (c) => {
   return c.body(null, 204);
 });
 
-escavador.post('/callbacks/reenviar', async (c) => {
+escavador.post('/v1/callbacks/reenviar', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
@@ -808,7 +808,7 @@ escavador.post('/callbacks/reenviar', async (c) => {
 
 // ──── Auxiliares ────
 
-escavador.get('/tribunais', async (c) => {
+escavador.get('/v1/tribunais', async (c) => {
   const tipo = c.req.query('tipo');
   const op = new ListarTribunais(buildHttpV1());
   const input: { tipo?: string } = {};
@@ -822,7 +822,7 @@ escavador.get('/tribunais', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.get('/tribunais/:id', async (c) => {
+escavador.get('/v1/tribunais/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
@@ -836,7 +836,7 @@ escavador.get('/tribunais/:id', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.get('/orgaos-administrativos', async (c) => {
+escavador.get('/v1/orgaos-administrativos', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
   const op = new ListarOrgaosAdministrativos(buildHttpV1());
   const result = await op.execute({ pagina });
@@ -848,7 +848,7 @@ escavador.get('/orgaos-administrativos', async (c) => {
   return c.json(result.value, 200);
 });
 
-escavador.get('/diarios-oficiais/origens', async (c) => {
+escavador.get('/v1/diarios-oficiais/origens', async (c) => {
   const estado = c.req.query('estado');
   const op = new ListarOrigensDiariosOficiais(buildHttpV1());
   const input: { estado?: string } = {};
