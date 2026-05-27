@@ -20,8 +20,13 @@ describe('SourceError', () => {
   });
 
   it.each([
-    'TIMEOUT', 'SCHEMA_MISMATCH', 'AUTH_FAILED',
-    'CIRCUIT_OPEN', 'RATE_LIMITED', 'NOT_FOUND', 'UPSTREAM_ERROR',
+    'TIMEOUT',
+    'SCHEMA_MISMATCH',
+    'AUTH_FAILED',
+    'CIRCUIT_OPEN',
+    'RATE_LIMITED',
+    'NOT_FOUND',
+    'UPSTREAM_ERROR',
   ] as const)('aceita kind válido: %s', (kind) => {
     expect(() => new SourceError(kind, 'src')).not.toThrow();
   });

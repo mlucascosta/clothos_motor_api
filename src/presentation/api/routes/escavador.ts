@@ -2175,10 +2175,12 @@ escavador.get('/v2/envolvido/processos', async (c) => {
   const input: Parameters<typeof op.execute>[0] = {};
   const nome = c.req.query('nome');
   const cpf_cnpj = c.req.query('cpf_cnpj');
-  const pagina = Number(c.req.query('page') ?? '1');
+  const cursor = c.req.query('cursor');
+  const li = c.req.query('li');
   if (nome !== undefined) input.nome = nome;
   if (cpf_cnpj !== undefined) input.cpf_cnpj = cpf_cnpj;
-  input.pagina = pagina;
+  if (cursor !== undefined) input.cursor = cursor;
+  if (li !== undefined) input.li = li;
   const result = await op.execute(input);
   const tipoParam = cpf_cnpj !== undefined ? 'cpf_cnpj' : nome !== undefined ? 'nome' : null;
   const paramVal = cpf_cnpj ?? nome ?? null;

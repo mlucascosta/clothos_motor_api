@@ -1,4 +1,4 @@
-import { left, right, type Either } from '../domain/Either.js';
+import { type Either, left, right } from '../domain/Either.js';
 import { SourceError } from '../domain/errors/SourceError.js';
 import type { HttpRequestOptions, IHttpClient } from './IHttpClient.js';
 
@@ -90,7 +90,10 @@ export class FetchHttpClient implements IHttpClient {
    * @param options Opções de requisição (método, body, headers, etc)
    * @returns Either contendo sucesso ou erro estruturado
    */
-  async request<T>(path: string, options: HttpRequestOptions = {}): Promise<Either<SourceError, T>> {
+  async request<T>(
+    path: string,
+    options: HttpRequestOptions = {},
+  ): Promise<Either<SourceError, T>> {
     const url = this.buildUrl(path, options.params);
     const timeoutMs = options.timeoutMs ?? this.config.defaultTimeoutMs ?? 30_000;
     const source = this.config.sourceName ?? 'http';
