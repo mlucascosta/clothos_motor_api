@@ -1,0 +1,27 @@
+/**
+ * @fileoverview Operation — Registradores / Matrícula Download
+ * Endpoint: POST consultas/registradores/matric/download
+ * @module infrastructure/providers/infosimples/operations/RegistradoresMatricDownload
+ */
+import type { Either } from '../../../../shared/domain/Either.js';
+import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
+import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
+import type { IInfosimplesOperation } from '../ports/IInfosimplesOperation.js';
+import { RegistradoresMatricDownloadResponseSchema, type RegistradoresMatricDownloadItem } from '../dtos/RegistradoresMatricDownloadDto.js';
+
+export class RegistradoresMatricDownload implements IInfosimplesOperation<RegistradoresMatricDownloadItem> {
+  readonly path = 'consultas/registradores/matric/download';
+
+  constructor(private readonly http: IHttpClient) {}
+
+  async execute(params: Record<string, string | undefined>): Promise<Either<SourceError, unknown>> {
+    const cleanParams: Record<string, string> = {};
+    for (const [k, v] of Object.entries(params)) {
+      if (v !== undefined && v !== '') cleanParams[k] = v;
+    }
+    const result = await this.http.request<unknown>(this.path, { method: 'POST', params: cleanParams });
+    if (result._tag === 'Left') return result;
+    return parseOrSchemaError(RegistradoresMatricDownloadResponseSchema, result.value, 'infosimples');
+  }
+}

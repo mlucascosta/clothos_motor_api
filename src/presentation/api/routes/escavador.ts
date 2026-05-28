@@ -199,6 +199,8 @@ import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { z } from 'zod';
 import { handleOp, handleOpVoid } from '../../../shared/infrastructure/handleOp.js';
+import { isLeft } from '../../../shared/domain/Either.js';
+import { rawStore } from '../../../infrastructure/persistence/index.js';
 import { EscavadorHttpClient } from '../../../infrastructure/providers/escavador/EscavadorHttpClient.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1034,32 +1036,9 @@ escavador.get('/v1/monitoramentos/:id/aparicoes', async (c) => {
 escavador.post('/v1/monitoramentos/:id/testar-callback', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-
-  const op = new TestarCallbackMonitoramento(buildHttp());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: 'escavador-v1',
-      fonte: 'monitoramentos/testar-callback',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: 'escavador-v1',
-    fonte: 'monitoramentos/testar-callback',
-    tipo_param: 'id',
-    param: String(id),
-    result: null,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.body(null, 204);
+  return handleOpVoid(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/testar-callback', tipo_param: 'id', param: String(id) }, () =>
+    new TestarCallbackMonitoramento(buildHttp()).execute({ id }),
+  );
 });
 
 escavador.get('/v1/monitoramentos/:id/origens', async (c) => {
@@ -1100,31 +1079,9 @@ escavador.post('/v1/callbacks/marcar-recebidos', async (c) => {
   if (!parsed.success)
     return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
 
-  const op = new MarcarCallbacksRecebidos(buildHttp());
-  const result = await op.execute({ ids: parsed.data.ids });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: 'escavador-v1',
-      fonte: 'callbacks/recebidos',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: 'escavador-v1',
-    fonte: 'callbacks/recebidos',
-    tipo_param: null,
-    param: null,
-    result: null,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.body(null, 204);
+  return handleOpVoid(c, { gateway: 'escavador-v1', fonte: 'callbacks/recebidos', tipo_param: null, param: null }, () =>
+    new MarcarCallbacksRecebidos(buildHttp()).execute({ ids: parsed.data.ids }),
+  );
 });
 
 escavador.post('/v1/callbacks/:id/reenviar', async (c) => {
@@ -2064,31 +2021,11 @@ escavador.post('/v2/callbacks/recebidos', async (c) => {
   if (!parsed.success)
     return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
 
-  const op = new MarcarCallbacksRecebidosV2(buildHttp());
-  const result = await op.execute({ ids: parsed.data.ids });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: 'escavador-v2',
-      fonte: 'v2/callbacks/recebidos',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: 'escavador-v2',
-    fonte: 'v2/callbacks/recebidos',
-    tipo_param: null,
-    param: null,
-    result: null,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.body(null, 204);
+  return handleOpVoid(
+    c,
+    { gateway: 'escavador-v2', fonte: 'v2/callbacks/recebidos', tipo_param: null, param: null },
+    () => new MarcarCallbacksRecebidosV2(buildHttp()).execute({ ids: parsed.data.ids }),
+  );
 });
 
 /**
