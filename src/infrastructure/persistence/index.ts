@@ -7,6 +7,7 @@
 import { MongoRawResultStore } from './MongoRawResultStore.js';
 
 export { MongoRawResultStore };
+export type { IRawResultStore } from './IRawResultStore.js';
 export type { RawResultDoc } from './RawResultDoc.js';
 
 /**

@@ -27,20 +27,23 @@ import {
   isValidTribunal,
 } from '../../../infrastructure/providers/datajud/DataJudTribunais.js';
 import {
-  DataJudClasseRequestSchema,
   DataJudEnvolvidoRequestSchema,
   DataJudOrgaoRequestSchema,
+  DataJudClasseRequestSchema,
   DataJudProcessoRequestSchema,
   DataJudSearchRequestSchema,
 } from '../../../infrastructure/providers/datajud/dtos/DataJudSearchRequestDto.js';
 import { BuscarGenericoDataJud } from '../../../infrastructure/providers/datajud/operations/BuscarGenericoDataJud.js';
 import { BuscarProcessoPorNumero } from '../../../infrastructure/providers/datajud/operations/BuscarProcessoPorNumero.js';
+import { BuscarPorClasse } from '../../../infrastructure/providers/datajud/operations/BuscarPorClasse.js';
+import { BuscarPorOrgaoJulgador } from '../../../infrastructure/providers/datajud/operations/BuscarPorOrgaoJulgador.js';
+import { BuscarPorEnvolvido } from '../../../infrastructure/providers/datajud/operations/BuscarPorEnvolvido.js';
 
 const GW = 'datajud';
 const BASE_URL = 'https://api-publica.datajud.cnj.jus.br';
 
 function buildHttp(): DataJudHttpClient {
-  const apiKey = process.env['DATAJUD_APIKEY'] ?? 'APIKey cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==';
+  const apiKey = process.env['DATAJUD_APIKEY'] ?? '';
   return new DataJudHttpClient(apiKey, BASE_URL);
 }
 
@@ -124,20 +127,16 @@ datajud.post('/classe', async (c) => {
   if (!parsed.success)
     return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
 
-  const query: Record<string, unknown> = parsed.data.classeCodigo !== undefined
-    ? { term: { 'classe.codigo': parsed.data.classeCodigo } }
-    : { match: { classe: parsed.data.classeNome } };
-
-  const dslBody = {
-    query,
-    size: parsed.data.size,
-  };
-
   const paramValue = String(parsed.data.classeCodigo ?? parsed.data.classeNome ?? '');
   const tipoParam = parsed.data.classeCodigo !== undefined ? 'classeCodigo' : 'classeNome';
 
   return handleOp(c, { gateway: GW, fonte: 'classe', tipo_param: tipoParam, param: paramValue }, () =>
-    new BuscarGenericoDataJud(buildHttp()).execute({ sigla, body: dslBody }),
+    new BuscarPorClasse(buildHttp()).execute({
+      sigla,
+      classeNome: parsed.data.classeNome,
+      classeCodigo: parsed.data.classeCodigo,
+      size: parsed.data.size,
+    }),
   );
 });
 
@@ -156,17 +155,12 @@ datajud.post('/orgao-julgador', async (c) => {
   if (!parsed.success)
     return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
 
-  const dslBody = {
-    query: {
-      match: {
-        'orgaoJulgador.nome': parsed.data.orgaoJulgador,
-      },
-    },
-    size: parsed.data.size,
-  };
-
   return handleOp(c, { gateway: GW, fonte: 'orgao-julgador', tipo_param: 'orgaoJulgador', param: parsed.data.orgaoJulgador }, () =>
-    new BuscarGenericoDataJud(buildHttp()).execute({ sigla, body: dslBody }),
+    new BuscarPorOrgaoJulgador(buildHttp()).execute({
+      sigla,
+      orgaoJulgador: parsed.data.orgaoJulgador,
+      size: parsed.data.size,
+    }),
   );
 });
 
@@ -189,28 +183,16 @@ datajud.post('/envolvido', async (c) => {
     return c.json({ error: 'Informe nome ou cpfCnpj' }, 422);
   }
 
-  const must: Array<Record<string, unknown>> = [];
-  if (parsed.data.nome) {
-    must.push({ match: { 'partes.nome': parsed.data.nome } });
-  }
-  if (parsed.data.cpfCnpj) {
-    must.push({ match: { 'partes.documento': parsed.data.cpfCnpj } });
-  }
-
-  const dslBody = {
-    query: {
-      bool: {
-        must,
-      },
-    },
-    size: parsed.data.size,
-  };
-
   const tipoParam = parsed.data.cpfCnpj ? 'cpf_cnpj' : 'nome';
   const paramValue = parsed.data.nome ?? parsed.data.cpfCnpj ?? '';
 
   return handleOp(c, { gateway: GW, fonte: 'envolvido', tipo_param: tipoParam, param: paramValue }, () =>
-    new BuscarGenericoDataJud(buildHttp()).execute({ sigla, body: dslBody }),
+    new BuscarPorEnvolvido(buildHttp()).execute({
+      sigla,
+      nome: parsed.data.nome,
+      cpfCnpj: parsed.data.cpfCnpj,
+      size: parsed.data.size,
+    }),
   );
 });
 

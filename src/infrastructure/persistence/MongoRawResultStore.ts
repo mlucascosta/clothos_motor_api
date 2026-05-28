@@ -5,9 +5,10 @@
  * @module infrastructure/persistence/MongoRawResultStore
  */
 
-import { createHash } from 'node:crypto';
 import { type Collection, MongoClient } from 'mongodb';
+import type { IRawResultStore } from './IRawResultStore.js';
 import type { RawResultDoc } from './RawResultDoc.js';
+import { hashCpfIfNeeded } from '../../shared/domain/privacy/hashCpf.js';
 
 /**
  * Store de resultados brutos em MongoDB.
@@ -19,29 +20,13 @@ import type { RawResultDoc } from './RawResultDoc.js';
  *
  * @class MongoRawResultStore
  */
-export class MongoRawResultStore {
+export class MongoRawResultStore implements IRawResultStore {
   /** @type {MongoClient | null} Cliente MongoDB (singleton) */
   private client: MongoClient | null = null;
   /** @type {Collection<RawResultDoc> | null} Collection raw_results */
   private collection: Collection<RawResultDoc> | null = null;
   /** @type {boolean} Flag para evitar múltiplas conexões concorrentes */
   private connecting = false;
-
-  /**
-   * Realiza hash SHA-256 de CPF se tipo_param for 'cpf_cnpj' e param for CPF válido (11 dígitos).
-   * CNPJ é ignorado (armazenado em texto claro, dado público).
-   *
-   * @private
-   * @param {string | null} tipoParam - Tipo do parâmetro ('cpf_cnpj', 'cnpj_puro', etc.)
-   * @param {string | null} param - Valor do parâmetro
-   * @returns {string | null} Valor original ou hash SHA-256 do CPF
-   */
-  private maybeHashCpf(tipoParam: string | null, param: string | null): string | null {
-    if (tipoParam === 'cpf_cnpj' && param !== null && /^\d{11}$/.test(param.replace(/\D/g, ''))) {
-      return createHash('sha256').update(param.replace(/\D/g, '')).digest('hex');
-    }
-    return param;
-  }
 
   /**
    * Conecta ao MongoDB na primeira chamada (lazy singleton).
@@ -91,7 +76,7 @@ export class MongoRawResultStore {
   save(doc: RawResultDoc): void {
     const safeDoc: RawResultDoc = {
       ...doc,
-      param: this.maybeHashCpf(doc.tipo_param, doc.param),
+      param: hashCpfIfNeeded(doc.tipo_param, doc.param),
     };
 
     this.connect()

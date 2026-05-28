@@ -9,15 +9,11 @@
  */
 
 import { Hono } from 'hono';
-import type { Context } from 'hono';
-import { rawStore } from '../../../infrastructure/persistence/index.js';
+import { handleOp } from '../../../shared/infrastructure/handleOp.js';
 import { InfosimplesHttpClient } from '../../../infrastructure/providers/infosimples/InfosimplesHttpClient.js';
 import { resolveOperation } from '../../../infrastructure/providers/infosimples/operations/registry.js';
 import type { OneOfGroup, ValidationRule } from '../../../infrastructure/providers/infosimples/operations/validation-map.js';
 import { infosimplesRequiredParams } from '../../../infrastructure/providers/infosimples/operations/validation-map.js';
-import { isLeft } from '../../../shared/domain/Either.js';
-import type { Either } from '../../../shared/domain/Either.js';
-import type { SourceError } from '../../../shared/domain/errors/SourceError.js';
 
 const GW = 'infosimples';
 const BASE_URL = 'https://api.infosimples.com/api/v2/';
@@ -55,37 +51,6 @@ function validateParams(
 }
 
 const infosimples = new Hono();
-
-async function handleOp<T>(
-  c: Context,
-  opts: {
-    gateway: string;
-    fonte: string;
-    tipo_param: string | null;
-    param: string | null;
-  },
-  execute: () => Promise<Either<SourceError, T>>,
-): Promise<Response> {
-  const result = await execute();
-  const base = {
-    gateway: opts.gateway,
-    fonte: opts.fonte,
-    tipo_param: opts.tipo_param,
-    param: opts.param,
-    created_at: new Date(),
-  };
-  if (isLeft(result)) {
-    rawStore.save({
-      ...base,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500) as Response;
-  }
-  rawStore.save({ ...base, result: result.value, status: 'success' });
-  return c.json(result.value, 200) as Response;
-}
 
 /**
  * POST /api/infosimples/:endpoint

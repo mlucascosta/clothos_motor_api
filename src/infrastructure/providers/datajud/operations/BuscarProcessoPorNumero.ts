@@ -31,7 +31,9 @@ export interface BuscarProcessoPorNumeroInput {
  *
  * @class BuscarProcessoPorNumero
  */
-export class BuscarProcessoPorNumero {
+import type { IBuscarProcessoPorNumero } from './IBuscarProcessoPorNumero.js';
+
+export class BuscarProcessoPorNumero implements IBuscarProcessoPorNumero {
   /**
    * @param {IHttpClient} http - Cliente HTTP ao DataJud
    */

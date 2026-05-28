@@ -8,7 +8,7 @@ import { left, right, type Either } from '../../../shared/domain/Either.js';
 import { SourceError } from '../../../shared/domain/errors/SourceError.js';
 import type { ISourceExecutor, SourceContext, SourceResult } from '../../../application/queries/ports/ISourceExecutor.js';
 import { extrairSiglaDoCNJ } from './CNJHelper.js';
-import { BuscarProcessoPorNumero } from './operations/BuscarProcessoPorNumero.js';
+import type { IBuscarProcessoPorNumero } from './operations/IBuscarProcessoPorNumero.js';
 
 /**
  * Executor de consultas DataJud.
@@ -20,7 +20,7 @@ import { BuscarProcessoPorNumero } from './operations/BuscarProcessoPorNumero.js
 export class DataJudExecutor implements ISourceExecutor {
   readonly sourceName = 'datajud';
 
-  constructor(private readonly buscarPorNumero: BuscarProcessoPorNumero) {}
+  constructor(private readonly buscarPorNumero: IBuscarProcessoPorNumero) {}
 
   async execute(context: SourceContext): Promise<Either<SourceError, SourceResult>> {
     const start = Date.now();
