@@ -1,12 +1,10 @@
 /**
  * @fileoverview Registry/factory de todas as operations do DirectData.
- * Mapeia nome do endpoint → factory function que cria a operation.
  * @module infrastructure/providers/directdata/operations/registry
  */
 
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
 import type { IDirectDataOperation } from '../ports/IDirectDataOperation.js';
-import { AbstractDirectDataOperation } from './AbstractDirectDataOperation.js';
 
 import { AML } from './AML.js';
 import { ANTTConsultaRegularidadeTransportadora } from './ANTTConsultaRegularidadeTransportadora.js';
@@ -137,16 +135,8 @@ import { VerificacaoEmpregadorTrabalhoForcado } from './VerificacaoEmpregadorTra
 import { VinculoEmpregaticio } from './VinculoEmpregaticio.js';
 import { VinculosSocietarios } from './VinculosSocietarios.js';
 
-/**
- * Tipo da factory function que cria uma operation.
- */
-type OperationFactory = (http: IHttpClient) => IDirectDataOperation;
+type OperationFactory = (http: IHttpClient) => IDirectDataOperation<unknown>;
 
-/**
- * Mapa de registro de todas as operations do DirectData.
- * Chave = nome da classe (ex: 'CadastroPessoaFisica').
- * Valor = factory function que recebe IHttpClient e retorna a operation.
- */
 export const directDataRegistry: Record<string, OperationFactory> = {
   AML: (http) => new AML(http),
   ANTTConsultaRegularidadeTransportadora: (http) =>
@@ -257,8 +247,8 @@ export const directDataRegistry: Record<string, OperationFactory> = {
   Score: (http) => new Score(http),
   SeguroDefeso: (http) => new SeguroDefeso(http),
   Similarity: (http) => new Similarity(http),
-  SimilarityArgentina: (http) => new SimilarityArgentina(http),
   SimilarityCrypt: (http) => new SimilarityCrypt(http),
+  SimilarityArgentina: (http) => new SimilarityArgentina(http),
   SimilarityMexico: (http) => new SimilarityMexico(http),
   SimplesNacional: (http) => new SimplesNacional(http),
   Sintegra: (http) => new Sintegra(http),
@@ -283,21 +273,10 @@ export const directDataRegistry: Record<string, OperationFactory> = {
   VinculosSocietarios: (http) => new VinculosSocietarios(http),
 };
 
-/**
- * Resolve o nome do endpoint para a operation correspondente.
- * Fallback para AbstractDirectDataOperation genérica se não encontrada.
- *
- * @param {string} name - Nome do endpoint (ex: 'CadastroPessoaFisica')
- * @param {IHttpClient} http - Cliente HTTP
- * @returns {IDirectDataOperation} Operation concreta ou genérica
- */
-export function resolveOperation(name: string, http: IHttpClient): IDirectDataOperation {
+export function resolveOperation(name: string, http: IHttpClient): IDirectDataOperation<unknown> {
   const factory = directDataRegistry[name];
   if (factory) {
     return factory(http);
   }
-  // Fallback: cria operation genérica com o path correspondente
-  return new (class extends AbstractDirectDataOperation {
-    readonly path = `/api/${name}`;
-  })(http);
+  throw new Error(`Operation '${name}' não encontrada no registry`);
 }

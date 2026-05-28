@@ -4,14 +4,46 @@
  * @module infrastructure/providers/directdata/operations/AcordosLeniencia
  */
 
-import { AbstractDirectDataOperation } from './AbstractDirectDataOperation.js';
+import type { Either } from '../../../../shared/domain/Either.js';
+import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
+import { AcordosLenienciaRetornoSchema } from '../dtos/AcordosLenienciaDto.js';
+import { DirectDataMetaDadosSchema } from '../dtos/DirectDataResponseDto.js';
+import type { IAcordosLeniencia } from '../ports/IAcordosLeniencia.js';
+import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
+import { z } from 'zod';
+
+const ResponseSchema = z.object({
+  metaDados: DirectDataMetaDadosSchema,
+  retorno: AcordosLenienciaRetornoSchema.nullable(),
+});
 
 /**
  * Operation para endpoint `AcordosLeniencia`.
  *
  * @class AcordosLeniencia
- * @extends {AbstractDirectDataOperation}
+ * @implements {IAcordosLeniencia}
  */
-export class AcordosLeniencia extends AbstractDirectDataOperation {
+export class AcordosLeniencia implements IAcordosLeniencia {
   readonly path = '/api/AcordosLeniencia';
+
+  constructor(private readonly http: IHttpClient) {}
+
+  async execute(params: Record<string, string | undefined>): Promise<Either<SourceError, ReturnType<typeof ResponseSchema.parse>>> {
+    const cleanParams: Record<string, string> = {};
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined && value !== '') {
+        cleanParams[key] = value;
+      }
+    }
+
+    const result = await this.http.request<unknown>(this.path, {
+      method: 'GET',
+      params: cleanParams,
+    });
+
+    if (result._tag === 'Left') return result;
+
+    return parseOrSchemaError(ResponseSchema, result.value, 'directdata');
+  }
 }

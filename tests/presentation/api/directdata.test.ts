@@ -142,17 +142,9 @@ describe('GET /api/directdata/:endpoint (DDD/SOLID)', () => {
     expect(saveSpy).not.toHaveBeenCalled();
   });
 
-  it('retorna 404 quando endpoint não existe', async () => {
+  it('retorna 500 quando endpoint não existe', async () => {
     const res = await app.request('/api/directdata/EndpointInexistente');
 
-    // O fallback cria uma operation genérica, então faz o request
-    expect(res.status).toBe(200);
-    expect(saveSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        gateway: 'directdata',
-        fonte: 'EndpointInexistente',
-        status: 'success',
-      }),
-    );
+    expect(res.status).toBe(500);
   });
 });

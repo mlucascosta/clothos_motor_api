@@ -6,33 +6,26 @@
 
 import type { Either } from '../../../../shared/domain/Either.js';
 import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { DirectDataResponseDto } from '../dtos/DirectDataResponseDto.js';
+import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 
 /**
- * Input genérico para qualquer operation DirectData.
- * Cada endpoint recebe query params específicos como Record.
- *
- * @interface DirectDataOperationInput
- */
-export interface DirectDataOperationInput {
-  params: Record<string, string | undefined>;
-}
-
-/**
- * Port que define o contrato de toda operation do DirectData.
- * Segue o padrão do projeto: uma interface por operação, implementação concreta separada.
+ * Port genérico que define o contrato de toda operation do DirectData.
+ * O tipo T representa o DTO específico do retorno de cada endpoint.
  *
  * @interface IDirectDataOperation
+ * @template T - Tipo do retorno específico do endpoint
  */
-export interface IDirectDataOperation {
+export interface IDirectDataOperation<T = unknown> {
   /** Path relativo do endpoint na API DirectData (ex: /api/CadastroPessoaFisica) */
   readonly path: string;
 
   /**
    * Executa a consulta no endpoint específico.
    *
-   * @param {DirectDataOperationInput} input - Query params da requisição
-   * @returns {Promise<Either<SourceError, DirectDataResponseDto>>} Resposta validada ou erro
+   * @param {Record<string, string | undefined>} params - Query params da requisição
+   * @returns {Promise<Either<SourceError, { metaDados: DirectDataMetaDados; retorno: T | null }>>} Resposta validada ou erro
    */
-  execute(input: DirectDataOperationInput): Promise<Either<SourceError, DirectDataResponseDto>>;
+  execute(
+    params: Record<string, string | undefined>,
+  ): Promise<Either<SourceError, { metaDados: DirectDataMetaDados; retorno: T | null }>>;
 }

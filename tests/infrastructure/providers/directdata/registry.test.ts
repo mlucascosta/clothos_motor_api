@@ -3,7 +3,6 @@
  * @module tests/infrastructure/providers/directdata/registry.test
  */
 
-import { AbstractDirectDataOperation } from '../../../../src/infrastructure/providers/directdata/operations/AbstractDirectDataOperation';
 import { CadastroPessoaFisica } from '../../../../src/infrastructure/providers/directdata/operations/CadastroPessoaFisica';
 import { OFAC } from '../../../../src/infrastructure/providers/directdata/operations/OFAC';
 import {
@@ -47,13 +46,13 @@ describe('resolveOperation', () => {
   });
 
   it('resolve Historico/ObterRetornoConsultaAsync para classe concreta', () => {
-    const op = resolveOperation('Historico/ObterRetornoConsultaAsync', mockHttp);
+    const op = resolveOperation('HistoricoObterRetornoConsultaAsync', mockHttp);
     expect(op.path).toBe('/api/Historico/ObterRetornoConsultaAsync');
   });
 
-  it('fallback cria AbstractDirectDataOperation genérica para endpoint desconhecido', () => {
-    const op = resolveOperation('EndpointDesconhecido', mockHttp);
-    expect(op).toBeInstanceOf(AbstractDirectDataOperation);
-    expect(op.path).toBe('/api/EndpointDesconhecido');
+  it('lança erro quando endpoint não está registrado', () => {
+    expect(() => resolveOperation('EndpointDesconhecido', mockHttp)).toThrow(
+      "Operation 'EndpointDesconhecido' não encontrada no registry",
+    );
   });
 });
