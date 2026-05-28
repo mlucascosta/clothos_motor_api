@@ -7,7 +7,7 @@
 import { type Either, left, right } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
-import { getDataJudEndpoint } from '../DataJudTribunais.js';
+import { getDataJudPath } from '../DataJudTribunais.js';
 import {
   type DataJudSearchResponseDto,
   DataJudSearchResponseSchema,
@@ -40,14 +40,12 @@ export class BuscarGenericoDataJud implements IBuscarGenericoDataJud {
   async execute(
     input: BuscarGenericoDataJudInput,
   ): Promise<Either<SourceError, DataJudSearchResponseDto>> {
-    const endpoint = getDataJudEndpoint(input.sigla);
-    if (!endpoint) {
+    const path = getDataJudPath(input.sigla);
+    if (!path) {
       return left(
         new SourceError('NOT_FOUND', 'datajud', `Tribunal '${input.sigla}' não encontrado`),
       );
     }
-
-    const path = endpoint.replace('https://api-publica.datajud.cnj.jus.br', '');
     const result = await this.http.request<unknown>(path, {
       method: 'POST',
       body: input.body,

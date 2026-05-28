@@ -15,7 +15,7 @@ import { SourceError } from '../../../shared/domain/errors/SourceError.js';
 import type { BuscaResultItem } from './dtos/BuscaGeralDto.js';
 import type { ProcessoResumido } from './dtos/PessoaDto.js';
 import type { IBuscarGeral } from './ports/IBuscarGeral.js';
-import type { IIniciarBuscaProcessosCpfCnpj } from './ports/IIniciarBuscaProcessosCpfCnpj.js';
+import type { IIniciarBuscaLote } from './operations/IniciarBuscaLote.js';
 import type { IObterBuscaAssincrona } from './ports/IObterBuscaAssincrona.js';
 import type { IObterInstituicao } from './ports/IObterInstituicao.js';
 import type { IObterPessoa } from './ports/IObterPessoa.js';
@@ -33,7 +33,7 @@ const MAX_POLL_ATTEMPTS = 10;
  * @property {IObterProcessosPessoa} obterProcessosPessoa - Listar processos de uma pessoa
  * @property {IObterInstituicao} obterInstituicao - Obter detalhes de instituição (empresa/CNPJ)
  * @property {IObterProcessosInstituicao} obterProcessosInstituicao - Listar processos de uma instituição
- * @property {IIniciarBuscaProcessosCpfCnpj} iniciarBuscaProcessosCpfCnpj - Iniciar busca assíncrona por CPF/CNPJ
+ * @property {IIniciarBuscaLote} iniciarBuscaLote - Iniciar busca assíncrona (por CPF/CNPJ ou nome)
  * @property {IObterBuscaAssincrona} obterBuscaAssincrona - Obter resultado de busca assíncrona
  */
 export interface EscavadorExecutorDeps {
@@ -42,7 +42,7 @@ export interface EscavadorExecutorDeps {
   obterProcessosPessoa: IObterProcessosPessoa;
   obterInstituicao: IObterInstituicao;
   obterProcessosInstituicao: IObterProcessosInstituicao;
-  iniciarBuscaProcessosCpfCnpj: IIniciarBuscaProcessosCpfCnpj;
+  iniciarBuscaLote: IIniciarBuscaLote;
   obterBuscaAssincrona: IObterBuscaAssincrona;
 }
 
@@ -156,7 +156,8 @@ export class EscavadorExecutor implements ISourceExecutor {
     context: SourceContext,
     start: number,
   ): Promise<Either<SourceError, SourceResult>> {
-    const iniciarResult = await this.deps.iniciarBuscaProcessosCpfCnpj.execute({
+    const iniciarResult = await this.deps.iniciarBuscaLote.execute({
+      tipo: 'busca_por_documento',
       cpfCnpj: context.identifier,
     });
 

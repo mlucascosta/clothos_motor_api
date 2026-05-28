@@ -199,7 +199,6 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { rawStore } from '../../../infrastructure/persistence/index.js';
 import { EscavadorHttpClient } from '../../../infrastructure/providers/escavador/EscavadorHttpClient.js';
-import { EscavadorV2HttpClient } from '../../../infrastructure/providers/escavador/EscavadorV2HttpClient.js';
 import { isLeft } from '../../../shared/domain/Either.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -219,8 +218,7 @@ import { EditarMonitoramentoTribunal } from '../../../infrastructure/providers/e
 import { IniciarBuscaProcesso } from '../../../infrastructure/providers/escavador/operations/IniciarBuscaProcesso.js';
 import { IniciarBuscaProcessoNup } from '../../../infrastructure/providers/escavador/operations/IniciarBuscaProcessoNup.js';
 // ──── Operations V1 ────
-import { IniciarBuscaProcessosCpfCnpj } from '../../../infrastructure/providers/escavador/operations/IniciarBuscaProcessosCpfCnpj.js';
-import { IniciarBuscaProcessosEnvolvido } from '../../../infrastructure/providers/escavador/operations/IniciarBuscaProcessosEnvolvido.js';
+import { IniciarBuscaLote } from '../../../infrastructure/providers/escavador/operations/IniciarBuscaLote.js';
 import { IniciarBuscaProcessosLote } from '../../../infrastructure/providers/escavador/operations/IniciarBuscaProcessosLote.js';
 import { IniciarBuscaProcessosOab } from '../../../infrastructure/providers/escavador/operations/IniciarBuscaProcessosOab.js';
 import { ListarCallbacks } from '../../../infrastructure/providers/escavador/operations/ListarCallbacks.js';
@@ -328,10 +326,10 @@ function buildHttpV1(): EscavadorHttpClient {
  * - Configura header automático: `Authorization: Bearer <token>`
  * - Timeout padrão: 30s
  */
-function buildHttpV2(): EscavadorV2HttpClient {
+function buildHttpV2(): EscavadorHttpClient {
   const apiKey = process.env['ESCAVADOR_API_KEY'] ?? '';
   const baseUrl = process.env['ESCAVADOR_BASE_URL'] ?? 'https://api.escavador.com';
-  return new EscavadorV2HttpClient(apiKey, baseUrl);
+  return new EscavadorHttpClient(apiKey, baseUrl, 'escavador-v2');
 }
 
 /** Router Hono que centraliza todas as rotas Escavador (V1 e V2) */
@@ -445,11 +443,12 @@ escavador.post('/v1/processos/tribunal/cpf-cnpj', async (c) => {
   if (!parsed.success)
     return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
 
-  const op = new IniciarBuscaProcessosCpfCnpj(buildHttpV1());
-  const input: Parameters<typeof op.execute>[0] = { cpfCnpj: parsed.data.cpf_cnpj };
-  if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
-
-  const result = await op.execute(input);
+  const op = new IniciarBuscaLote(buildHttpV1());
+  const result = await op.execute({
+    tipo: 'busca_por_documento',
+    cpfCnpj: parsed.data.cpf_cnpj,
+    ...(parsed.data.tribunais !== undefined ? { tribunais: parsed.data.tribunais } : {}),
+  });
   if (isLeft(result)) {
     rawStore.save({
       gateway: GW_V1,
@@ -499,11 +498,12 @@ escavador.post('/v1/processos/tribunal/envolvido', async (c) => {
   if (!parsed.success)
     return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
 
-  const op = new IniciarBuscaProcessosEnvolvido(buildHttpV1());
-  const input: Parameters<typeof op.execute>[0] = { nome: parsed.data.nome };
-  if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
-
-  const result = await op.execute(input);
+  const op = new IniciarBuscaLote(buildHttpV1());
+  const result = await op.execute({
+    tipo: 'busca_por_nome',
+    nome: parsed.data.nome,
+    ...(parsed.data.tribunais !== undefined ? { tribunais: parsed.data.tribunais } : {}),
+  });
   if (isLeft(result)) {
     rawStore.save({
       gateway: GW_V1,

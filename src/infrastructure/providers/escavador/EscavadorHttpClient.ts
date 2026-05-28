@@ -29,10 +29,10 @@ export class EscavadorHttpClient implements IHttpClient {
    * @param {string} apiKey - Chave API Escavador (autenticação)
    * @param {string} baseUrl - URL base da API (ex: https://api.escavador.com.br)
    */
-  constructor(apiKey: string, baseUrl: string) {
+  constructor(apiKey: string, baseUrl: string, sourceName = 'escavador') {
     this.http = new FetchHttpClient({
       baseUrl,
-      sourceName: 'escavador',
+      sourceName,
       defaultHeaders: {
         Authorization: `Bearer ${apiKey}`,
         Accept: 'application/json',

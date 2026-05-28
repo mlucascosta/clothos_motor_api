@@ -5,21 +5,25 @@ import {
   type IniciarBuscaLoteResponse,
   IniciarBuscaLoteResponseSchema,
 } from '../dtos/BuscaAssincronaDto.js';
-import type {
-  IIniciarBuscaProcessosEnvolvido,
-  IniciarBuscaProcessosEnvolvidoInput,
-} from '../ports/IIniciarBuscaProcessosEnvolvido.js';
 
-export class IniciarBuscaProcessosEnvolvido implements IIniciarBuscaProcessosEnvolvido {
+export type IniciarBuscaLoteInput =
+  | { tipo: 'busca_por_documento'; cpfCnpj: string; tribunais?: string[] }
+  | { tipo: 'busca_por_nome'; nome: string; tribunais?: string[] };
+
+export interface IIniciarBuscaLote {
+  execute(input: IniciarBuscaLoteInput): Promise<Either<SourceError, IniciarBuscaLoteResponse>>;
+}
+
+export class IniciarBuscaLote implements IIniciarBuscaLote {
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(
-    input: IniciarBuscaProcessosEnvolvidoInput,
-  ): Promise<Either<SourceError, IniciarBuscaLoteResponse>> {
-    const body: Record<string, unknown> = {
-      tipo: 'busca_por_nome',
-      nome: input.nome,
-    };
+  async execute(input: IniciarBuscaLoteInput): Promise<Either<SourceError, IniciarBuscaLoteResponse>> {
+    const body: Record<string, unknown> = { tipo: input.tipo };
+    if (input.tipo === 'busca_por_documento') {
+      body['numero_documento'] = input.cpfCnpj;
+    } else {
+      body['nome'] = input.nome;
+    }
     if (input.tribunais !== undefined) body['tribunais'] = input.tribunais;
 
     const result = await this.http.request<unknown>('/api/v1/tribunal/async/lote', {

@@ -503,6 +503,19 @@ export function getDataJudEndpoint(sigla: string): string | undefined {
 }
 
 /**
+ * Retorna o path relativo do tribunal para uso com IHttpClient.
+ * Equivalente a `getDataJudEndpoint(sigla)` sem o prefixo da base URL.
+ *
+ * @param {string} sigla - Sigla do tribunal (ex: 'tjsp')
+ * @returns {string | null} Path relativo (ex: '/api_publica_tjsp/_search') ou null se não encontrado
+ */
+export function getDataJudPath(sigla: string): string | null {
+  const endpoint = getDataJudEndpoint(sigla);
+  if (!endpoint) return null;
+  return endpoint.slice(BASE.length);
+}
+
+/**
  * Verifica se uma sigla é um tribunal válido no DataJud.
  *
  * @param {string} sigla - Sigla a verificar
