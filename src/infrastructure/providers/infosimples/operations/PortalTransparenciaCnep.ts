@@ -12,7 +12,6 @@ import { PortalTransparenciaCnepResponseSchema, type PortalTransparenciaCnepItem
 
 export class PortalTransparenciaCnep implements IInfosimplesOperation<PortalTransparenciaCnepItem> {
   readonly path = 'consultas/portal-transparencia/cnep';
-  readonly requiredParams = undefined; // oneOf cpf|cnpj tratado no validation-map
 
   constructor(private readonly http: IHttpClient) {}
 

@@ -12,7 +12,6 @@ import { MpfAmazoniaProtegeResponseSchema, type MpfAmazoniaProtegeItem } from '.
 
 export class MpfAmazoniaProtege implements IInfosimplesOperation<MpfAmazoniaProtegeItem> {
   readonly path = 'consultas/mpf/amazonia-protege';
-  readonly requiredParams = undefined; // oneOf cpf|cnpj tratado no validation-map
 
   constructor(private readonly http: IHttpClient) {}
 

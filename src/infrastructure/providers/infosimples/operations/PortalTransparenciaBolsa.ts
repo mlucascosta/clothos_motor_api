@@ -12,7 +12,6 @@ import { PortalTransparenciaBolsaResponseSchema, type PortalTransparenciaBolsaIt
 
 export class PortalTransparenciaBolsa implements IInfosimplesOperation<PortalTransparenciaBolsaItem> {
   readonly path = 'consultas/portal-transparencia/bolsa';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

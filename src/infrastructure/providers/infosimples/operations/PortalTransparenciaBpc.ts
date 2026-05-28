@@ -12,7 +12,6 @@ import { PortalTransparenciaBpcResponseSchema, type PortalTransparenciaBpcItem }
 
 export class PortalTransparenciaBpc implements IInfosimplesOperation<PortalTransparenciaBpcItem> {
   readonly path = 'consultas/portal-transparencia/bpc';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

@@ -12,7 +12,6 @@ import { PortalTransparenciaRepasseResponseSchema, type PortalTransparenciaRepas
 
 export class PortalTransparenciaRepasse implements IInfosimplesOperation<PortalTransparenciaRepasseItem> {
   readonly path = 'consultas/portal-transparencia/repasse';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

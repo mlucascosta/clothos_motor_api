@@ -12,7 +12,6 @@ import { PortalTransparenciaCeafResponseSchema, type PortalTransparenciaCeafItem
 
 export class PortalTransparenciaCeaf implements IInfosimplesOperation<PortalTransparenciaCeafItem> {
   readonly path = 'consultas/portal-transparencia/ceaf';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

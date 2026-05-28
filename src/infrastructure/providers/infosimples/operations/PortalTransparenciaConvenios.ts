@@ -12,7 +12,6 @@ import { PortalTransparenciaConveniosResponseSchema, type PortalTransparenciaCon
 
 export class PortalTransparenciaConvenios implements IInfosimplesOperation<PortalTransparenciaConveniosItem> {
   readonly path = 'consultas/portal-transparencia/convenios';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

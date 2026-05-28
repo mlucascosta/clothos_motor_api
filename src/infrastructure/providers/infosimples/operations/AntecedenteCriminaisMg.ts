@@ -12,7 +12,6 @@ import { AntecedenteCriminaisMgResponseSchema, type AntecedenteCriminaisMgItem }
 
 export class AntecedenteCriminaisMg implements IInfosimplesOperation<AntecedenteCriminaisMgItem> {
   readonly path = 'consultas/antecedentes-criminais/mg';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

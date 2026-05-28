@@ -12,7 +12,6 @@ import { BcbValoresReceberResponseSchema, type BcbValoresReceberItem } from '../
 
 export class BcbValoresReceber implements IInfosimplesOperation<BcbValoresReceberItem> {
   readonly path = 'consultas/bcb/valores-receber';
-  readonly requiredParams = undefined; // oneOf cpf|cnpj tratado no validation-map
 
   constructor(private readonly http: IHttpClient) {}
 

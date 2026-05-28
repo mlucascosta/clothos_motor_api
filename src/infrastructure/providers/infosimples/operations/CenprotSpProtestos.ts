@@ -12,7 +12,6 @@ import { CenprotSpProtestosResponseSchema, type CenprotSpProtestosItem } from '.
 
 export class CenprotSpProtestos implements IInfosimplesOperation<CenprotSpProtestosItem> {
   readonly path = 'consultas/cenprot-sp/protestos';
-  readonly requiredParams = undefined; // oneOf cpf|cnpj tratado no validation-map
 
   constructor(private readonly http: IHttpClient) {}
 

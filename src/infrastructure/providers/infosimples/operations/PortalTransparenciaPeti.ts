@@ -12,7 +12,6 @@ import { PortalTransparenciaPetiResponseSchema, type PortalTransparenciaPetiItem
 
 export class PortalTransparenciaPeti implements IInfosimplesOperation<PortalTransparenciaPetiItem> {
   readonly path = 'consultas/portal-transparencia/peti';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

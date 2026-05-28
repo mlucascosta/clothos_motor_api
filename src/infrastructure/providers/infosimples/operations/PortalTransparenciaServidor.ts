@@ -12,7 +12,6 @@ import { PortalTransparenciaServidorResponseSchema, type PortalTransparenciaServ
 
 export class PortalTransparenciaServidor implements IInfosimplesOperation<PortalTransparenciaServidorItem> {
   readonly path = 'consultas/portal-transparencia/servidor';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

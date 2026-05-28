@@ -12,7 +12,6 @@ import { MpSpInquiritoCivilResponseSchema, type MpSpInquiritoCivilItem } from '.
 
 export class MpSpInquiritoCivil implements IInfosimplesOperation<MpSpInquiritoCivilItem> {
   readonly path = 'consultas/mp/sp/inquerito-civil';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

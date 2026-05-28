@@ -68,6 +68,25 @@ export const infosimplesRequiredParams: Record<string, ValidationRule> = {
   'consultas/portal-transparencia/servidor': ['cpf'],
   // 'consultas/portal-transparencia/seguro' — sem parâmetros obrigatórios
 
+  // Lote 5 — Social
+  'consultas/dataprev/fap': ['cnpj_estabelecimento'],
+  'consultas/dataprev/qualificacao': ['nis', 'name', 'birthdate', 'cpf'],
+  'consultas/cnis/pre-inscricao': ['cpf', 'nome', 'data_nascimento'],
+  'consultas/sit/caepi': ['ca'],
+
+  // Lote 6 — Imóveis/Rural
+  'consultas/car/demonstrativo': ['car'],
+  'consultas/car/demonstrativo-pdf': ['car'],
+  'consultas/car/download-shapefile': ['car'],
+  'consultas/car/imovel': ['car'],
+  'consultas/incra/coordenadas': ['numero_certificacao'],
+  'consultas/incra/sigef/detalhes-parcela': ['codigo_parcela'],
+  'consultas/sncr/ccir': ['codigo_imovel', 'uf_sede', 'municipio_sede'],
+  'consultas/sncr/imoveis': ['uf', 'municipio'],
+  'consultas/onr/mapa-registro-imoveis': ['camada'],
+  'consultas/ibama/autuacoes': ['ano'],
+  'consultas/diario-oficial/sp/valor-venal': ['codigo_ipva', 'ano_fabricacao'],
+
   // Lote 7 — Prefeituras IPTU + Sefaz
   'consultas/pref/mg/belo-horizonte/cndiptu': ['identificador', 'data_inicio', 'data_fim'],
   'consultas/pref/mg/belo-horizonte/iptu': ['identificador'],

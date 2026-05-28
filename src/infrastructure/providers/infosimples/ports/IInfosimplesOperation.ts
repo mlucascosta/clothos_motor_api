@@ -6,7 +6,6 @@
 
 import type { Either } from '../../../../shared/domain/Either.js';
 import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { InfosimplesResponseHeader } from '../dtos/InfosimplesResponseDto.js';
 
 /**
  * Port genérico que define o contrato de toda operation do Infosimples.
@@ -30,17 +29,5 @@ export interface IInfosimplesOperation<T = unknown> {
    */
   execute(
     params: Record<string, string | undefined>,
-  ): Promise<
-    Either<
-      SourceError,
-      {
-        code: number;
-        code_message: string;
-        header: InfosimplesResponseHeader;
-        data: T[] | null;
-        errors: string[];
-        data_count: number;
-      }
-    >
-  >;
+  ): Promise<Either<SourceError, unknown>>;
 }

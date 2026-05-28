@@ -12,7 +12,6 @@ import { PortalTransparenciaSeguroResponseSchema, type PortalTransparenciaSeguro
 
 export class PortalTransparenciaSeguro implements IInfosimplesOperation<PortalTransparenciaSeguroItem> {
   readonly path = 'consultas/portal-transparencia/seguro';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

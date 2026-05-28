@@ -12,7 +12,6 @@ import { PortalTransparenciaCeisResponseSchema, type PortalTransparenciaCeisItem
 
 export class PortalTransparenciaCeis implements IInfosimplesOperation<PortalTransparenciaCeisItem> {
   readonly path = 'consultas/portal-transparencia/ceis';
-  readonly requiredParams = undefined; // oneOf cpf|cnpj tratado no validation-map
 
   constructor(private readonly http: IHttpClient) {}
 

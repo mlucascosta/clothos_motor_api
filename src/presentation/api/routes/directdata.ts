@@ -42,7 +42,7 @@ const GW = 'directdata';
 const BASE_URL = 'https://apiv3.directd.com.br';
 
 function buildHttp(): DirectDataHttpClient {
-  const token = process.env.DIRECTDATA_TOKEN ?? process.env.DIRECTDATA_APIKEY ?? '';
+  const token = process.env['DIRECTDATA_TOKEN'] ?? process.env['DIRECTDATA_APIKEY'] ?? '';
   return new DirectDataHttpClient(token, BASE_URL);
 }
 

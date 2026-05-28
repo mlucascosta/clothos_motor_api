@@ -12,7 +12,6 @@ import { IeptbProtestosResponseSchema, type IeptbProtestosItem } from '../dtos/I
 
 export class IeptbProtestos implements IInfosimplesOperation<IeptbProtestosItem> {
   readonly path = 'consultas/ieptb/protestos';
-  readonly requiredParams = undefined; // oneOf cpf|cnpj tratado no validation-map
 
   constructor(private readonly http: IHttpClient) {}
 

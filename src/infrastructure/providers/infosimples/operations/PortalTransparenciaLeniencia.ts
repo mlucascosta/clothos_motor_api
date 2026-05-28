@@ -12,7 +12,6 @@ import { PortalTransparenciaLenienciaResponseSchema, type PortalTransparenciaLen
 
 export class PortalTransparenciaLeniencia implements IInfosimplesOperation<PortalTransparenciaLenienciaItem> {
   readonly path = 'consultas/portal-transparencia/leniencia';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

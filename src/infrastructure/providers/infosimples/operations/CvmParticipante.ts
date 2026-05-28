@@ -12,7 +12,6 @@ import { CvmParticipanteResponseSchema, type CvmParticipanteItem } from '../dtos
 
 export class CvmParticipante implements IInfosimplesOperation<CvmParticipanteItem> {
   readonly path = 'consultas/cvm/participante';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

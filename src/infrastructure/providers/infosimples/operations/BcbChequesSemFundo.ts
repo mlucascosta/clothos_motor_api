@@ -12,7 +12,6 @@ import { BcbChequesSemFundoResponseSchema, type BcbChequesSemFundoItem } from '.
 
 export class BcbChequesSemFundo implements IInfosimplesOperation<BcbChequesSemFundoItem> {
   readonly path = 'consultas/bcb/cheques-sem-fundo';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

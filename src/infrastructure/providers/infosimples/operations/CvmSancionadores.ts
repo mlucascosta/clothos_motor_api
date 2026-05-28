@@ -12,7 +12,6 @@ import { CvmSancionadoresResponseSchema, type CvmSancionadoresItem } from '../dt
 
 export class CvmSancionadores implements IInfosimplesOperation<CvmSancionadoresItem> {
   readonly path = 'consultas/cvm/sancionadores';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

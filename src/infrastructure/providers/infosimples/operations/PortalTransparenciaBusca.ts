@@ -12,7 +12,6 @@ import { PortalTransparenciaBuscaResponseSchema, type PortalTransparenciaBuscaIt
 
 export class PortalTransparenciaBusca implements IInfosimplesOperation<PortalTransparenciaBuscaItem> {
   readonly path = 'consultas/portal-transparencia/busca';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

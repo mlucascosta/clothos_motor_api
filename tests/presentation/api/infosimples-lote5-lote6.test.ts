@@ -6,93 +6,9 @@
  * @module tests/presentation/api/infosimples-lote5-lote6.test
  */
 
-import { rawStore } from '../../../src/infrastructure/persistence/index';
-import { app } from '../../../src/presentation/api/app';
+// ── Mocks são hoistados antes dos imports ──────────────────────────────────
 
-// Mockar registry para que as novas operations sejam resolvidas
-// sem modificar o registry.ts de produção.
-jest.mock('../../../src/infrastructure/providers/infosimples/operations/registry', () => {
-  const { CaixaRegularidade } = require('../../../src/infrastructure/providers/infosimples/operations/CaixaRegularidade');
-  const { FgtsGuia } = require('../../../src/infrastructure/providers/infosimples/operations/FgtsGuia');
-  const { FgtsGuiaRapida } = require('../../../src/infrastructure/providers/infosimples/operations/FgtsGuiaRapida');
-  const { DataprevFap } = require('../../../src/infrastructure/providers/infosimples/operations/DataprevFap');
-  const { DataprevQualificacao } = require('../../../src/infrastructure/providers/infosimples/operations/DataprevQualificacao');
-  const { CnisPreInscricao } = require('../../../src/infrastructure/providers/infosimples/operations/CnisPreInscricao');
-  const { FazendaSped } = require('../../../src/infrastructure/providers/infosimples/operations/FazendaSped');
-  const { SitCaepi } = require('../../../src/infrastructure/providers/infosimples/operations/SitCaepi');
-  const { SitTrabalhoEscravo } = require('../../../src/infrastructure/providers/infosimples/operations/SitTrabalhoEscravo');
-  const { CarDemonstrativo } = require('../../../src/infrastructure/providers/infosimples/operations/CarDemonstrativo');
-  const { CarDemonstrativoPdf } = require('../../../src/infrastructure/providers/infosimples/operations/CarDemonstrativoPdf');
-  const { CarDownloadShapefile } = require('../../../src/infrastructure/providers/infosimples/operations/CarDownloadShapefile');
-  const { CarImovel } = require('../../../src/infrastructure/providers/infosimples/operations/CarImovel');
-  const { IncraCoordenadas } = require('../../../src/infrastructure/providers/infosimples/operations/IncraCoordenadas');
-  const { IncraSigefDetalhesParcela } = require('../../../src/infrastructure/providers/infosimples/operations/IncraSigefDetalhesParcela');
-  const { IncraSigefParcelas } = require('../../../src/infrastructure/providers/infosimples/operations/IncraSigefParcelas');
-  const { IncraSigefRequerimentos } = require('../../../src/infrastructure/providers/infosimples/operations/IncraSigefRequerimentos');
-  const { SncrCcir } = require('../../../src/infrastructure/providers/infosimples/operations/SncrCcir');
-  const { SncrImoveis } = require('../../../src/infrastructure/providers/infosimples/operations/SncrImoveis');
-  const { OnrMapaRegistroImoveis } = require('../../../src/infrastructure/providers/infosimples/operations/OnrMapaRegistroImoveis');
-  const { IbamaAutuacoes } = require('../../../src/infrastructure/providers/infosimples/operations/IbamaAutuacoes');
-  const { IbamaCertidaoDebitos } = require('../../../src/infrastructure/providers/infosimples/operations/IbamaCertidaoDebitos');
-  const { IbamaCertidaoEmbargos } = require('../../../src/infrastructure/providers/infosimples/operations/IbamaCertidaoEmbargos');
-  const { IbamaCertificadoRegularidade } = require('../../../src/infrastructure/providers/infosimples/operations/IbamaCertificadoRegularidade');
-  const { DiarioOficialSpValorVenal } = require('../../../src/infrastructure/providers/infosimples/operations/DiarioOficialSpValorVenal');
-  // Original operations
-  const { CadastroPessoaFisica } = require('../../../src/infrastructure/providers/infosimples/operations/CadastroPessoaFisica');
-  const { CadastroPessoaJuridica } = require('../../../src/infrastructure/providers/infosimples/operations/CadastroPessoaJuridica');
-  const { CenprotSpProtestos } = require('../../../src/infrastructure/providers/infosimples/operations/CenprotSpProtestos');
-  const { IeptbProtestos } = require('../../../src/infrastructure/providers/infosimples/operations/IeptbProtestos');
-  const { IeptbProtestosDetalhes } = require('../../../src/infrastructure/providers/infosimples/operations/IeptbProtestosDetalhes');
-
-  const registry: Record<string, (http: unknown) => unknown> = {
-    // Original
-    'consultas/receita-federal/cpf': (http) => new CadastroPessoaFisica(http),
-    'consultas/receita-federal/cnpj': (http) => new CadastroPessoaJuridica(http),
-    'consultas/cenprot-sp/protestos': (http) => new CenprotSpProtestos(http),
-    'consultas/ieptb/protestos': (http) => new IeptbProtestos(http),
-    'consultas/ieptb/protestos/detalhes-sp': (http) => new IeptbProtestosDetalhes(http),
-    cpf: (http) => new CadastroPessoaFisica(http),
-    cnpj: (http) => new CadastroPessoaJuridica(http),
-    // Lote 5
-    'consultas/caixa/regularidade': (http) => new CaixaRegularidade(http),
-    'consultas/fgts/guia': (http) => new FgtsGuia(http),
-    'consultas/fgts/guia-rapida': (http) => new FgtsGuiaRapida(http),
-    'consultas/dataprev/fap': (http) => new DataprevFap(http),
-    'consultas/dataprev/qualificacao': (http) => new DataprevQualificacao(http),
-    'consultas/cnis/pre-inscricao': (http) => new CnisPreInscricao(http),
-    'consultas/fazenda/sped': (http) => new FazendaSped(http),
-    'consultas/sit/caepi': (http) => new SitCaepi(http),
-    'consultas/sit/trabalho-escravo': (http) => new SitTrabalhoEscravo(http),
-    // Lote 6
-    'consultas/car/demonstrativo': (http) => new CarDemonstrativo(http),
-    'consultas/car/demonstrativo-pdf': (http) => new CarDemonstrativoPdf(http),
-    'consultas/car/download-shapefile': (http) => new CarDownloadShapefile(http),
-    'consultas/car/imovel': (http) => new CarImovel(http),
-    'consultas/incra/coordenadas': (http) => new IncraCoordenadas(http),
-    'consultas/incra/sigef/detalhes-parcela': (http) => new IncraSigefDetalhesParcela(http),
-    'consultas/incra/sigef/parcelas': (http) => new IncraSigefParcelas(http),
-    'consultas/incra/sigef/requerimentos': (http) => new IncraSigefRequerimentos(http),
-    'consultas/sncr/ccir': (http) => new SncrCcir(http),
-    'consultas/sncr/imoveis': (http) => new SncrImoveis(http),
-    'consultas/onr/mapa-registro-imoveis': (http) => new OnrMapaRegistroImoveis(http),
-    'consultas/ibama/autuacoes': (http) => new IbamaAutuacoes(http),
-    'consultas/ibama/certidao-debitos': (http) => new IbamaCertidaoDebitos(http),
-    'consultas/ibama/certidao-embargos': (http) => new IbamaCertidaoEmbargos(http),
-    'consultas/ibama/certificado-regularidade': (http) => new IbamaCertificadoRegularidade(http),
-    'consultas/diario-oficial/sp/valor-venal': (http) => new DiarioOficialSpValorVenal(http),
-  };
-
-  return {
-    resolveOperation: (key: string, http: unknown) => {
-      const factory = registry[key.toLowerCase()];
-      if (!factory) throw new Error(`Operação Infosimples desconhecida: ${key}`);
-      return factory(http);
-    },
-    listSupportedOperations: () => Object.keys(registry),
-  };
-});
-
-// Mockar validation-map para incluir os novos required params
+// Mock do validation-map com os novos required params (só literais, sem require).
 jest.mock('../../../src/infrastructure/providers/infosimples/operations/validation-map', () => ({
   infosimplesRequiredParams: {
     // Original
@@ -123,6 +39,126 @@ jest.mock('../../../src/infrastructure/providers/infosimples/operations/validati
   },
 }));
 
+// Mock do registry — usa require() das novas operations dentro do factory.
+// O jest.mock factory roda no contexto de módulo isolado do jest, após transforms,
+// então require() aqui funciona corretamente.
+jest.mock('../../../src/infrastructure/providers/infosimples/operations/registry', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { CaixaRegularidade } = require('../../../src/infrastructure/providers/infosimples/operations/CaixaRegularidade');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { FgtsGuia } = require('../../../src/infrastructure/providers/infosimples/operations/FgtsGuia');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { FgtsGuiaRapida } = require('../../../src/infrastructure/providers/infosimples/operations/FgtsGuiaRapida');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { DataprevFap } = require('../../../src/infrastructure/providers/infosimples/operations/DataprevFap');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { DataprevQualificacao } = require('../../../src/infrastructure/providers/infosimples/operations/DataprevQualificacao');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { CnisPreInscricao } = require('../../../src/infrastructure/providers/infosimples/operations/CnisPreInscricao');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { FazendaSped } = require('../../../src/infrastructure/providers/infosimples/operations/FazendaSped');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { SitCaepi } = require('../../../src/infrastructure/providers/infosimples/operations/SitCaepi');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { SitTrabalhoEscravo } = require('../../../src/infrastructure/providers/infosimples/operations/SitTrabalhoEscravo');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { CarDemonstrativo } = require('../../../src/infrastructure/providers/infosimples/operations/CarDemonstrativo');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { CarDemonstrativoPdf } = require('../../../src/infrastructure/providers/infosimples/operations/CarDemonstrativoPdf');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { CarDownloadShapefile } = require('../../../src/infrastructure/providers/infosimples/operations/CarDownloadShapefile');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { CarImovel } = require('../../../src/infrastructure/providers/infosimples/operations/CarImovel');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { IncraCoordenadas } = require('../../../src/infrastructure/providers/infosimples/operations/IncraCoordenadas');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { IncraSigefDetalhesParcela } = require('../../../src/infrastructure/providers/infosimples/operations/IncraSigefDetalhesParcela');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { IncraSigefParcelas } = require('../../../src/infrastructure/providers/infosimples/operations/IncraSigefParcelas');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { IncraSigefRequerimentos } = require('../../../src/infrastructure/providers/infosimples/operations/IncraSigefRequerimentos');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { SncrCcir } = require('../../../src/infrastructure/providers/infosimples/operations/SncrCcir');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { SncrImoveis } = require('../../../src/infrastructure/providers/infosimples/operations/SncrImoveis');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { OnrMapaRegistroImoveis } = require('../../../src/infrastructure/providers/infosimples/operations/OnrMapaRegistroImoveis');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { IbamaAutuacoes } = require('../../../src/infrastructure/providers/infosimples/operations/IbamaAutuacoes');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { IbamaCertidaoDebitos } = require('../../../src/infrastructure/providers/infosimples/operations/IbamaCertidaoDebitos');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { IbamaCertidaoEmbargos } = require('../../../src/infrastructure/providers/infosimples/operations/IbamaCertidaoEmbargos');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { IbamaCertificadoRegularidade } = require('../../../src/infrastructure/providers/infosimples/operations/IbamaCertificadoRegularidade');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { DiarioOficialSpValorVenal } = require('../../../src/infrastructure/providers/infosimples/operations/DiarioOficialSpValorVenal');
+  // Original operations
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { CadastroPessoaFisica } = require('../../../src/infrastructure/providers/infosimples/operations/CadastroPessoaFisica');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { CadastroPessoaJuridica } = require('../../../src/infrastructure/providers/infosimples/operations/CadastroPessoaJuridica');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { CenprotSpProtestos } = require('../../../src/infrastructure/providers/infosimples/operations/CenprotSpProtestos');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { IeptbProtestos } = require('../../../src/infrastructure/providers/infosimples/operations/IeptbProtestos');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { IeptbProtestosDetalhes } = require('../../../src/infrastructure/providers/infosimples/operations/IeptbProtestosDetalhes');
+
+  const reg: Record<string, (http: unknown) => unknown> = {
+    'consultas/receita-federal/cpf': (h) => new CadastroPessoaFisica(h),
+    'consultas/receita-federal/cnpj': (h) => new CadastroPessoaJuridica(h),
+    'consultas/cenprot-sp/protestos': (h) => new CenprotSpProtestos(h),
+    'consultas/ieptb/protestos': (h) => new IeptbProtestos(h),
+    'consultas/ieptb/protestos/detalhes-sp': (h) => new IeptbProtestosDetalhes(h),
+    cpf: (h) => new CadastroPessoaFisica(h),
+    cnpj: (h) => new CadastroPessoaJuridica(h),
+    // Lote 5
+    'consultas/caixa/regularidade': (h) => new CaixaRegularidade(h),
+    'consultas/fgts/guia': (h) => new FgtsGuia(h),
+    'consultas/fgts/guia-rapida': (h) => new FgtsGuiaRapida(h),
+    'consultas/dataprev/fap': (h) => new DataprevFap(h),
+    'consultas/dataprev/qualificacao': (h) => new DataprevQualificacao(h),
+    'consultas/cnis/pre-inscricao': (h) => new CnisPreInscricao(h),
+    'consultas/fazenda/sped': (h) => new FazendaSped(h),
+    'consultas/sit/caepi': (h) => new SitCaepi(h),
+    'consultas/sit/trabalho-escravo': (h) => new SitTrabalhoEscravo(h),
+    // Lote 6
+    'consultas/car/demonstrativo': (h) => new CarDemonstrativo(h),
+    'consultas/car/demonstrativo-pdf': (h) => new CarDemonstrativoPdf(h),
+    'consultas/car/download-shapefile': (h) => new CarDownloadShapefile(h),
+    'consultas/car/imovel': (h) => new CarImovel(h),
+    'consultas/incra/coordenadas': (h) => new IncraCoordenadas(h),
+    'consultas/incra/sigef/detalhes-parcela': (h) => new IncraSigefDetalhesParcela(h),
+    'consultas/incra/sigef/parcelas': (h) => new IncraSigefParcelas(h),
+    'consultas/incra/sigef/requerimentos': (h) => new IncraSigefRequerimentos(h),
+    'consultas/sncr/ccir': (h) => new SncrCcir(h),
+    'consultas/sncr/imoveis': (h) => new SncrImoveis(h),
+    'consultas/onr/mapa-registro-imoveis': (h) => new OnrMapaRegistroImoveis(h),
+    'consultas/ibama/autuacoes': (h) => new IbamaAutuacoes(h),
+    'consultas/ibama/certidao-debitos': (h) => new IbamaCertidaoDebitos(h),
+    'consultas/ibama/certidao-embargos': (h) => new IbamaCertidaoEmbargos(h),
+    'consultas/ibama/certificado-regularidade': (h) => new IbamaCertificadoRegularidade(h),
+    'consultas/diario-oficial/sp/valor-venal': (h) => new DiarioOficialSpValorVenal(h),
+  };
+
+  return {
+    resolveOperation: (key: string, http: unknown) => {
+      const factory = reg[key.toLowerCase()];
+      if (!factory) throw new Error(`Operação Infosimples desconhecida: ${key}`);
+      return factory(http);
+    },
+    listSupportedOperations: () => Object.keys(reg),
+  };
+});
+
+// ── Imports normais (após mocks) ──────────────────────────────────────────
+
+import { rawStore } from '../../../src/infrastructure/persistence/index';
+import { app } from '../../../src/presentation/api/app';
+
+// ── Suite de testes ───────────────────────────────────────────────────────
+
 describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
   let saveSpy: jest.SpyInstance;
   let fetchSpy: jest.SpyInstance;
@@ -137,7 +173,14 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     ...overrides,
   });
 
-  const noResult = envelope({ code: 603, code_message: 'Dados não encontrados' });
+  const noResult = {
+    code: 603,
+    code_message: 'Dados não encontrados',
+    header: { api_version: '2', billable: true, price: 0.5 },
+    data_count: 0,
+    data: null,
+    errors: [],
+  };
 
   beforeEach(() => {
     process.env.INFOSIMPLES_TOKEN = 'test-token';
@@ -167,10 +210,7 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com dados de regularidade', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{ cnpj: '33200056000149', razao_social: 'Empresa Teste', situacao: 'Regular' }],
-          })),
+          JSON.stringify(envelope({ data_count: 1, data: [{ cnpj: '33200056000149', razao_social: 'Empresa Teste', situacao: 'Regular' }] })),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -213,8 +253,7 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       );
       const res = await app.request(`${PATH}?cnpj=33200056000149`, { method: 'POST' });
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.data_count).toBe(1);
+      expect((await res.json() as Record<string, unknown>).data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ gateway: 'infosimples', status: 'success' }));
     });
 
@@ -447,7 +486,7 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
   describe('consultas/sit/trabalho-escravo', () => {
     const PATH = '/api/infosimples/consultas/sit/trabalho-escravo';
 
-    it('sucesso — retorna 200 com lista de trabalho escravo', async () => {
+    it('sucesso — retorna 200 com lista trabalho escravo', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify(envelope({ data_count: 1, data: [{ cpf: '11144477735', ano: '2023', trabalhadores_resgatados: 5 }] })),
@@ -773,7 +812,7 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
-      const res = await app.request(`${PATH}?codigo_imovel=12345&uf_sede=SP&municipio_sede=SãoPaulo`, { method: 'POST' });
+      const res = await app.request(`${PATH}?codigo_imovel=12345&uf_sede=SP&municipio_sede=SaoPaulo`, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
@@ -787,7 +826,7 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
 
     it('falha — upstream throw → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
-      const res = await app.request(`${PATH}?codigo_imovel=12345&uf_sede=SP&municipio_sede=SãoPaulo`, { method: 'POST' });
+      const res = await app.request(`${PATH}?codigo_imovel=12345&uf_sede=SP&municipio_sede=SaoPaulo`, { method: 'POST' });
       expect(res.status).toBe(500);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
     });
@@ -810,7 +849,7 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
-      const res = await app.request(`${PATH}?uf=SP&municipio=SãoPaulo`, { method: 'POST' });
+      const res = await app.request(`${PATH}?uf=SP&municipio=SaoPaulo`, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
@@ -824,7 +863,7 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
 
     it('falha — upstream throw → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
-      const res = await app.request(`${PATH}?uf=SP&municipio=SãoPaulo`, { method: 'POST' });
+      const res = await app.request(`${PATH}?uf=SP&municipio=SaoPaulo`, { method: 'POST' });
       expect(res.status).toBe(500);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
     });

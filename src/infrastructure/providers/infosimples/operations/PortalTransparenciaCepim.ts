@@ -12,7 +12,6 @@ import { PortalTransparenciaCepimResponseSchema, type PortalTransparenciaCepimIt
 
 export class PortalTransparenciaCepim implements IInfosimplesOperation<PortalTransparenciaCepimItem> {
   readonly path = 'consultas/portal-transparencia/cepim';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

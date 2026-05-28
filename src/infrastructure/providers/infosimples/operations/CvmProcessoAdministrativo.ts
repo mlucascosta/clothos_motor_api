@@ -12,7 +12,6 @@ import { CvmProcessoAdministrativoResponseSchema, type CvmProcessoAdministrativo
 
 export class CvmProcessoAdministrativo implements IInfosimplesOperation<CvmProcessoAdministrativoItem> {
   readonly path = 'consultas/cvm/processo-administrativo';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

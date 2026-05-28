@@ -12,7 +12,6 @@ import { CadeProcessosResponseSchema, type CadeProcessosItem } from '../dtos/Cad
 
 export class CadeProcessos implements IInfosimplesOperation<CadeProcessosItem> {
   readonly path = 'consultas/cade/processos';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

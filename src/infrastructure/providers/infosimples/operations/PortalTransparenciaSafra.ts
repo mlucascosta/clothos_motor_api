@@ -12,7 +12,6 @@ import { PortalTransparenciaSafraResponseSchema, type PortalTransparenciaSafraIt
 
 export class PortalTransparenciaSafra implements IInfosimplesOperation<PortalTransparenciaSafraItem> {
   readonly path = 'consultas/portal-transparencia/safra';
-  readonly requiredParams = undefined;
 
   constructor(private readonly http: IHttpClient) {}
 

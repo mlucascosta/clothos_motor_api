@@ -12,7 +12,6 @@ import { MpfCertidaoNegativaResponseSchema, type MpfCertidaoNegativaItem } from 
 
 export class MpfCertidaoNegativa implements IInfosimplesOperation<MpfCertidaoNegativaItem> {
   readonly path = 'consultas/mpf/certidao-negativa';
-  readonly requiredParams = undefined; // oneOf cpf|cnpj tratado no validation-map
 
   constructor(private readonly http: IHttpClient) {}
 
