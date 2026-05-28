@@ -35,10 +35,12 @@ export const DirectDataMetaDadosSchema = z.object({
  *
  * @type {ZodSchema}
  */
-export const DirectDataResponseSchema = z.object({
-  metaDados: DirectDataMetaDadosSchema,
-  retorno: z.unknown().nullable(),
-}).required();
+export const DirectDataResponseSchema = z
+  .object({
+    metaDados: DirectDataMetaDadosSchema,
+    retorno: z.unknown().nullable(),
+  })
+  .required();
 
 /**
  * Tipo de metadados da DirectData.

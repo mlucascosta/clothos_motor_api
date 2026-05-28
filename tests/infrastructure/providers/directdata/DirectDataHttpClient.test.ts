@@ -7,10 +7,7 @@ import { DirectDataHttpClient } from '../../../../src/infrastructure/providers/d
 import { isLeft, isRight } from '../../../../src/shared/domain/Either';
 
 describe('DirectDataHttpClient', () => {
-  const client = new DirectDataHttpClient(
-    'test-api-key',
-    'https://apiv3.directd.com.br',
-  );
+  const client = new DirectDataHttpClient('test-api-key', 'https://apiv3.directd.com.br');
 
   it('injeta TOKEN como query param em todas as requisições', async () => {
     const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(
@@ -35,16 +32,14 @@ describe('DirectDataHttpClient', () => {
 
     const init = call[1] as RequestInit;
     const headers = init.headers as Record<string, string>;
-    expect(headers['Authorization']).toBeUndefined();
-    expect(headers['Accept']).toBe('application/json');
+    expect(headers.Authorization).toBeUndefined();
+    expect(headers.Accept).toBe('application/json');
 
     fetchSpy.mockRestore();
   });
 
   it('retorna AUTH_FAILED em 401', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response('Unauthorized', { status: 401 }),
-    );
+    jest.spyOn(global, 'fetch').mockResolvedValue(new Response('Unauthorized', { status: 401 }));
 
     const result = await client.request('/api/CadastroPessoaFisica');
 
@@ -58,9 +53,7 @@ describe('DirectDataHttpClient', () => {
   });
 
   it('retorna NOT_FOUND em 404', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response('Not Found', { status: 404 }),
-    );
+    jest.spyOn(global, 'fetch').mockResolvedValue(new Response('Not Found', { status: 404 }));
 
     const result = await client.request('/api/EndpointInexistente');
 
@@ -73,9 +66,9 @@ describe('DirectDataHttpClient', () => {
   });
 
   it('retorna RATE_LIMITED em 429', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response('Too Many Requests', { status: 429 }),
-    );
+    jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(new Response('Too Many Requests', { status: 429 }));
 
     const result = await client.request('/api/CadastroPessoaFisica');
 
@@ -88,9 +81,9 @@ describe('DirectDataHttpClient', () => {
   });
 
   it('retorna UPSTREAM_ERROR em 500', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response('Internal Server Error', { status: 500 }),
-    );
+    jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(new Response('Internal Server Error', { status: 500 }));
 
     const result = await client.request('/api/CadastroPessoaFisica');
 
@@ -103,9 +96,9 @@ describe('DirectDataHttpClient', () => {
   });
 
   it('retorna TIMEOUT em abort timeout', async () => {
-    jest.spyOn(global, 'fetch').mockRejectedValue(
-      new DOMException('The operation timed out.', 'TimeoutError'),
-    );
+    jest
+      .spyOn(global, 'fetch')
+      .mockRejectedValue(new DOMException('The operation timed out.', 'TimeoutError'));
 
     const result = await client.request('/api/CadastroPessoaFisica', { timeoutMs: 1 });
 

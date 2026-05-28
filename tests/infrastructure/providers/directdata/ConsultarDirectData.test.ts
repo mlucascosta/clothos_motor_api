@@ -11,7 +11,9 @@ describe('ConsultarDirectData', () => {
     request: jest.fn(),
   };
 
-  const operation = new ConsultarDirectData(mockHttp as any);
+  const operation = new ConsultarDirectData(
+    mockHttp as unknown as import('../../../../src/shared/infrastructure/IHttpClient').IHttpClient,
+  );
 
   beforeEach(() => {
     mockHttp.request.mockClear();
