@@ -20,6 +20,7 @@
  */
 
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 import { rawStore } from '../../../infrastructure/persistence/index.js';
 import { DataJudHttpClient } from '../../../infrastructure/providers/datajud/DataJudHttpClient.js';
 import {
@@ -36,6 +37,8 @@ import {
 import { BuscarGenericoDataJud } from '../../../infrastructure/providers/datajud/operations/BuscarGenericoDataJud.js';
 import { BuscarProcessoPorNumero } from '../../../infrastructure/providers/datajud/operations/BuscarProcessoPorNumero.js';
 import { isLeft } from '../../../shared/domain/Either.js';
+import type { Either } from '../../../shared/domain/Either.js';
+import type { SourceError } from '../../../shared/domain/errors/SourceError.js';
 
 const GW = 'datajud';
 const BASE_URL = 'https://api-publica.datajud.cnj.jus.br';
@@ -54,6 +57,21 @@ function validateTribunal(c: { req: { query: (key: string) => string | undefined
 }
 
 const datajud = new Hono();
+
+async function handleOp<T>(
+  c: Context,
+  opts: { gateway: string; fonte: string; tipo_param: string | null; param: string | null; statusCode?: number },
+  execute: () => Promise<Either<SourceError, T>>,
+): Promise<Response> {
+  const result = await execute();
+  const base = { gateway: opts.gateway, fonte: opts.fonte, tipo_param: opts.tipo_param, param: opts.param, created_at: new Date() };
+  if (isLeft(result)) {
+    rawStore.save({ ...base, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500) as Response;
+  }
+  rawStore.save({ ...base, result: result.value, status: 'success' });
+  return c.json(result.value, (opts.statusCode ?? 200) as import("hono/utils/http-status").ContentfulStatusCode) as Response;
+}
 
 /**
  * GET /tribunais
@@ -81,33 +99,9 @@ datajud.post('/buscar', async (c) => {
   if (!parsed.success)
     return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
 
-  const op = new BuscarGenericoDataJud(buildHttp());
-  const result = await op.execute({ sigla, body: parsed.data });
-
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW,
-      fonte: 'buscar',
-      tipo_param: 'tribunal_dsl',
-      param: sigla,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-
-  rawStore.save({
-    gateway: GW,
-    fonte: 'buscar',
-    tipo_param: 'tribunal_dsl',
-    param: sigla,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW, fonte: 'buscar', tipo_param: 'tribunal_dsl', param: sigla }, () =>
+    new BuscarGenericoDataJud(buildHttp()).execute({ sigla, body: parsed.data }),
+  );
 });
 
 /**
@@ -125,37 +119,13 @@ datajud.post('/processo', async (c) => {
   if (!parsed.success)
     return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
 
-  const op = new BuscarProcessoPorNumero(buildHttp());
-  const result = await op.execute({
-    sigla,
-    numeroProcesso: parsed.data.numeroProcesso,
-    size: parsed.data.size,
-  });
-
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW,
-      fonte: 'processo',
-      tipo_param: 'numeroProcesso',
-      param: parsed.data.numeroProcesso,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-
-  rawStore.save({
-    gateway: GW,
-    fonte: 'processo',
-    tipo_param: 'numeroProcesso',
-    param: parsed.data.numeroProcesso,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW, fonte: 'processo', tipo_param: 'numeroProcesso', param: parsed.data.numeroProcesso }, () =>
+    new BuscarProcessoPorNumero(buildHttp()).execute({
+      sigla,
+      numeroProcesso: parsed.data.numeroProcesso,
+      size: parsed.data.size,
+    }),
+  );
 });
 
 /**
@@ -185,33 +155,9 @@ datajud.post('/classe', async (c) => {
   const paramValue = String(parsed.data.classeCodigo ?? parsed.data.classeNome ?? '');
   const tipoParam = parsed.data.classeCodigo !== undefined ? 'classeCodigo' : 'classeNome';
 
-  const op = new BuscarGenericoDataJud(buildHttp());
-  const result = await op.execute({ sigla, body: dslBody });
-
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW,
-      fonte: 'classe',
-      tipo_param: tipoParam,
-      param: paramValue,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-
-  rawStore.save({
-    gateway: GW,
-    fonte: 'classe',
-    tipo_param: tipoParam,
-    param: paramValue,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW, fonte: 'classe', tipo_param: tipoParam, param: paramValue }, () =>
+    new BuscarGenericoDataJud(buildHttp()).execute({ sigla, body: dslBody }),
+  );
 });
 
 /**
@@ -238,33 +184,9 @@ datajud.post('/orgao-julgador', async (c) => {
     size: parsed.data.size,
   };
 
-  const op = new BuscarGenericoDataJud(buildHttp());
-  const result = await op.execute({ sigla, body: dslBody });
-
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW,
-      fonte: 'orgao-julgador',
-      tipo_param: 'orgaoJulgador',
-      param: parsed.data.orgaoJulgador,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-
-  rawStore.save({
-    gateway: GW,
-    fonte: 'orgao-julgador',
-    tipo_param: 'orgaoJulgador',
-    param: parsed.data.orgaoJulgador,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW, fonte: 'orgao-julgador', tipo_param: 'orgaoJulgador', param: parsed.data.orgaoJulgador }, () =>
+    new BuscarGenericoDataJud(buildHttp()).execute({ sigla, body: dslBody }),
+  );
 });
 
 /**
@@ -303,36 +225,12 @@ datajud.post('/envolvido', async (c) => {
     size: parsed.data.size,
   };
 
-  const op = new BuscarGenericoDataJud(buildHttp());
-  const result = await op.execute({ sigla, body: dslBody });
-
-  const paramValue = parsed.data.nome ?? parsed.data.cpfCnpj ?? '';
   const tipoParam = parsed.data.cpfCnpj ? 'cpf_cnpj' : 'nome';
+  const paramValue = parsed.data.nome ?? parsed.data.cpfCnpj ?? '';
 
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW,
-      fonte: 'envolvido',
-      tipo_param: tipoParam,
-      param: paramValue,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-
-  rawStore.save({
-    gateway: GW,
-    fonte: 'envolvido',
-    tipo_param: tipoParam,
-    param: paramValue,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW, fonte: 'envolvido', tipo_param: tipoParam, param: paramValue }, () =>
+    new BuscarGenericoDataJud(buildHttp()).execute({ sigla, body: dslBody }),
+  );
 });
 
 export { datajud };

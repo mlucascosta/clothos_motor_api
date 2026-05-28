@@ -196,10 +196,13 @@
  */
 
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 import { z } from 'zod';
 import { rawStore } from '../../../infrastructure/persistence/index.js';
 import { EscavadorHttpClient } from '../../../infrastructure/providers/escavador/EscavadorHttpClient.js';
 import { isLeft } from '../../../shared/domain/Either.js';
+import type { Either } from '../../../shared/domain/Either.js';
+import type { SourceError } from '../../../shared/domain/errors/SourceError.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // IMPORTS — Operations V1 e V2
@@ -335,6 +338,21 @@ function buildHttpV2(): EscavadorHttpClient {
 /** Router Hono que centraliza todas as rotas Escavador (V1 e V2) */
 const escavador = new Hono();
 
+async function handleOp<T>(
+  c: Context,
+  opts: { gateway: string; fonte: string; tipo_param: string | null; param: string | null; statusCode?: number },
+  execute: () => Promise<Either<SourceError, T>>,
+): Promise<Response> {
+  const result = await execute();
+  const base = { gateway: opts.gateway, fonte: opts.fonte, tipo_param: opts.tipo_param, param: opts.param, created_at: new Date() };
+  if (isLeft(result)) {
+    rawStore.save({ ...base, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind });
+    return c.json({ error: result.value.message, kind: result.value.kind }, 500) as Response;
+  }
+  rawStore.save({ ...base, result: result.value, status: 'success' });
+  return c.json(result.value, (opts.statusCode ?? 200) as import('hono/utils/http-status').ContentfulStatusCode) as Response;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // V1 — ESCAVADOR API V1 — 42 ENDPOINTS
 // ═══════════════════════════════════════════════════════════════════════════
@@ -373,59 +391,27 @@ const escavador = new Hono();
  *   "saldo_descricao": "R$ 15,00"
  * }
  */
-escavador.get('/v1/quantidade-creditos', async (c) => {
-  const op = new ObterSaldo(buildHttpV1());
-  const result = await op.execute();
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'saldo',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'saldo',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
-});
+escavador.get('/v1/quantidade-creditos', (c) =>
+  handleOp(c, { gateway: GW_V1, fonte: 'saldo', tipo_param: null, param: null }, () =>
+    new ObterSaldo(buildHttpV1()).execute(),
+  ),
+);
 
 // ──── Buscas Assíncronas — listar e consultar ────
 
 escavador.get('/v1/buscas-assincronas', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
-  const op = new ListarBuscasAssincronas(buildHttpV1());
-  const result = await op.execute({ pagina });
-  if (isLeft(result)) {
-    rawStore.save({ gateway: GW_V1, fonte: 'buscas-assincronas/listar', tipo_param: null, param: null, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({ gateway: GW_V1, fonte: 'buscas-assincronas/listar', tipo_param: null, param: null, result: result.value, status: 'success', created_at: new Date() });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'buscas-assincronas/listar', tipo_param: null, param: null }, () =>
+    new ListarBuscasAssincronas(buildHttpV1()).execute({ pagina }),
+  );
 });
 
 escavador.get('/v1/buscas-assincronas/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-  const op = new ObterBuscaAssincrona(buildHttpV1());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({ gateway: GW_V1, fonte: 'buscas-assincronas/obter', tipo_param: 'id', param: String(id), result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({ gateway: GW_V1, fonte: 'buscas-assincronas/obter', tipo_param: 'id', param: String(id), result: result.value, status: 'success', created_at: new Date() });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'buscas-assincronas/obter', tipo_param: 'id', param: String(id) }, () =>
+    new ObterBuscaAssincrona(buildHttpV1()).execute({ id }),
+  );
 });
 
 // ──── Processos — Buscas Assíncronas (iniciar) ────
@@ -443,35 +429,13 @@ escavador.post('/v1/processos/tribunal/cpf-cnpj', async (c) => {
   if (!parsed.success)
     return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
 
-  const op = new IniciarBuscaLote(buildHttpV1());
-  const result = await op.execute({
-    tipo: 'busca_por_documento',
-    cpfCnpj: parsed.data.cpf_cnpj,
-    ...(parsed.data.tribunais !== undefined ? { tribunais: parsed.data.tribunais } : {}),
-  });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'processos/tribunal/cpf-cnpj',
-      tipo_param: 'cpf_cnpj',
-      param: parsed.data.cpf_cnpj,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'processos/tribunal/cpf-cnpj',
-    tipo_param: 'cpf_cnpj',
-    param: parsed.data.cpf_cnpj,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 202);
+  return handleOp(c, { gateway: GW_V1, fonte: 'processos/tribunal/cpf-cnpj', tipo_param: 'cpf_cnpj', param: parsed.data.cpf_cnpj, statusCode: 202 }, () =>
+    new IniciarBuscaLote(buildHttpV1()).execute({
+      tipo: 'busca_por_documento',
+      cpfCnpj: parsed.data.cpf_cnpj,
+      ...(parsed.data.tribunais !== undefined ? { tribunais: parsed.data.tribunais } : {}),
+    }),
+  );
 });
 
 /**
@@ -498,35 +462,13 @@ escavador.post('/v1/processos/tribunal/envolvido', async (c) => {
   if (!parsed.success)
     return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
 
-  const op = new IniciarBuscaLote(buildHttpV1());
-  const result = await op.execute({
-    tipo: 'busca_por_nome',
-    nome: parsed.data.nome,
-    ...(parsed.data.tribunais !== undefined ? { tribunais: parsed.data.tribunais } : {}),
-  });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'processos/tribunal/envolvido',
-      tipo_param: 'nome',
-      param: parsed.data.nome,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'processos/tribunal/envolvido',
-    tipo_param: 'nome',
-    param: parsed.data.nome,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 202);
+  return handleOp(c, { gateway: GW_V1, fonte: 'processos/tribunal/envolvido', tipo_param: 'nome', param: parsed.data.nome, statusCode: 202 }, () =>
+    new IniciarBuscaLote(buildHttpV1()).execute({
+      tipo: 'busca_por_nome',
+      nome: parsed.data.nome,
+      ...(parsed.data.tribunais !== undefined ? { tribunais: parsed.data.tribunais } : {}),
+    }),
+  );
 });
 
 /**
@@ -560,31 +502,9 @@ escavador.post('/v1/processos/tribunal/oab', async (c) => {
     estado_oab: parsed.data.estado_oab,
   };
   if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
-
-  const result = await op.execute(input);
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'processos/tribunal/oab',
-      tipo_param: 'numero_oab',
-      param: `${parsed.data.numero_oab}/${parsed.data.estado_oab}`,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'processos/tribunal/oab',
-    tipo_param: 'numero_oab',
-    param: `${parsed.data.numero_oab}/${parsed.data.estado_oab}`,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 202);
+  return handleOp(c, { gateway: GW_V1, fonte: 'processos/tribunal/oab', tipo_param: 'numero_oab', param: `${parsed.data.numero_oab}/${parsed.data.estado_oab}`, statusCode: 202 }, () =>
+    op.execute(input),
+  );
 });
 
 /**
@@ -606,31 +526,9 @@ escavador.post('/v1/processos/administrativo/nup', async (c) => {
   if (!parsed.success)
     return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
 
-  const op = new IniciarBuscaProcessoNup(buildHttpV1());
-  const result = await op.execute({ nup: parsed.data.nup });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'processos/administrativo/nup',
-      tipo_param: 'nup',
-      param: parsed.data.nup,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'processos/administrativo/nup',
-    tipo_param: 'nup',
-    param: parsed.data.nup,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 202);
+  return handleOp(c, { gateway: GW_V1, fonte: 'processos/administrativo/nup', tipo_param: 'nup', param: parsed.data.nup, statusCode: 202 }, () =>
+    new IniciarBuscaProcessoNup(buildHttpV1()).execute({ nup: parsed.data.nup }),
+  );
 });
 
 /**
@@ -656,31 +554,9 @@ escavador.post('/v1/processos/pesquisar', async (c) => {
   if (!parsed.success)
     return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
 
-  const op = new IniciarBuscaProcesso(buildHttpV1());
-  const result = await op.execute({ numero_cnj: parsed.data.numero_cnj });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'processos/pesquisar',
-      tipo_param: 'numero_cnj',
-      param: parsed.data.numero_cnj,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'processos/pesquisar',
-    tipo_param: 'numero_cnj',
-    param: parsed.data.numero_cnj,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 202);
+  return handleOp(c, { gateway: GW_V1, fonte: 'processos/pesquisar', tipo_param: 'numero_cnj', param: parsed.data.numero_cnj, statusCode: 202 }, () =>
+    new IniciarBuscaProcesso(buildHttpV1()).execute({ numero_cnj: parsed.data.numero_cnj }),
+  );
 });
 
 escavador.post('/v1/processos/tribunal/lote', async (c) => {
@@ -709,31 +585,9 @@ escavador.post('/v1/processos/tribunal/lote', async (c) => {
     ...(parsed.data.numero_oab !== undefined && { numero_oab: parsed.data.numero_oab }),
     ...(parsed.data.estado_oab !== undefined && { estado_oab: parsed.data.estado_oab }),
   };
-
-  const result = await op.execute(input);
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'processos/tribunal/lote',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'processos/tribunal/lote',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 202);
+  return handleOp(c, { gateway: GW_V1, fonte: 'processos/tribunal/lote', tipo_param: null, param: null, statusCode: 202 }, () =>
+    op.execute(input),
+  );
 });
 
 // ══════════════════════════════════════════════════════════════════════════════════
@@ -756,31 +610,9 @@ escavador.get('/v1/processos/diarios-oficiais/numero', async (c) => {
   const numero = c.req.query('numero') ?? '';
   if (!numero) return c.json({ error: 'Parâmetro numero obrigatório' }, 400);
 
-  const op = new BuscarProcessosDiarioPorNumero(buildHttpV1());
-  const result = await op.execute({ numero });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'processos/diarios-oficiais/numero',
-      tipo_param: 'numero',
-      param: numero,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'processos/diarios-oficiais/numero',
-    tipo_param: 'numero',
-    param: numero,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'processos/diarios-oficiais/numero', tipo_param: 'numero', param: numero }, () =>
+    new BuscarProcessosDiarioPorNumero(buildHttpV1()).execute({ numero }),
+  );
 });
 
 /**
@@ -797,31 +629,9 @@ escavador.get('/v1/processos/diarios-oficiais/oab', async (c) => {
   const oab = c.req.query('oab') ?? '';
   if (!oab) return c.json({ error: 'Parâmetro oab obrigatório' }, 400);
 
-  const op = new BuscarProcessosDiarioPorOab(buildHttpV1());
-  const result = await op.execute({ oab });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'processos/diarios-oficiais/oab',
-      tipo_param: 'oab',
-      param: oab,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'processos/diarios-oficiais/oab',
-    tipo_param: 'oab',
-    param: oab,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'processos/diarios-oficiais/oab', tipo_param: 'oab', param: oab }, () =>
+    new BuscarProcessosDiarioPorOab(buildHttpV1()).execute({ oab }),
+  );
 });
 
 // ══════════════════════════════════════════════════════════════════════════════════
@@ -841,31 +651,9 @@ escavador.get('/v1/processos/diarios-oficiais/oab', async (c) => {
  */
 escavador.get('/v1/processos/:numero_cnj', async (c) => {
   const numeroCnj = c.req.param('numero_cnj');
-  const op = new ObterDetalhesProcesso(buildHttpV1());
-  const result = await op.execute({ numeroCnj });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'processos/obter',
-      tipo_param: 'numero_cnj',
-      param: numeroCnj,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'processos/obter',
-    tipo_param: 'numero_cnj',
-    param: numeroCnj,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'processos/obter', tipo_param: 'numero_cnj', param: numeroCnj }, () =>
+    new ObterDetalhesProcesso(buildHttpV1()).execute({ numeroCnj }),
+  );
 });
 
 /**
@@ -882,31 +670,9 @@ escavador.get('/v1/processos/:numero_cnj', async (c) => {
 escavador.get('/v1/processos/:numero_cnj/movimentacoes', async (c) => {
   const numeroCnj = c.req.param('numero_cnj');
   const pagina = Number(c.req.query('page') ?? '1');
-  const op = new ObterMovimentacoesProcesso(buildHttpV1());
-  const result = await op.execute({ numeroCnj, pagina });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'processos/movimentacoes',
-      tipo_param: 'numero_cnj',
-      param: numeroCnj,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'processos/movimentacoes',
-    tipo_param: 'numero_cnj',
-    param: numeroCnj,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'processos/movimentacoes', tipo_param: 'numero_cnj', param: numeroCnj }, () =>
+    new ObterMovimentacoesProcesso(buildHttpV1()).execute({ numeroCnj, pagina }),
+  );
 });
 
 /**
@@ -924,31 +690,9 @@ escavador.get('/v1/processos/:id/envolvidos-diarios', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new ObterEnvolvidosProcesso(buildHttpV1());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'processos/envolvidos-diarios',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'processos/envolvidos-diarios',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'processos/envolvidos-diarios', tipo_param: 'id', param: String(id) }, () =>
+    new ObterEnvolvidosProcesso(buildHttpV1()).execute({ id }),
+  );
 });
 
 // ══════════════════════════════════════════════════════════════════════════════════
@@ -969,31 +713,9 @@ escavador.get('/v1/movimentacoes/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new ObterMovimentacao(buildHttpV1());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'movimentacoes/obter',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'movimentacoes/obter',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'movimentacoes/obter', tipo_param: 'id', param: String(id) }, () =>
+    new ObterMovimentacao(buildHttpV1()).execute({ id }),
+  );
 });
 
 // ══════════════════════════════════════════════════════════════════════════════════
@@ -1023,30 +745,9 @@ escavador.get('/v1/busca', async (c) => {
   const input: Parameters<typeof op.execute>[0] = { query, pagina };
   if (tipoRaw === 'pessoa' || tipoRaw === 'processo' || tipoRaw === 'instituicao')
     input.tipo = tipoRaw;
-  const result = await op.execute(input);
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'busca',
-      tipo_param: 'query',
-      param: query,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'busca',
-    tipo_param: 'query',
-    param: query,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'busca', tipo_param: 'query', param: query }, () =>
+    op.execute(input),
+  );
 });
 
 // ══════════════════════════════════════════════════════════════════════════════════
@@ -1068,31 +769,9 @@ escavador.get('/v1/pessoas/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new ObterPessoa(buildHttpV1());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'pessoas/obter',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'pessoas/obter',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'pessoas/obter', tipo_param: 'id', param: String(id) }, () =>
+    new ObterPessoa(buildHttpV1()).execute({ id }),
+  );
 });
 
 /**
@@ -1110,31 +789,9 @@ escavador.get('/v1/pessoas/:id/processos', async (c) => {
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
   const pagina = Number(c.req.query('page') ?? '1');
-  const op = new ObterProcessosPessoa(buildHttpV1());
-  const result = await op.execute({ id, pagina });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'pessoas/processos',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'pessoas/processos',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'pessoas/processos', tipo_param: 'id', param: String(id) }, () =>
+    new ObterProcessosPessoa(buildHttpV1()).execute({ id, pagina }),
+  );
 });
 
 /**
@@ -1152,31 +809,9 @@ escavador.get('/v1/pessoas/:id/publicacoes', async (c) => {
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
   const pagina = Number(c.req.query('page') ?? '1');
-  const op = new BuscarPublicacoes(buildHttpV1());
-  const result = await op.execute({ entidadeId: id, pagina });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'pessoas/publicacoes',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'pessoas/publicacoes',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'pessoas/publicacoes', tipo_param: 'id', param: String(id) }, () =>
+    new BuscarPublicacoes(buildHttpV1()).execute({ entidadeId: id, pagina }),
+  );
 });
 
 // ══════════════════════════════════════════════════════════════════════════════════
@@ -1197,31 +832,9 @@ escavador.get('/v1/instituicoes/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new ObterInstituicao(buildHttpV1());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'instituicoes/obter',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'instituicoes/obter',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'instituicoes/obter', tipo_param: 'id', param: String(id) }, () =>
+    new ObterInstituicao(buildHttpV1()).execute({ id }),
+  );
 });
 
 /**
@@ -1236,31 +849,9 @@ escavador.get('/v1/instituicoes/:id/pessoas', async (c) => {
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
   const pagina = Number(c.req.query('page') ?? '1');
-  const op = new ObterPessoasInstituicao(buildHttpV1());
-  const result = await op.execute({ id, pagina });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'instituicoes/pessoas',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'instituicoes/pessoas',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'instituicoes/pessoas', tipo_param: 'id', param: String(id) }, () =>
+    new ObterPessoasInstituicao(buildHttpV1()).execute({ id, pagina }),
+  );
 });
 
 /**
@@ -1275,31 +866,9 @@ escavador.get('/v1/instituicoes/:id/processos', async (c) => {
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
   const pagina = Number(c.req.query('page') ?? '1');
-  const op = new ObterProcessosInstituicao(buildHttpV1());
-  const result = await op.execute({ id, pagina });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'instituicoes/processos',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'instituicoes/processos',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'instituicoes/processos', tipo_param: 'id', param: String(id) }, () =>
+    new ObterProcessosInstituicao(buildHttpV1()).execute({ id, pagina }),
+  );
 });
 
 // ══════════════════════════════════════════════════════════════════════════════════
@@ -1351,30 +920,9 @@ escavador.get('/v1/monitoramentos', async (c) => {
   const op = new ListarMonitoramentos(buildHttpV1());
   const input: Parameters<typeof op.execute>[0] = { pagina };
   if (ativo !== undefined) input.ativo = ativo;
-  const result = await op.execute(input);
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'monitoramentos/listar',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'monitoramentos/listar',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'monitoramentos/listar', tipo_param: null, param: null }, () =>
+    op.execute(input),
+  );
 });
 
 /**
@@ -1407,62 +955,18 @@ escavador.post('/v1/monitoramentos', async (c) => {
   };
   if (parsed.data.callback_url !== undefined) input.callback_url = parsed.data.callback_url;
   if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
-
-  const result = await op.execute(input);
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'monitoramentos/criar',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'monitoramentos/criar',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 201);
+  return handleOp(c, { gateway: GW_V1, fonte: 'monitoramentos/criar', tipo_param: null, param: null, statusCode: 201 }, () =>
+    op.execute(input),
+  );
 });
 
 escavador.get('/v1/monitoramentos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new ObterMonitoramento(buildHttpV1());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'monitoramentos/obter',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'monitoramentos/obter',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'monitoramentos/obter', tipo_param: 'id', param: String(id) }, () =>
+    new ObterMonitoramento(buildHttpV1()).execute({ id }),
+  );
 });
 
 escavador.put('/v1/monitoramentos/:id', async (c) => {
@@ -1481,61 +985,23 @@ escavador.put('/v1/monitoramentos/:id', async (c) => {
   if (parsed.data.ativo !== undefined) input.ativo = parsed.data.ativo;
   if (parsed.data.callback_url !== undefined) input.callback_url = parsed.data.callback_url;
   if (parsed.data.nome !== undefined) input.nome = parsed.data.nome;
-
-  const result = await op.execute(input);
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'monitoramentos/editar',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'monitoramentos/editar',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'monitoramentos/editar', tipo_param: 'id', param: String(id) }, () =>
+    op.execute(input),
+  );
 });
 
 escavador.delete('/v1/monitoramentos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+  // DELETE — retorna 204, não usa handleOp
 
   const op = new RemoverMonitoramento(buildHttpV1());
   const result = await op.execute({ id });
   if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'monitoramentos/remover',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
+    rawStore.save({ gateway: GW_V1, fonte: 'monitoramentos/remover', tipo_param: 'id', param: String(id), result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
     return c.json({ error: result.value.message, kind: result.value.kind }, 500);
   }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'monitoramentos/remover',
-    tipo_param: 'id',
-    param: String(id),
-    result: null,
-    status: 'success',
-    created_at: new Date(),
-  });
+  rawStore.save({ gateway: GW_V1, fonte: 'monitoramentos/remover', tipo_param: 'id', param: String(id), result: null, status: 'success', created_at: new Date() });
   return c.body(null, 204);
 });
 
@@ -1544,31 +1010,9 @@ escavador.get('/v1/monitoramentos/:id/aparicoes', async (c) => {
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
   const pagina = Number(c.req.query('page') ?? '1');
-  const op = new ObterAparicoes(buildHttpV1());
-  const result = await op.execute({ id, pagina });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'monitoramentos/aparicoes',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'monitoramentos/aparicoes',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'monitoramentos/aparicoes', tipo_param: 'id', param: String(id) }, () =>
+    new ObterAparicoes(buildHttpV1()).execute({ id, pagina }),
+  );
 });
 
 escavador.post('/v1/monitoramentos/:id/testar-callback', async (c) => {
@@ -1606,31 +1050,9 @@ escavador.get('/v1/monitoramentos/:id/origens', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new ObterOrigensMonitoramento(buildHttpV1());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'monitoramentos/origens',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'monitoramentos/origens',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'monitoramentos/origens', tipo_param: 'id', param: String(id) }, () =>
+    new ObterOrigensMonitoramento(buildHttpV1()).execute({ id }),
+  );
 });
 
 // ══════════════════════════════════════════════════════════════════════════════════
@@ -1653,30 +1075,9 @@ escavador.get('/v1/monitoramentos/tribunal', async (c) => {
   const op = new ListarMonitoramentosTribunal(buildHttpV1());
   const input: Parameters<typeof op.execute>[0] = { pagina };
   if (ativo !== undefined) input.ativo = ativo;
-  const result = await op.execute(input);
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'monitoramentos/tribunal/listar',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'monitoramentos/tribunal/listar',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'monitoramentos/tribunal/listar', tipo_param: null, param: null }, () =>
+    op.execute(input),
+  );
 });
 
 escavador.post('/v1/monitoramentos/tribunal', async (c) => {
@@ -1694,62 +1095,18 @@ escavador.post('/v1/monitoramentos/tribunal', async (c) => {
     tribunal: parsed.data.tribunal,
   };
   if (parsed.data.callback_url !== undefined) input.callback_url = parsed.data.callback_url;
-
-  const result = await op.execute(input);
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'monitoramentos/tribunal/criar',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'monitoramentos/tribunal/criar',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 201);
+  return handleOp(c, { gateway: GW_V1, fonte: 'monitoramentos/tribunal/criar', tipo_param: null, param: null, statusCode: 201 }, () =>
+    op.execute(input),
+  );
 });
 
 escavador.get('/v1/monitoramentos/tribunal/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new ObterMonitoramentoTribunal(buildHttpV1());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'monitoramentos/tribunal/obter',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'monitoramentos/tribunal/obter',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'monitoramentos/tribunal/obter', tipo_param: 'id', param: String(id) }, () =>
+    new ObterMonitoramentoTribunal(buildHttpV1()).execute({ id }),
+  );
 });
 
 escavador.put('/v1/monitoramentos/tribunal/:id', async (c) => {
@@ -1767,31 +1124,9 @@ escavador.put('/v1/monitoramentos/tribunal/:id', async (c) => {
   const input: Parameters<typeof op.execute>[0] = { id };
   if (parsed.data.ativo !== undefined) input.ativo = parsed.data.ativo;
   if (parsed.data.callback_url !== undefined) input.callback_url = parsed.data.callback_url;
-
-  const result = await op.execute(input);
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'monitoramentos/tribunal/editar',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'monitoramentos/tribunal/editar',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'monitoramentos/tribunal/editar', tipo_param: 'id', param: String(id) }, () =>
+    op.execute(input),
+  );
 });
 
 escavador.delete('/v1/monitoramentos/tribunal/:id', async (c) => {
@@ -1841,31 +1176,9 @@ escavador.delete('/v1/monitoramentos/tribunal/:id', async (c) => {
  */
 escavador.get('/v1/callbacks', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
-  const op = new ListarCallbacks(buildHttpV1());
-  const result = await op.execute({ pagina });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'callbacks/listar',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'callbacks/listar',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'callbacks/listar', tipo_param: null, param: null }, () =>
+    new ListarCallbacks(buildHttpV1()).execute({ pagina }),
+  );
 });
 
 escavador.post('/v1/callbacks/marcar-recebidos', async (c) => {
@@ -1907,31 +1220,9 @@ escavador.post('/v1/callbacks/:id/reenviar', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new ReenviarCallback(buildHttpV1());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'callbacks/reenviar',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'callbacks/reenviar',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'callbacks/reenviar', tipo_param: 'id', param: String(id) }, () =>
+    new ReenviarCallback(buildHttpV1()).execute({ id }),
+  );
 });
 
 // ══════════════════════════════════════════════════════════════════════════════════
@@ -1953,90 +1244,25 @@ escavador.get('/v1/tribunais', async (c) => {
   const op = new ListarTribunais(buildHttpV1());
   const input: { tipo?: string } = {};
   if (tipo !== undefined) input.tipo = tipo;
-  const result = await op.execute(input);
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'tribunais/listar',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'tribunais/listar',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'tribunais/listar', tipo_param: null, param: null }, () =>
+    op.execute(input),
+  );
 });
 
 escavador.get('/v1/tribunais/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new ObterTribunal(buildHttpV1());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'tribunais/obter',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'tribunais/obter',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'tribunais/obter', tipo_param: 'id', param: String(id) }, () =>
+    new ObterTribunal(buildHttpV1()).execute({ id }),
+  );
 });
 
 escavador.get('/v1/orgaos-administrativos', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
-  const op = new ListarOrgaosAdministrativos(buildHttpV1());
-  const result = await op.execute({ pagina });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'orgaos-administrativos/listar',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'orgaos-administrativos/listar',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'orgaos-administrativos/listar', tipo_param: null, param: null }, () =>
+    new ListarOrgaosAdministrativos(buildHttpV1()).execute({ pagina }),
+  );
 });
 
 escavador.get('/v1/diarios-oficiais/origens', async (c) => {
@@ -2044,30 +1270,9 @@ escavador.get('/v1/diarios-oficiais/origens', async (c) => {
   const op = new ListarOrigensDiariosOficiais(buildHttpV1());
   const input: { estado?: string } = {};
   if (estado !== undefined) input.estado = estado;
-  const result = await op.execute(input);
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V1,
-      fonte: 'diarios-oficiais/origens',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V1,
-    fonte: 'diarios-oficiais/origens',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V1, fonte: 'diarios-oficiais/origens', tipo_param: null, param: null }, () =>
+    op.execute(input),
+  );
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -2098,31 +1303,9 @@ escavador.get('/v1/diarios-oficiais/origens', async (c) => {
  */
 escavador.get('/v2/processos/numero_cnj/:numero', async (c) => {
   const numero = c.req.param('numero');
-  const op = new ObterProcessoPorCnj(buildHttpV2());
-  const result = await op.execute({ numero });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/processos/obter',
-      tipo_param: 'numero_cnj',
-      param: numero,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/processos/obter',
-    tipo_param: 'numero_cnj',
-    param: numero,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/obter', tipo_param: 'numero_cnj', param: numero }, () =>
+    new ObterProcessoPorCnj(buildHttpV2()).execute({ numero }),
+  );
 });
 
 /**
@@ -2149,31 +1332,9 @@ escavador.get('/v2/processos/numero_cnj/:numero', async (c) => {
 escavador.get('/v2/processos/movimentacoes/:numero_cnj', async (c) => {
   const numero_cnj = c.req.param('numero_cnj');
   const pagina = Number(c.req.query('page') ?? '1');
-  const op = new ObterMovimentacoesV2(buildHttpV2());
-  const result = await op.execute({ numero_cnj, pagina });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/processos/movimentacoes',
-      tipo_param: 'numero_cnj',
-      param: numero_cnj,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/processos/movimentacoes',
-    tipo_param: 'numero_cnj',
-    param: numero_cnj,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/movimentacoes', tipo_param: 'numero_cnj', param: numero_cnj }, () =>
+    new ObterMovimentacoesV2(buildHttpV2()).execute({ numero_cnj, pagina }),
+  );
 });
 
 /**
@@ -2208,32 +1369,11 @@ escavador.get('/v2/envolvido/processos', async (c) => {
   if (cpf_cnpj !== undefined) input.cpf_cnpj = cpf_cnpj;
   if (cursor !== undefined) input.cursor = cursor;
   if (li !== undefined) input.li = li;
-  const result = await op.execute(input);
   const tipoParam = cpf_cnpj !== undefined ? 'cpf_cnpj' : nome !== undefined ? 'nome' : null;
   const paramVal = cpf_cnpj ?? nome ?? null;
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/processos/envolvido',
-      tipo_param: tipoParam,
-      param: paramVal,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/processos/envolvido',
-    tipo_param: tipoParam,
-    param: paramVal,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/envolvido', tipo_param: tipoParam, param: paramVal }, () =>
+    op.execute(input),
+  );
 });
 
 /**
@@ -2262,32 +1402,11 @@ escavador.get('/v2/envolvido/resumo', async (c) => {
   const cpf_cnpj = c.req.query('cpf_cnpj');
   if (nome !== undefined) input.nome = nome;
   if (cpf_cnpj !== undefined) input.cpf_cnpj = cpf_cnpj;
-  const result = await op.execute(input);
   const tipoParam = cpf_cnpj !== undefined ? 'cpf_cnpj' : nome !== undefined ? 'nome' : null;
   const paramVal = cpf_cnpj ?? nome ?? null;
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/processos/envolvido/resumo',
-      tipo_param: tipoParam,
-      param: paramVal,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/processos/envolvido/resumo',
-    tipo_param: tipoParam,
-    param: paramVal,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/envolvido/resumo', tipo_param: tipoParam, param: paramVal }, () =>
+    op.execute(input),
+  );
 });
 
 /**
@@ -2310,31 +1429,9 @@ escavador.get('/v2/envolvido/resumo', async (c) => {
 escavador.get('/v2/processos/advogado/:oab', async (c) => {
   const oab = c.req.param('oab');
   const pagina = Number(c.req.query('page') ?? '1');
-  const op = new BuscarProcessosPorAdvogado(buildHttpV2());
-  const result = await op.execute({ oab, pagina });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/processos/advogado',
-      tipo_param: 'oab',
-      param: oab,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/processos/advogado',
-    tipo_param: 'oab',
-    param: oab,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/advogado', tipo_param: 'oab', param: oab }, () =>
+    new BuscarProcessosPorAdvogado(buildHttpV2()).execute({ oab, pagina }),
+  );
 });
 
 /**
@@ -2357,31 +1454,9 @@ escavador.get('/v2/processos/advogado/:oab', async (c) => {
  */
 escavador.get('/v2/processos/advogado/:oab/resumo', async (c) => {
   const oab = c.req.param('oab');
-  const op = new ResumoProcessosPorAdvogado(buildHttpV2());
-  const result = await op.execute({ oab });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/processos/advogado/resumo',
-      tipo_param: 'oab',
-      param: oab,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/processos/advogado/resumo',
-    tipo_param: 'oab',
-    param: oab,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/advogado/resumo', tipo_param: 'oab', param: oab }, () =>
+    new ResumoProcessosPorAdvogado(buildHttpV2()).execute({ oab }),
+  );
 });
 
 /**
@@ -2407,31 +1482,9 @@ escavador.get('/v2/processos/advogado/:oab/resumo', async (c) => {
 escavador.get('/v2/processos/:numero_cnj/documentos', async (c) => {
   const numero_cnj = c.req.param('numero_cnj');
   const pagina = Number(c.req.query('page') ?? '1');
-  const op = new ObterDocumentosProcesso(buildHttpV2());
-  const result = await op.execute({ numero_cnj, pagina });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/processos/documentos',
-      tipo_param: 'numero_cnj',
-      param: numero_cnj,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/processos/documentos',
-    tipo_param: 'numero_cnj',
-    param: numero_cnj,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/documentos', tipo_param: 'numero_cnj', param: numero_cnj }, () =>
+    new ObterDocumentosProcesso(buildHttpV2()).execute({ numero_cnj, pagina }),
+  );
 });
 
 /**
@@ -2457,31 +1510,9 @@ escavador.get('/v2/processos/:numero_cnj/documentos', async (c) => {
 escavador.get('/v2/processos/:numero_cnj/autos', async (c) => {
   const numero_cnj = c.req.param('numero_cnj');
   const pagina = Number(c.req.query('page') ?? '1');
-  const op = new ObterAutosProcesso(buildHttpV2());
-  const result = await op.execute({ numero_cnj, pagina });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/processos/autos',
-      tipo_param: 'numero_cnj',
-      param: numero_cnj,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/processos/autos',
-    tipo_param: 'numero_cnj',
-    param: numero_cnj,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/autos', tipo_param: 'numero_cnj', param: numero_cnj }, () =>
+    new ObterAutosProcesso(buildHttpV2()).execute({ numero_cnj, pagina }),
+  );
 });
 
 /**
@@ -2505,31 +1536,9 @@ escavador.get('/v2/processos/:numero_cnj/autos', async (c) => {
  */
 escavador.get('/v2/processos/:numero_cnj/envolvidos', async (c) => {
   const numero_cnj = c.req.param('numero_cnj');
-  const op = new ObterEnvolvidosProcessoV2(buildHttpV2());
-  const result = await op.execute({ numero_cnj });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/processos/envolvidos',
-      tipo_param: 'numero_cnj',
-      param: numero_cnj,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/processos/envolvidos',
-    tipo_param: 'numero_cnj',
-    param: numero_cnj,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/envolvidos', tipo_param: 'numero_cnj', param: numero_cnj }, () =>
+    new ObterEnvolvidosProcessoV2(buildHttpV2()).execute({ numero_cnj }),
+  );
 });
 
 // ──── Atualização de Processos V2 ────
@@ -2565,31 +1574,9 @@ escavador.post('/v2/processos/atualizacao', async (c) => {
   if (!parsed.success)
     return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
 
-  const op = new SolicitarAtualizacaoLote(buildHttpV2());
-  const result = await op.execute({ processos_ids: parsed.data.processos_ids });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/processos/atualizacao/lote',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/processos/atualizacao/lote',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 202);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/atualizacao/lote', tipo_param: null, param: null, statusCode: 202 }, () =>
+    new SolicitarAtualizacaoLote(buildHttpV2()).execute({ processos_ids: parsed.data.processos_ids }),
+  );
 });
 
 /**
@@ -2616,31 +1603,9 @@ escavador.get('/v2/processos/atualizacao/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new ObterStatusAtualizacaoLote(buildHttpV2());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/processos/atualizacao/lote/status',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/processos/atualizacao/lote/status',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/atualizacao/lote/status', tipo_param: 'id', param: String(id) }, () =>
+    new ObterStatusAtualizacaoLote(buildHttpV2()).execute({ id }),
+  );
 });
 
 /**
@@ -2666,31 +1631,9 @@ escavador.get('/v2/processos/:id/atualizacao', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new ObterStatusAtualizacaoProcesso(buildHttpV2());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/processos/atualizacao/status',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/processos/atualizacao/status',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/atualizacao/status', tipo_param: 'id', param: String(id) }, () =>
+    new ObterStatusAtualizacaoProcesso(buildHttpV2()).execute({ id }),
+  );
 });
 
 /**
@@ -2714,31 +1657,9 @@ escavador.post('/v2/processos/:id/atualizacao', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new SolicitarAtualizacaoProcesso(buildHttpV2());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/processos/atualizacao/solicitar',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/processos/atualizacao/solicitar',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 202);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/atualizacao/solicitar', tipo_param: 'id', param: String(id), statusCode: 202 }, () =>
+    new SolicitarAtualizacaoProcesso(buildHttpV2()).execute({ id }),
+  );
 });
 
 // ──── Resumo de Processos (IA) V2 ────
@@ -2765,31 +1686,9 @@ escavador.post('/v2/processos/:id/resumo', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new SolicitarResumoProcesso(buildHttpV2());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/processos/resumo/solicitar',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/processos/resumo/solicitar',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 202);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/resumo/solicitar', tipo_param: 'id', param: String(id), statusCode: 202 }, () =>
+    new SolicitarResumoProcesso(buildHttpV2()).execute({ id }),
+  );
 });
 
 /**
@@ -2815,31 +1714,9 @@ escavador.get('/v2/processos/:id/resumo', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new ObterResumoProcesso(buildHttpV2());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/processos/resumo/obter',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/processos/resumo/obter',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/resumo/obter', tipo_param: 'id', param: String(id) }, () =>
+    new ObterResumoProcesso(buildHttpV2()).execute({ id }),
+  );
 });
 
 /**
@@ -2864,31 +1741,9 @@ escavador.get('/v2/processos/:id/resumo/status', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new ObterStatusResumoProcesso(buildHttpV2());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/processos/resumo/status',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/processos/resumo/status',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/resumo/status', tipo_param: 'id', param: String(id) }, () =>
+    new ObterStatusResumoProcesso(buildHttpV2()).execute({ id }),
+  );
 });
 
 // ──── Download de Documento V2 ────
@@ -2958,31 +1813,9 @@ escavador.get('/v2/documentos/:id/download', async (c) => {
  */
 escavador.get('/v2/certificados', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
-  const op = new ListarMonitoramentosNovosProcessos(buildHttpV2());
-  const result = await op.execute({ pagina });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/monitoramentos/novos-processos/listar',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/monitoramentos/novos-processos/listar',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/monitoramentos/novos-processos/listar', tipo_param: null, param: null }, () =>
+    new ListarMonitoramentosNovosProcessos(buildHttpV2()).execute({ pagina }),
+  );
 });
 
 /**
@@ -3030,31 +1863,9 @@ escavador.post('/v2/monitoramentos/novos-processos', async (c) => {
   const input: Parameters<typeof op.execute>[0] = { variacao_busca: parsed.data.variacao_busca };
   if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
   if (parsed.data.callback_url !== undefined) input.callback_url = parsed.data.callback_url;
-
-  const result = await op.execute(input);
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/monitoramentos/novos-processos/criar',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/monitoramentos/novos-processos/criar',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 201);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/monitoramentos/novos-processos/criar', tipo_param: null, param: null, statusCode: 201 }, () =>
+    op.execute(input),
+  );
 });
 
 /**
@@ -3082,31 +1893,9 @@ escavador.get('/v2/monitoramentos/novos-processos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new ObterMonitoramentoNovosProcessos(buildHttpV2());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/monitoramentos/novos-processos/obter',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/monitoramentos/novos-processos/obter',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/monitoramentos/novos-processos/obter', tipo_param: 'id', param: String(id) }, () =>
+    new ObterMonitoramentoNovosProcessos(buildHttpV2()).execute({ id }),
+  );
 });
 
 /**
@@ -3161,31 +1950,9 @@ escavador.patch('/v2/monitoramentos/novos-processos/:id', async (c) => {
   if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
   if (parsed.data.callback_url !== undefined) input.callback_url = parsed.data.callback_url;
   if (parsed.data.ativo !== undefined) input.ativo = parsed.data.ativo;
-
-  const result = await op.execute(input);
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/monitoramentos/novos-processos/editar',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/monitoramentos/novos-processos/editar',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/monitoramentos/novos-processos/editar', tipo_param: 'id', param: String(id) }, () =>
+    op.execute(input),
+  );
 });
 
 /**
@@ -3236,31 +2003,9 @@ escavador.get('/v2/monitoramentos/novos-processos/:id/resultados', async (c) => 
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
   const pagina = Number(c.req.query('page') ?? '1');
-  const op = new ObterResultadosMonitoramentoNovosProcessos(buildHttpV2());
-  const result = await op.execute({ id, pagina });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/monitoramentos/novos-processos/resultados',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/monitoramentos/novos-processos/resultados',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/monitoramentos/novos-processos/resultados', tipo_param: 'id', param: String(id) }, () =>
+    new ObterResultadosMonitoramentoNovosProcessos(buildHttpV2()).execute({ id, pagina }),
+  );
 });
 
 // ──── Monitoramentos V2 — Processos ────
@@ -3284,31 +2029,9 @@ escavador.get('/v2/monitoramentos/novos-processos/:id/resultados', async (c) => 
  */
 escavador.get('/v2/monitoramentos/processos', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
-  const op = new ListarMonitoramentosProcesso(buildHttpV2());
-  const result = await op.execute({ pagina });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/monitoramentos/processos/listar',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/monitoramentos/processos/listar',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/monitoramentos/processos/listar', tipo_param: null, param: null }, () =>
+    new ListarMonitoramentosProcesso(buildHttpV2()).execute({ pagina }),
+  );
 });
 
 /**
@@ -3352,31 +2075,9 @@ escavador.post('/v2/monitoramentos/processos', async (c) => {
   const op = new CriarMonitoramentoProcesso(buildHttpV2());
   const input: Parameters<typeof op.execute>[0] = { processo_id: parsed.data.processo_id };
   if (parsed.data.callback_url !== undefined) input.callback_url = parsed.data.callback_url;
-
-  const result = await op.execute(input);
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/monitoramentos/processos/criar',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/monitoramentos/processos/criar',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 201);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/monitoramentos/processos/criar', tipo_param: null, param: null, statusCode: 201 }, () =>
+    op.execute(input),
+  );
 });
 
 /**
@@ -3403,31 +2104,9 @@ escavador.get('/v2/monitoramentos/processos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new ObterMonitoramentoProcesso(buildHttpV2());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/monitoramentos/processos/obter',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/monitoramentos/processos/obter',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/monitoramentos/processos/obter', tipo_param: 'id', param: String(id) }, () =>
+    new ObterMonitoramentoProcesso(buildHttpV2()).execute({ id }),
+  );
 });
 
 /**
@@ -3494,31 +2173,9 @@ escavador.delete('/v2/monitoramentos/processos/:id', async (c) => {
  */
 escavador.get('/v2/callbacks', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
-  const op = new ListarCallbacksV2(buildHttpV2());
-  const result = await op.execute({ pagina });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/callbacks/listar',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/callbacks/listar',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/callbacks/listar', tipo_param: null, param: null }, () =>
+    new ListarCallbacksV2(buildHttpV2()).execute({ pagina }),
+  );
 });
 
 /**
@@ -3594,31 +2251,9 @@ escavador.post('/v2/callbacks/:id/reenviar', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new ReenviarCallbackV2(buildHttpV2());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/callbacks/reenviar',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/callbacks/reenviar',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/callbacks/reenviar', tipo_param: 'id', param: String(id) }, () =>
+    new ReenviarCallbackV2(buildHttpV2()).execute({ id }),
+  );
 });
 
 // ──── Certificados V2 ────
@@ -3639,31 +2274,9 @@ escavador.post('/v2/callbacks/:id/reenviar', async (c) => {
  * }
  */
 escavador.get('/v2/certificados', async (c) => {
-  const op = new ListarCertificados(buildHttpV2());
-  const result = await op.execute();
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/certificados/listar',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/certificados/listar',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/certificados/listar', tipo_param: null, param: null }, () =>
+    new ListarCertificados(buildHttpV2()).execute(),
+  );
 });
 
 /**
@@ -3707,31 +2320,9 @@ escavador.post('/v2/certificados', async (c) => {
   if (!parsed.success)
     return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
 
-  const op = new CriarCertificado(buildHttpV2());
-  const result = await op.execute(parsed.data);
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/certificados/criar',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/certificados/criar',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 201);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/certificados/criar', tipo_param: null, param: null, statusCode: 201 }, () =>
+    new CriarCertificado(buildHttpV2()).execute(parsed.data),
+  );
 });
 
 /**
@@ -3759,31 +2350,9 @@ escavador.get('/v2/certificados/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const op = new ObterCertificado(buildHttpV2());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/certificados/obter',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/certificados/obter',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/certificados/obter', tipo_param: 'id', param: String(id) }, () =>
+    new ObterCertificado(buildHttpV2()).execute({ id }),
+  );
 });
 
 /**
@@ -3873,31 +2442,9 @@ escavador.post('/v2/certificados/:id/autenticacoes', async (c) => {
   const op = new CriarAutenticacaoCertificado(buildHttpV2());
   const input: Parameters<typeof op.execute>[0] = { id, tipo: parsed.data.tipo };
   if (parsed.data.valor !== undefined) input.valor = parsed.data.valor;
-
-  const result = await op.execute(input);
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/certificados/autenticacoes/criar',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/certificados/autenticacoes/criar',
-    tipo_param: 'id',
-    param: String(id),
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 201);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/certificados/autenticacoes/criar', tipo_param: 'id', param: String(id), statusCode: 201 }, () =>
+    op.execute(input),
+  );
 });
 
 /**
@@ -3965,31 +2512,9 @@ escavador.delete('/v2/certificados/:id/autenticacoes/:autenticacaoId', async (c)
  * }
  */
 escavador.get('/v2/tribunais/sistemas', async (c) => {
-  const op = new ListarSistemasTribunais(buildHttpV2());
-  const result = await op.execute();
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/tribunais/sistemas',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/tribunais/sistemas',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/tribunais/sistemas', tipo_param: null, param: null }, () =>
+    new ListarSistemasTribunais(buildHttpV2()).execute(),
+  );
 });
 
 /**
@@ -4017,30 +2542,9 @@ escavador.get('/v2/tribunais', async (c) => {
     const id = Number(sistemaIdRaw);
     if (!Number.isNaN(id)) input.sistema_id = id;
   }
-  const result = await op.execute(input);
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: GW_V2,
-      fonte: 'v2/tribunais/listar',
-      tipo_param: null,
-      param: null,
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: GW_V2,
-    fonte: 'v2/tribunais/listar',
-    tipo_param: null,
-    param: null,
-    result: result.value,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.json(result.value, 200);
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/tribunais/listar', tipo_param: null, param: null }, () =>
+    op.execute(input),
+  );
 });
 
 export { escavador };
