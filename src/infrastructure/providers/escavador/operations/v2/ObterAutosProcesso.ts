@@ -1,7 +1,8 @@
-import { type Either, left, right } from '../../../../../shared/domain/Either.js';
+import type { Either } from '../../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../../shared/infrastructure/IHttpClient.js';
 import { type AutosV2Response, AutosV2ResponseSchema } from '../../dtos/v2/ProcessoV2Dto.js';
+import { parseOrSchemaError } from '../../../../../shared/domain/parseOrSchemaError.js';
 
 export interface IObterAutosProcesso {
   execute(input: { numero_cnj: string; pagina?: number }): Promise<
@@ -23,9 +24,6 @@ export class ObterAutosProcesso implements IObterAutosProcesso {
       { params },
     );
     if (result._tag === 'Left') return result;
-    const parsed = AutosV2ResponseSchema.safeParse(result.value);
-    if (!parsed.success)
-      return left(new SourceError('SCHEMA_MISMATCH', 'escavador-v2', parsed.error.message));
-    return right(parsed.data);
+    return parseOrSchemaError(AutosV2ResponseSchema, result.value, 'escavador-v2');
   }
 }

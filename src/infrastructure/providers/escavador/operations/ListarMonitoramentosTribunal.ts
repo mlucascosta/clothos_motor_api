@@ -1,8 +1,9 @@
-import { type Either, left, right } from '../../../../shared/domain/Either.js';
+import type { Either } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
 import type { ListarMonitoramentosTribunalResponse } from '../dtos/MonitoramentoDto.js';
 import { ListarMonitoramentosTribunalResponseSchema } from '../dtos/MonitoramentoDto.js';
+import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
 
 export interface IListarMonitoramentosTribunal {
   execute(input: { pagina?: number; ativo?: boolean }): Promise<
@@ -20,9 +21,6 @@ export class ListarMonitoramentosTribunal implements IListarMonitoramentosTribun
       params: { page: input.pagina, ativo: input.ativo },
     });
     if (result._tag === 'Left') return result;
-    const parsed = ListarMonitoramentosTribunalResponseSchema.safeParse(result.value);
-    if (!parsed.success)
-      return left(new SourceError('SCHEMA_MISMATCH', 'escavador', parsed.error.message));
-    return right(parsed.data);
+    return parseOrSchemaError(ListarMonitoramentosTribunalResponseSchema, result.value, 'escavador');
   }
 }

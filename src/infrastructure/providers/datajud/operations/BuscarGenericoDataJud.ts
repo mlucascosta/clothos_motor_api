@@ -16,6 +16,7 @@ import type {
   BuscarGenericoDataJudInput,
   IBuscarGenericoDataJud,
 } from '../ports/IBuscarGenericoDataJud.js';
+import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
 
 /**
  * Operação de busca genérica no DataJud (POST /{tribunal}/_search).
@@ -53,11 +54,6 @@ export class BuscarGenericoDataJud implements IBuscarGenericoDataJud {
 
     if (result._tag === 'Left') return result;
 
-    const parsed = DataJudSearchResponseSchema.safeParse(result.value);
-    if (!parsed.success) {
-      return left(new SourceError('SCHEMA_MISMATCH', 'datajud', parsed.error.message));
-    }
-
-    return right(parsed.data);
+    return parseOrSchemaError(DataJudSearchResponseSchema, result.value, 'datajud');
   }
 }

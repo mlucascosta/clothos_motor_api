@@ -1,7 +1,8 @@
 import { z } from 'zod';
-import { type Either, left, right } from '../../../../../shared/domain/Either.js';
+import type { Either } from '../../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../../shared/infrastructure/IHttpClient.js';
+import { parseOrSchemaError } from '../../../../../shared/domain/parseOrSchemaError.js';
 
 const ResumoAdvogadoSchema = z.record(z.unknown());
 type ResumoAdvogado = z.infer<typeof ResumoAdvogadoSchema>;
@@ -18,9 +19,6 @@ export class ResumoProcessosPorAdvogado implements IResumoProcessosPorAdvogado {
       `/api/v2/processos/advogado/${encodeURIComponent(input.oab)}/resumo`,
     );
     if (result._tag === 'Left') return result;
-    const parsed = ResumoAdvogadoSchema.safeParse(result.value);
-    if (!parsed.success)
-      return left(new SourceError('SCHEMA_MISMATCH', 'escavador-v2', parsed.error.message));
-    return right(parsed.data);
+    return parseOrSchemaError(ResumoAdvogadoSchema, result.value, 'escavador-v2');
   }
 }

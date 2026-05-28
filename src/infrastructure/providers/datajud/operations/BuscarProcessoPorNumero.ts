@@ -10,6 +10,7 @@ import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.
 import { getDataJudPath } from '../DataJudTribunais.js';
 import type { DataJudSearchResponseDto } from '../dtos/DataJudSearchResponseDto.js';
 import { DataJudSearchResponseSchema } from '../dtos/DataJudSearchResponseDto.js';
+import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
 
 /**
  * Input para busca por número de processo.
@@ -68,11 +69,6 @@ export class BuscarProcessoPorNumero {
 
     if (result._tag === 'Left') return result;
 
-    const parsed = DataJudSearchResponseSchema.safeParse(result.value);
-    if (!parsed.success) {
-      return left(new SourceError('SCHEMA_MISMATCH', 'datajud', parsed.error.message));
-    }
-
-    return right(parsed.data);
+    return parseOrSchemaError(DataJudSearchResponseSchema, result.value, 'datajud');
   }
 }

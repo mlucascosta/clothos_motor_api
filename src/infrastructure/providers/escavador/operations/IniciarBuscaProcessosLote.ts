@@ -1,4 +1,4 @@
-import { type Either, left, right } from '../../../../shared/domain/Either.js';
+import type { Either } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
 import {
@@ -9,6 +9,7 @@ import type {
   IIniciarBuscaProcessosLote,
   IniciarBuscaProcessosLoteInput,
 } from '../ports/IIniciarBuscaProcessosLote.js';
+import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
 
 export class IniciarBuscaProcessosLote implements IIniciarBuscaProcessosLote {
   constructor(private readonly http: IHttpClient) {}
@@ -32,11 +33,6 @@ export class IniciarBuscaProcessosLote implements IIniciarBuscaProcessosLote {
 
     if (result._tag === 'Left') return result;
 
-    const parsed = IniciarBuscaLoteResponseSchema.safeParse(result.value);
-    if (!parsed.success) {
-      return left(new SourceError('SCHEMA_MISMATCH', 'escavador', parsed.error.message));
-    }
-
-    return right(parsed.data);
+    return parseOrSchemaError(IniciarBuscaLoteResponseSchema, result.value, 'escavador');
   }
 }

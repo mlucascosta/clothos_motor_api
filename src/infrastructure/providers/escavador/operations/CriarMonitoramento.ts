@@ -1,8 +1,9 @@
-import { type Either, left, right } from '../../../../shared/domain/Either.js';
+import type { Either } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
 import type { MonitoramentoDto } from '../dtos/MonitoramentoDto.js';
 import { MonitoramentoDtoSchema } from '../dtos/MonitoramentoDto.js';
+import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
 
 export interface CriarMonitoramentoInput {
   nome: string;
@@ -31,9 +32,6 @@ export class CriarMonitoramento implements ICriarMonitoramento {
       },
     });
     if (result._tag === 'Left') return result;
-    const parsed = MonitoramentoDtoSchema.safeParse(result.value);
-    if (!parsed.success)
-      return left(new SourceError('SCHEMA_MISMATCH', 'escavador', parsed.error.message));
-    return right(parsed.data);
+    return parseOrSchemaError(MonitoramentoDtoSchema, result.value, 'escavador');
   }
 }

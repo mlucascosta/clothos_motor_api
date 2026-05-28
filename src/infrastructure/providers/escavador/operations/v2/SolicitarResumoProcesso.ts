@@ -1,10 +1,11 @@
-import { type Either, left, right } from '../../../../../shared/domain/Either.js';
+import type { Either } from '../../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../../shared/infrastructure/IHttpClient.js';
 import {
   type ResumoProcessoV2Dto,
   ResumoProcessoV2DtoSchema,
 } from '../../dtos/v2/ResumoProcessoV2Dto.js';
+import { parseOrSchemaError } from '../../../../../shared/domain/parseOrSchemaError.js';
 
 export interface ISolicitarResumoProcesso {
   execute(input: { id: number }): Promise<Either<SourceError, ResumoProcessoV2Dto>>;
@@ -18,9 +19,6 @@ export class SolicitarResumoProcesso implements ISolicitarResumoProcesso {
       method: 'POST',
     });
     if (result._tag === 'Left') return result;
-    const parsed = ResumoProcessoV2DtoSchema.safeParse(result.value);
-    if (!parsed.success)
-      return left(new SourceError('SCHEMA_MISMATCH', 'escavador-v2', parsed.error.message));
-    return right(parsed.data);
+    return parseOrSchemaError(ResumoProcessoV2DtoSchema, result.value, 'escavador-v2');
   }
 }
