@@ -103,4 +103,25 @@ export interface IHttpClient {
    * });
    */
   request<T>(path: string, options?: HttpRequestOptions): Promise<Either<SourceError, T>>;
+
+  /**
+   * Executa uma requisição HTTP e retorna dados binários brutos (ArrayBuffer).
+   *
+   * Útil para downloads de arquivos (PDF, imagens, binários).
+   * Não faz parsing JSON; retorna resposta bruta como ArrayBuffer.
+   *
+   * @param path Caminho relativo (ex: '/docs/123/download') — será prefixado com baseUrl
+   * @param options Opções de requisição
+   * @returns Promise com Either contendo sucesso (Right<ArrayBuffer>) ou erro (Left<SourceError>)
+   *
+   * @example
+   * // Download de PDF
+   * const result = await client.requestRaw('/documents/123/download');
+   *
+   * if (isRight(result)) {
+   *   const buffer = result.value;
+   *   // ... processar arquivo
+   * }
+   */
+  requestRaw(path: string, options?: HttpRequestOptions): Promise<Either<SourceError, ArrayBuffer>>;
 }

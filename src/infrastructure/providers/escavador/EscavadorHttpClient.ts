@@ -53,4 +53,16 @@ export class EscavadorHttpClient implements IHttpClient {
   request<T>(path: string, options?: HttpRequestOptions): Promise<Either<SourceError, T>> {
     return this.http.request<T>(path, options);
   }
+
+  /**
+   * Realiza requisição HTTP à API Escavador e retorna dados binários brutos.
+   * Útil para downloads de arquivos (PDF, etc).
+   *
+   * @param {string} path - Caminho relativo (ex: /api/v2/documentos/123/download)
+   * @param {HttpRequestOptions} [options] - Opções (method, params, body, etc.)
+   * @returns {Promise<Either<SourceError, ArrayBuffer>>} ArrayBuffer ou erro de source
+   */
+  requestRaw(path: string, options?: HttpRequestOptions): Promise<Either<SourceError, ArrayBuffer>> {
+    return this.http.requestRaw(path, options);
+  }
 }

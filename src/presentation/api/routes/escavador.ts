@@ -1647,9 +1647,7 @@ escavador.get('/v2/documentos/:id/download', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  const apiKey = process.env['ESCAVADOR_API_KEY'] ?? '';
-  const baseUrl = process.env['ESCAVADOR_BASE_URL'] ?? 'https://api.escavador.com';
-  const op = new DownloadDocumento(apiKey, baseUrl);
+  const op = new DownloadDocumento(buildHttp());
   const result = await op.execute({ id });
   if (isLeft(result)) {
     rawStore.save({

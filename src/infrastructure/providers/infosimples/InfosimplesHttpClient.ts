@@ -72,4 +72,24 @@ export class InfosimplesHttpClient implements IHttpClient {
     };
     return this.http.request<T>(path, mergedOptions);
   }
+
+  /**
+   * Realiza requisição HTTP à API Infosimples e retorna dados binários brutos.
+   * Injeta automaticamente o query param `token` em todas as chamadas.
+   *
+   * @param {string} path - Caminho relativo
+   * @param {HttpRequestOptions} [options] - Opções (method, params, body, etc.)
+   * @returns {Promise<Either<SourceError, ArrayBuffer>>} ArrayBuffer ou erro de source
+   */
+  requestRaw(path: string, options?: HttpRequestOptions): Promise<Either<SourceError, ArrayBuffer>> {
+    const mergedOptions: HttpRequestOptions = {
+      ...options,
+      method: 'POST', // Infosimples sempre usa POST
+      params: {
+        token: this.apiKey,
+        ...options?.params,
+      },
+    };
+    return this.http.requestRaw(path, mergedOptions);
+  }
 }

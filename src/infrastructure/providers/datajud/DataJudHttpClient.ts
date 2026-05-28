@@ -54,4 +54,15 @@ export class DataJudHttpClient implements IHttpClient {
   request<T>(path: string, options?: HttpRequestOptions): Promise<Either<SourceError, T>> {
     return this.http.request<T>(path, options);
   }
+
+  /**
+   * Realiza requisição HTTP à API DataJud e retorna dados binários brutos.
+   *
+   * @param {string} path - Caminho relativo
+   * @param {HttpRequestOptions} [options] - Opções (method, params, body, etc.)
+   * @returns {Promise<Either<SourceError, ArrayBuffer>>} ArrayBuffer ou erro de source
+   */
+  requestRaw(path: string, options?: HttpRequestOptions): Promise<Either<SourceError, ArrayBuffer>> {
+    return this.http.requestRaw(path, options);
+  }
 }

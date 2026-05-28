@@ -145,6 +145,67 @@ export class FetchHttpClient implements IHttpClient {
   }
 
   /**
+   * Executa uma requisição HTTP e retorna dados binários brutos (ArrayBuffer).
+   *
+   * Idêntico ao request() mas sem parsing JSON.
+   * Retorna a resposta bruta como ArrayBuffer.
+   *
+   * Errors tratados:
+   * - Mesmos casos que request() (timeout, auth, rate-limit, etc)
+   *
+   * @param path Caminho relativo (ex: '/docs/download')
+   * @param options Opções de requisição
+   * @returns Either contendo sucesso (ArrayBuffer) ou erro estruturado
+   */
+  async requestRaw(
+    path: string,
+    options: HttpRequestOptions = {},
+  ): Promise<Either<SourceError, ArrayBuffer>> {
+    const url = this.buildUrl(path, options.params);
+    const timeoutMs = options.timeoutMs ?? this.config.defaultTimeoutMs ?? 30_000;
+    const source = this.config.sourceName ?? 'http';
+
+    try {
+      const init: RequestInit = {
+        method: options.method ?? 'GET',
+        signal: AbortSignal.timeout(timeoutMs),
+        headers: {
+          ...this.config.defaultHeaders,
+          ...options.headers,
+        },
+      };
+      if (options.body !== undefined) {
+        init.body = JSON.stringify(options.body);
+      }
+      const response = await fetch(url, init);
+
+      if (response.status === 401 || response.status === 403) {
+        return left(new SourceError('AUTH_FAILED', source, `HTTP ${response.status}`));
+      }
+
+      if (response.status === 404) {
+        return left(new SourceError('NOT_FOUND', source));
+      }
+
+      if (response.status === 429) {
+        return left(new SourceError('RATE_LIMITED', source));
+      }
+
+      if (!response.ok) {
+        return left(new SourceError('UPSTREAM_ERROR', source, `HTTP ${response.status}`));
+      }
+
+      const buffer = await response.arrayBuffer();
+      return right(buffer);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'TimeoutError') {
+        return left(new SourceError('TIMEOUT', source));
+      }
+      return left(new SourceError('UPSTREAM_ERROR', source, err));
+    }
+  }
+
+  /**
    * Constrói URL completa a partir de baseUrl, path e query params.
    *
    * Comportamento:

@@ -23,7 +23,7 @@ const GW = 'infosimples';
 const BASE_URL = 'https://api.infosimples.com/api/v2/';
 
 function buildHttp(): InfosimplesHttpClient {
-  const token = process.env.INFOSIMPLES_TOKEN ?? '';
+  const token = process.env['INFOSIMPLES_TOKEN'] ?? '';
   return new InfosimplesHttpClient(token, BASE_URL);
 }
 

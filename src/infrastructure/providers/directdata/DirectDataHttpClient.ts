@@ -63,4 +63,23 @@ export class DirectDataHttpClient implements IHttpClient {
     };
     return this.http.request<T>(path, mergedOptions);
   }
+
+  /**
+   * Realiza requisição HTTP à API DirectData e retorna dados binários brutos.
+   * Injeta automaticamente o query param `TOKEN` em todas as chamadas.
+   *
+   * @param {string} path - Caminho relativo
+   * @param {HttpRequestOptions} [options] - Opções (method, params, body, etc.)
+   * @returns {Promise<Either<SourceError, ArrayBuffer>>} ArrayBuffer ou erro de source
+   */
+  requestRaw(path: string, options?: HttpRequestOptions): Promise<Either<SourceError, ArrayBuffer>> {
+    const mergedOptions: HttpRequestOptions = {
+      ...options,
+      params: {
+        TOKEN: this.apiKey,
+        ...options?.params,
+      },
+    };
+    return this.http.requestRaw(path, mergedOptions);
+  }
 }
