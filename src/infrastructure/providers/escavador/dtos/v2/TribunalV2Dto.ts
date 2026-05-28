@@ -12,13 +12,13 @@ import { z } from 'zod';
  * @type {ZodSchema}
  */
 export const SistemaJudicialSchema = z.object({
-  /** ID único do sistema judicial */
-  id: z.number().int(),
-  /** Nome do sistema (ex: "Supremo Tribunal Federal", "Tribunal de Justiça de SP") */
-  nome: z.string(),
-  /** Sigla do sistema (ex: "STF", "TJSP") (opcional) */
+  id: z.number().int().optional(),
+  nome: z.string().optional(),
   sigla: z.string().optional(),
-});
+  sistema_nome: z.string().optional(),
+  tribunal_sigla: z.string().optional(),
+  tribunal_nome: z.string().optional(),
+}).passthrough();
 
 /**
  * Schema de resposta de listagem de sistemas judiciais.

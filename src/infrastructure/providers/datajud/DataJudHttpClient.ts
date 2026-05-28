@@ -34,7 +34,7 @@ export class DataJudHttpClient implements IHttpClient {
       baseUrl,
       sourceName: 'datajud',
       defaultHeaders: {
-        Authorization: `APIKey ${apiKey}`,
+        Authorization: apiKey.startsWith('APIKey ') ? apiKey : `APIKey ${apiKey}`,
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },

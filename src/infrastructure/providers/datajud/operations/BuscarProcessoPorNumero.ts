@@ -53,10 +53,12 @@ export class BuscarProcessoPorNumero {
         new SourceError('NOT_FOUND', 'datajud', `Tribunal '${input.sigla}' não encontrado`),
       );
     }
+    // DataJud armazena numeroProcesso em 20 dígitos sem separadores
+    const numeroLimpo = input.numeroProcesso.replace(/\D/g, '');
     const body = {
       query: {
         match: {
-          numeroProcesso: input.numeroProcesso,
+          numeroProcesso: numeroLimpo,
         },
       },
       size: input.size ?? 1,

@@ -23,7 +23,7 @@ export class ObterDocumentosProcesso implements IObterDocumentosProcesso {
     if (input.pagina !== undefined) params['page'] = input.pagina;
 
     const result = await this.http.request<unknown>(
-      `/api/v2/processos/${encodeURIComponent(input.numero_cnj)}/documentos`,
+      `/api/v2/processos/numero_cnj/${encodeURIComponent(input.numero_cnj)}/documentos-publicos`,
       { params },
     );
     if (result._tag === 'Left') return result;

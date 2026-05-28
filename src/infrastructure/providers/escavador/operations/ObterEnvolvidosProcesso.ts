@@ -18,7 +18,7 @@ export class ObterEnvolvidosProcesso implements IObterEnvolvidosProcesso {
     input: ObterEnvolvidosProcessoInput,
   ): Promise<Either<SourceError, ProcessoEnvolvidosResponse>> {
     const result = await this.http.request<unknown>(
-      `/api/v1/processos/${input.id}/envolvidos-diarios`,
+      `/api/v1/processos/${input.id}/envolvidos`,
     );
 
     if (result._tag === 'Left') return result;

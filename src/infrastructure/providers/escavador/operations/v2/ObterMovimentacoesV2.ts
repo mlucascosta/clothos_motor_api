@@ -23,7 +23,7 @@ export class ObterMovimentacoesV2 implements IObterMovimentacoesV2 {
     if (input.pagina !== undefined) params['page'] = input.pagina;
 
     const result = await this.http.request<unknown>(
-      `/api/v2/processos/movimentacoes/${encodeURIComponent(input.numero_cnj)}`,
+      `/api/v2/processos/numero_cnj/${encodeURIComponent(input.numero_cnj)}/movimentacoes`,
       { params },
     );
     if (result._tag === 'Left') return result;

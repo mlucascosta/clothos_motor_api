@@ -13,7 +13,7 @@ export class ListarTribunais implements IListarTribunais {
   constructor(private readonly http: IHttpClient) {}
 
   async execute(input: { tipo?: string }): Promise<Either<SourceError, ListarTribunaisResponse>> {
-    const result = await this.http.request<unknown>('/api/v1/tribunais', {
+    const result = await this.http.request<unknown>('/api/v1/tribunal/origens', {
       params: { tipo: input.tipo },
     });
     if (result._tag === 'Left') return result;

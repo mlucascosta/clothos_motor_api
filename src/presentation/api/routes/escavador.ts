@@ -1426,11 +1426,15 @@ escavador.get('/v2/envolvido/resumo', async (c) => {
  *   "pagination": { "page": 1, "total": 45, "por_pagina": 20 }
  * }
  */
-escavador.get('/v2/processos/advogado/:oab', async (c) => {
-  const oab = c.req.param('oab');
+escavador.get('/v2/processos/advogado', async (c) => {
+  const oab_numero = c.req.query('oab_numero') ?? '';
+  const oab_estado = c.req.query('oab_estado');
+  const oab_tipo   = c.req.query('oab_tipo');
   const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/advogado', tipo_param: 'oab', param: oab }, () =>
-    new BuscarProcessosPorAdvogado(buildHttpV2()).execute({ oab, pagina }),
+  if (!oab_numero) return c.json({ error: 'Parâmetro oab_numero obrigatório' }, 400);
+  const param = oab_estado ? `${oab_numero}/${oab_estado}` : oab_numero;
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/advogado', tipo_param: 'oab', param }, () =>
+    new BuscarProcessosPorAdvogado(buildHttpV2()).execute({ oab_numero, oab_estado, oab_tipo, pagina }),
   );
 });
 
@@ -1452,10 +1456,13 @@ escavador.get('/v2/processos/advogado/:oab', async (c) => {
  *   "valor_total": 12500000.75
  * }
  */
-escavador.get('/v2/processos/advogado/:oab/resumo', async (c) => {
-  const oab = c.req.param('oab');
-  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/advogado/resumo', tipo_param: 'oab', param: oab }, () =>
-    new ResumoProcessosPorAdvogado(buildHttpV2()).execute({ oab }),
+escavador.get('/v2/processos/advogado/resumo', async (c) => {
+  const oab_numero = c.req.query('oab_numero') ?? '';
+  const oab_estado = c.req.query('oab_estado');
+  if (!oab_numero) return c.json({ error: 'Parâmetro oab_numero obrigatório' }, 400);
+  const param = oab_estado ? `${oab_numero}/${oab_estado}` : oab_numero;
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/advogado/resumo', tipo_param: 'oab', param }, () =>
+    new ResumoProcessosPorAdvogado(buildHttpV2()).execute({ oab: oab_numero, oab_estado }),
   );
 });
 
@@ -1570,12 +1577,15 @@ escavador.post('/v2/processos/atualizacao', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = z.object({ processos_ids: z.array(z.number().int()).min(1) }).safeParse(body);
+  const parsed = z.object({
+    processos: z.array(z.object({ numero_cnj: z.string().min(1) })).min(1),
+    enviar_callback: z.boolean().optional(),
+  }).safeParse(body);
   if (!parsed.success)
     return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
 
   return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/atualizacao/lote', tipo_param: null, param: null, statusCode: 202 }, () =>
-    new SolicitarAtualizacaoLote(buildHttpV2()).execute({ processos_ids: parsed.data.processos_ids }),
+    new SolicitarAtualizacaoLote(buildHttpV2()).execute({ processos: parsed.data.processos, enviar_callback: parsed.data.enviar_callback }),
   );
 });
 
@@ -1628,10 +1638,8 @@ escavador.get('/v2/processos/atualizacao/:id', async (c) => {
  * }
  */
 escavador.get('/v2/processos/:id/atualizacao', async (c) => {
-  const id = Number(c.req.param('id'));
-  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-
-  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/atualizacao/status', tipo_param: 'id', param: String(id) }, () =>
+  const id = c.req.param('id');
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/atualizacao/status', tipo_param: 'numero_cnj', param: id }, () =>
     new ObterStatusAtualizacaoProcesso(buildHttpV2()).execute({ id }),
   );
 });
@@ -1654,10 +1662,8 @@ escavador.get('/v2/processos/:id/atualizacao', async (c) => {
  * }
  */
 escavador.post('/v2/processos/:id/atualizacao', async (c) => {
-  const id = Number(c.req.param('id'));
-  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-
-  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/atualizacao/solicitar', tipo_param: 'id', param: String(id), statusCode: 202 }, () =>
+  const id = c.req.param('id');
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/atualizacao/solicitar', tipo_param: 'numero_cnj', param: id, statusCode: 202 }, () =>
     new SolicitarAtualizacaoProcesso(buildHttpV2()).execute({ id }),
   );
 });
@@ -1683,10 +1689,8 @@ escavador.post('/v2/processos/:id/atualizacao', async (c) => {
  * }
  */
 escavador.post('/v2/processos/:id/resumo', async (c) => {
-  const id = Number(c.req.param('id'));
-  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-
-  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/resumo/solicitar', tipo_param: 'id', param: String(id), statusCode: 202 }, () =>
+  const id = c.req.param('id');
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/resumo/solicitar', tipo_param: 'numero_cnj', param: id, statusCode: 202 }, () =>
     new SolicitarResumoProcesso(buildHttpV2()).execute({ id }),
   );
 });
@@ -1711,10 +1715,8 @@ escavador.post('/v2/processos/:id/resumo', async (c) => {
  * }
  */
 escavador.get('/v2/processos/:id/resumo', async (c) => {
-  const id = Number(c.req.param('id'));
-  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-
-  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/resumo/obter', tipo_param: 'id', param: String(id) }, () =>
+  const id = c.req.param('id');
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/resumo/obter', tipo_param: 'numero_cnj', param: id }, () =>
     new ObterResumoProcesso(buildHttpV2()).execute({ id }),
   );
 });
@@ -1738,10 +1740,8 @@ escavador.get('/v2/processos/:id/resumo', async (c) => {
  * }
  */
 escavador.get('/v2/processos/:id/resumo/status', async (c) => {
-  const id = Number(c.req.param('id'));
-  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-
-  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/resumo/status', tipo_param: 'id', param: String(id) }, () =>
+  const id = c.req.param('id');
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/processos/resumo/status', tipo_param: 'numero_cnj', param: id }, () =>
     new ObterStatusResumoProcesso(buildHttpV2()).execute({ id }),
   );
 });
@@ -1845,6 +1845,13 @@ escavador.get('/v2/certificados', async (c) => {
  *   "created_at": "2024-05-27T10:30:00Z"
  * }
  */
+escavador.get('/v2/monitoramentos/novos-processos', async (c) => {
+  const pagina = Number(c.req.query('page') ?? '1');
+  return handleOp(c, { gateway: GW_V2, fonte: 'v2/monitoramentos/novos-processos/list', tipo_param: null, param: null }, () =>
+    new ListarMonitoramentosNovosProcessos(buildHttpV2()).execute({ pagina }),
+  );
+});
+
 escavador.post('/v2/monitoramentos/novos-processos', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);

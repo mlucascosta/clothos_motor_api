@@ -5,18 +5,18 @@ import { type AtualizacaoLoteDto, AtualizacaoLoteDtoSchema } from '../../dtos/v2
 import { parseOrSchemaError } from '../../../../../shared/domain/parseOrSchemaError.js';
 
 export interface ISolicitarAtualizacaoLote {
-  execute(input: { processos_ids: number[] }): Promise<Either<SourceError, AtualizacaoLoteDto>>;
+  execute(input: { processos: Array<{ numero_cnj: string }>; enviar_callback?: boolean }): Promise<Either<SourceError, AtualizacaoLoteDto>>;
 }
 
 export class SolicitarAtualizacaoLote implements ISolicitarAtualizacaoLote {
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(input: { processos_ids: number[] }): Promise<
+  async execute(input: { processos: Array<{ numero_cnj: string }>; enviar_callback?: boolean }): Promise<
     Either<SourceError, AtualizacaoLoteDto>
   > {
-    const result = await this.http.request<unknown>('/api/v2/processos/atualizacao', {
+    const result = await this.http.request<unknown>('/api/v2/processos/lote/solicitar-atualizacao', {
       method: 'POST',
-      body: { processos_ids: input.processos_ids },
+      body: { processos: input.processos, enviar_callback: input.enviar_callback ?? false },
     });
     if (result._tag === 'Left') return result;
     return parseOrSchemaError(AtualizacaoLoteDtoSchema, result.value, 'escavador-v2');

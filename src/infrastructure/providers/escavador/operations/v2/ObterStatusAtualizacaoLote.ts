@@ -12,7 +12,7 @@ export class ObterStatusAtualizacaoLote implements IObterStatusAtualizacaoLote {
   constructor(private readonly http: IHttpClient) {}
 
   async execute(input: { id: number }): Promise<Either<SourceError, AtualizacaoLoteDto>> {
-    const result = await this.http.request<unknown>(`/api/v2/processos/atualizacao/${input.id}`);
+    const result = await this.http.request<unknown>(`/api/v2/processos/lote/${input.id}/status`);
     if (result._tag === 'Left') return result;
     return parseOrSchemaError(AtualizacaoLoteDtoSchema, result.value, 'escavador-v2');
   }

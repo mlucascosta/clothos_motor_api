@@ -8,16 +8,17 @@ import {
 import { parseOrSchemaError } from '../../../../../shared/domain/parseOrSchemaError.js';
 
 export interface ISolicitarAtualizacaoProcesso {
-  execute(input: { id: number }): Promise<Either<SourceError, AtualizacaoProcessoDto>>;
+  execute(input: { id: string }): Promise<Either<SourceError, AtualizacaoProcessoDto>>;
 }
 
 export class SolicitarAtualizacaoProcesso implements ISolicitarAtualizacaoProcesso {
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(input: { id: number }): Promise<Either<SourceError, AtualizacaoProcessoDto>> {
-    const result = await this.http.request<unknown>(`/api/v2/processos/${input.id}/atualizacao`, {
-      method: 'POST',
-    });
+  async execute(input: { id: string }): Promise<Either<SourceError, AtualizacaoProcessoDto>> {
+    const result = await this.http.request<unknown>(
+      `/api/v2/processos/numero_cnj/${encodeURIComponent(input.id)}/solicitar-atualizacao`,
+      { method: 'POST', body: { enviar_callback: false } },
+    );
     if (result._tag === 'Left') return result;
     return parseOrSchemaError(AtualizacaoProcessoDtoSchema, result.value, 'escavador-v2');
   }

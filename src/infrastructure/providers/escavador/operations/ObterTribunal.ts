@@ -13,7 +13,7 @@ export class ObterTribunal implements IObterTribunal {
   constructor(private readonly http: IHttpClient) {}
 
   async execute(input: { id: number }): Promise<Either<SourceError, TribunalDto>> {
-    const result = await this.http.request<unknown>(`/api/v1/tribunais/${input.id}`);
+    const result = await this.http.request<unknown>(`/api/v1/tribunal/origens/${input.id}`);
     if (result._tag === 'Left') return result;
     return parseOrSchemaError(TribunalDtoSchema, result.value, 'escavador');
   }

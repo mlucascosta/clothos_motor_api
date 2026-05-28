@@ -13,17 +13,12 @@ import { z } from 'zod';
  * @type {ZodSchema}
  */
 export const MovimentacaoDtoSchema = z.object({
-  /** ID único da movimentação (opcional) */
   id: z.number().int().optional(),
-  /** Data da movimentação em formato ISO 8601 ou local */
-  data: z.string(),
-  /** Tipo/classificação da movimentação (ex: "Sentença", "Apelação") */
-  tipo: z.string(),
-  /** Descrição detalhada do evento processual */
-  descricao: z.string(),
-  /** URL para download do documento associado (opcional) */
-  documento_url: z.string().optional(),
-});
+  data: z.string().nullish(),
+  tipo: z.string().nullish(),
+  descricao: z.string().nullish(),
+  documento_url: z.string().nullish(),
+}).passthrough();
 
 /**
  * Schema de resposta com listagem de movimentações.

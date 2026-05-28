@@ -13,19 +13,13 @@ import { z } from 'zod';
  * @type {ZodSchema}
  */
 export const TribunalDtoSchema = z.object({
-  /** ID único do tribunal no Escavador */
-  id: z.number().int().positive(),
-  /** Nome completo do tribunal (ex: "Tribunal de Justiça do Estado de São Paulo") */
+  id: z.number().int().positive().optional(),
   nome: z.string(),
-  /** Sigla do tribunal (ex: "TJSP", "STF", "TST") (opcional) */
   sigla: z.string().optional(),
-  /** Tipo de tribunal (ex: "Estadual", "Federal", "Trabalhista") (opcional) */
   tipo: z.string().optional(),
-  /** UF de jurisdição (ex: "SP", "RJ", "BR" para federais) (opcional) */
   estado: z.string().optional(),
-  /** Se tribunal está ativo para consultas (opcional, padrão true) */
   ativo: z.boolean().optional(),
-});
+}).passthrough();
 
 /**
  * Schema de resposta de listagem de tribunais.
@@ -51,15 +45,11 @@ export const ListarTribunaisResponseSchema = z.object({
  * @type {ZodSchema}
  */
 export const OrgaoAdministrativoSchema = z.object({
-  /** ID único do órgão no Escavador */
-  id: z.number().int().positive(),
-  /** Nome completo do órgão */
+  id: z.number().int().positive().optional(),
   nome: z.string(),
-  /** Sigla do órgão (ex: "MP", "AGU", "INSS") (opcional) */
   sigla: z.string().optional(),
-  /** Tipo de órgão (ex: "Ministério Público", "Autarquia") (opcional) */
   tipo: z.string().optional(),
-});
+}).passthrough();
 
 /**
  * Schema de resposta de listagem de órgãos administrativos.

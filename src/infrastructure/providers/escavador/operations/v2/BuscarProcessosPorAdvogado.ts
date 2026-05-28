@@ -5,22 +5,22 @@ import { type ProcessoV2Resumo, ProcessoV2ResumoSchema } from '../../dtos/v2/Pro
 import { parseOrSchemaError } from '../../../../../shared/domain/parseOrSchemaError.js';
 
 export interface IBuscarProcessosPorAdvogado {
-  execute(input: { oab: string; pagina?: number }): Promise<Either<SourceError, ProcessoV2Resumo>>;
+  execute(input: { oab_numero: string; oab_estado?: string; oab_tipo?: string; pagina?: number }): Promise<Either<SourceError, ProcessoV2Resumo>>;
 }
 
 export class BuscarProcessosPorAdvogado implements IBuscarProcessosPorAdvogado {
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(input: { oab: string; pagina?: number }): Promise<
+  async execute(input: { oab_numero: string; oab_estado?: string; oab_tipo?: string; pagina?: number }): Promise<
     Either<SourceError, ProcessoV2Resumo>
   > {
-    const params: Record<string, string | number | boolean | undefined> = {};
-    if (input.pagina !== undefined) params['page'] = input.pagina;
-
-    const result = await this.http.request<unknown>(
-      `/api/v2/processos/advogado/${encodeURIComponent(input.oab)}`,
-      { params },
-    );
+    const params: Record<string, string | number | boolean | undefined> = {
+      oab_numero: input.oab_numero,
+      oab_estado: input.oab_estado,
+      oab_tipo: input.oab_tipo,
+      page: input.pagina,
+    };
+    const result = await this.http.request<unknown>(`/api/v2/advogado/processos`, { params });
     if (result._tag === 'Left') return result;
     return parseOrSchemaError(ProcessoV2ResumoSchema, result.value, 'escavador-v2');
   }

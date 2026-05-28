@@ -16,7 +16,7 @@ export class ObterEnvolvidosProcessoV2 implements IObterEnvolvidosProcessoV2 {
 
   async execute(input: { numero_cnj: string }): Promise<Either<SourceError, EnvolvidosV2Response>> {
     const result = await this.http.request<unknown>(
-      `/api/v2/processos/${encodeURIComponent(input.numero_cnj)}/envolvidos`,
+      `/api/v2/processos/numero_cnj/${encodeURIComponent(input.numero_cnj)}/envolvidos`,
     );
     if (result._tag === 'Left') return result;
     return parseOrSchemaError(EnvolvidosV2ResponseSchema, result.value, 'escavador-v2');

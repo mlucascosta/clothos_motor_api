@@ -13,7 +13,7 @@ export class ListarOrgaosAdministrativos implements IListarOrgaosAdministrativos
   constructor(private readonly http: IHttpClient) {}
 
   async execute(input: { pagina?: number }): Promise<Either<SourceError, ListarOrgaosResponse>> {
-    const result = await this.http.request<unknown>('/api/v1/orgaos-administrativos', {
+    const result = await this.http.request<unknown>('/api/v1/orgao-administrativo/origens', {
       params: { page: input.pagina },
     });
     if (result._tag === 'Left') return result;

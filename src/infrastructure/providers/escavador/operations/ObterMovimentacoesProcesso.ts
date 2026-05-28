@@ -18,7 +18,7 @@ export class ObterMovimentacoesProcesso implements IObterMovimentacoesProcesso {
     input: ObterMovimentacoesProcessoInput,
   ): Promise<Either<SourceError, MovimentacoesResponse>> {
     const result = await this.http.request<unknown>(
-      `/api/v1/processos/${input.numeroCnj}/movimentacoes-diarios`,
+      `/api/v1/processos/${input.numeroCnj}/movimentacoes`,
       {
         params: {
           page: input.pagina,

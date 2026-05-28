@@ -30,15 +30,11 @@ export const EnvolvidoV2DtoSchema = z.object({
  * @type {ZodSchema}
  */
 export const MovimentacaoV2DtoSchema = z.object({
-  /** ID único da movimentação */
   id: z.number().int().optional(),
-  /** Data ISO 8601 da movimentação */
-  data: z.string(),
-  /** Descrição do evento */
-  descricao: z.string(),
-  /** Tipo/classificação da movimentação */
-  tipo: z.string().optional(),
-});
+  data: z.string().nullish(),
+  descricao: z.string().nullish(),
+  tipo: z.string().nullish(),
+}).passthrough();
 
 /**
  * Schema de documento anexado ao processo.
@@ -46,15 +42,11 @@ export const MovimentacaoV2DtoSchema = z.object({
  * @type {ZodSchema}
  */
 export const DocumentoV2DtoSchema = z.object({
-  /** ID único do documento */
-  id: z.number().int(),
-  /** Nome do documento */
-  nome: z.string(),
-  /** Tipo (petição, sentença, etc.) */
-  tipo: z.string().optional(),
-  /** URL para download */
-  url: z.string().optional(),
-});
+  id: z.number().int().optional(),
+  nome: z.string().nullish(),
+  tipo: z.string().nullish(),
+  url: z.string().nullish(),
+}).passthrough();
 
 /**
  * Schema de auto anexado ao processo.

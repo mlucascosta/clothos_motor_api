@@ -12,37 +12,34 @@ import { z } from 'zod';
  * @type {ZodSchema}
  */
 export const DiarioOficialOrigemSchema = z.object({
-  /** ID único da origem no Escavador */
-  id: z.number().int().positive(),
-  /** Nome da origem (ex: "Diário Oficial do Estado de São Paulo") */
+  id: z.number().int().positive().optional(),
   nome: z.string(),
-  /** Sigla da origem (ex: "DOESP", "DOU") (opcional) */
   sigla: z.string().optional(),
-  /** UF de jurisdição (ex: "SP", "RJ", "BR" para federal) (opcional) */
   estado: z.string().optional(),
-  /** Tipo de diário (ex: "Estadual", "Municipal", "Federal") (opcional) */
   tipo: z.string().optional(),
-  /** Se diário está ativo para buscas (opcional, padrão true) */
   ativo: z.boolean().optional(),
-});
+}).passthrough();
 
 /**
  * Schema de resposta de listagem de origens de diários oficiais.
  * Retornado por ListarOrigensDiariosOficiais.
  * @type {ZodSchema}
  */
-export const ListarOrigensDiariosResponseSchema = z.object({
-  /** Array de origens de diários */
-  items: z.array(DiarioOficialOrigemSchema),
-  paginator: z.object({
+// API /api/v1/origens retorna array direto (não {items: []})
+export const ListarOrigensDiariosResponseSchema = z.union([
+  z.array(DiarioOficialOrigemSchema),
+  z.object({
+    items: z.array(DiarioOficialOrigemSchema),
+    paginator: z.object({
+      total: z.number().int().nullish(),
+      total_pages: z.number().int().nullish(),
+      current_page: z.number().int().nullish(),
+      per_page: z.number().int().nullish(),
+    }).nullish(),
+    links: z.object({ next: z.string().nullish(), prev: z.string().nullish() }).nullish(),
     total: z.number().int().nullish(),
-    total_pages: z.number().int().nullish(),
-    current_page: z.number().int().nullish(),
-    per_page: z.number().int().nullish(),
-  }).nullish(),
-  links: z.object({ next: z.string().nullish(), prev: z.string().nullish() }).nullish(),
-  total: z.number().int().nullish(),
-});
+  }),
+]);
 
 /**
  * DTO de origem de diário oficial.

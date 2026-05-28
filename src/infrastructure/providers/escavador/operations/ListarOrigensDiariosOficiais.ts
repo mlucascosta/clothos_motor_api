@@ -15,7 +15,7 @@ export class ListarOrigensDiariosOficiais implements IListarOrigensDiariosOficia
   async execute(input: { estado?: string }): Promise<
     Either<SourceError, ListarOrigensDiariosResponse>
   > {
-    const result = await this.http.request<unknown>('/api/v1/diarios-oficiais/origens', {
+    const result = await this.http.request<unknown>('/api/v1/origens', {
       params: { estado: input.estado },
     });
     if (result._tag === 'Left') return result;

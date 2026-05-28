@@ -38,15 +38,15 @@ export const AtualizacaoLoteDtoSchema = z.object({
  * @type {ZodSchema}
  */
 export const AtualizacaoProcessoDtoSchema = z.object({
-  /** ID único da requisição de atualização */
-  id: z.number().int(),
-  /** Status do processamento da atualização */
-  status: AtualizacaoStatusSchema,
-  /** ID do processo sendo atualizado (opcional) */
+  id: z.number().int().optional(),
+  status: AtualizacaoStatusSchema.optional(),
+  numero_cnj: z.string().optional(),
   processo_id: z.number().int().optional(),
-  /** Timestamp ISO 8601 de criação da requisição */
-  criado_em: z.string().optional(),
-});
+  criado_em: z.string().nullish(),
+  data_ultima_verificacao: z.string().nullish(),
+  tempo_desde_ultima_verificacao: z.string().nullish(),
+  ultima_verificacao: z.unknown().optional(),
+}).passthrough();
 
 /**
  * Status de uma operação de atualização.
