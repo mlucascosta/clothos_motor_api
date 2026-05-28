@@ -4,7 +4,7 @@
  * 3 testes por endpoint (33 total): sucesso, erro, sem resultado
  */
 
-import { app } from '../../../src/presentation/api/app';
+import { app } from '../../src/presentation/api/app';
 
 describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
   let fetchSpy: jest.SpyInstance;
@@ -26,8 +26,7 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [{ id: 1, status: 'pending' }],
-            meta: { total: 1, page: 1, per_page: 20 },
+            items: [{ id: 1, tipo: 'pending' }],
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -37,8 +36,8 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(Array.isArray(body.data)).toBe(true);
-      expect((body.data as Array<unknown>).length).toBe(1);
+      expect(Array.isArray(body.items)).toBe(true);
+      expect((body.items as Array<unknown>).length).toBe(1);
     });
 
     it('❌ erro: retorna 500 quando upstream falha', async () => {
@@ -55,8 +54,8 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [],
-            meta: { total: 0, page: 1, per_page: 20 },
+            items: [],
+            total: 0,
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -66,13 +65,15 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect((body.data as Array<unknown>).length).toBe(0);
+      expect((body.items as Array<unknown>).length).toBe(0);
     });
   });
 
   describe('POST /api/escavador/v2/callbacks/recebidos', () => {
     it('✅ sucesso: ids válidos retorna 204', async () => {
-      fetchSpy.mockResolvedValue(new Response(null, { status: 204 }));
+      fetchSpy.mockResolvedValue(
+        new Response(JSON.stringify({}), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+      );
 
       const res = await app.request('/api/escavador/v2/callbacks/recebidos', {
         method: 'POST',
@@ -114,7 +115,7 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
         new Response(
           JSON.stringify({
             id: 1,
-            status: 'resent',
+            tipo: 'resent',
             tentativas: 2,
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
@@ -128,7 +129,7 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.id).toBe(1);
-      expect(body.status).toBe('resent');
+      expect(body.tipo).toBe('resent');
     });
 
     it('❌ erro: id inexistente retorna 500', async () => {
@@ -165,12 +166,11 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [
+            items: [
               {
                 id: 1,
                 nome: 'Certificado ABC LTDA',
-                tipo: 'e-CNPJ',
-                valido_ate: '2025-12-31',
+                validade: '2025-12-31',
               },
             ],
           }),
@@ -182,8 +182,8 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body).toHaveProperty('data');
-      expect(Array.isArray(body.data)).toBe(true);
+      expect(body).toHaveProperty('items');
+      expect(Array.isArray(body.items)).toBe(true);
     });
 
     it('❌ erro: retorna 500 quando upstream falha', async () => {
@@ -199,7 +199,7 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
     it('⊘ sem resultado: retorna 200 com array vazio', async () => {
       fetchSpy.mockResolvedValue(
         new Response(
-          JSON.stringify({ data: [] }),
+          JSON.stringify({ items: [] }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -208,7 +208,7 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect((body.data as Array<unknown>).length).toBe(0);
+      expect((body.items as Array<unknown>).length).toBe(0);
     });
   });
 
@@ -219,8 +219,7 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
           JSON.stringify({
             id: 1,
             nome: 'Certificado ABC LTDA',
-            tipo: 'e-CNPJ',
-            valido_ate: '2025-12-31',
+            validade: '2025-12-31',
           }),
           { status: 201, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -284,9 +283,7 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
           JSON.stringify({
             id: 1,
             nome: 'Certificado ABC LTDA',
-            tipo: 'e-CNPJ',
-            cnpj: 'XX.XXX.XXX/XXXX-XX',
-            valido_ate: '2025-12-31',
+            validade: '2025-12-31',
             autenticacoes: [],
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
@@ -324,7 +321,9 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
 
   describe('DELETE /api/escavador/v2/certificados/:id', () => {
     it('✅ sucesso: id válido retorna 204', async () => {
-      fetchSpy.mockResolvedValue(new Response(null, { status: 204 }));
+      fetchSpy.mockResolvedValue(
+        new Response(JSON.stringify({}), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+      );
 
       const res = await app.request('/api/escavador/v2/certificados/1', {
         method: 'DELETE',
@@ -366,7 +365,6 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
         new Response(
           JSON.stringify({
             id: 5,
-            certificado_id: 1,
             tipo: 'password',
           }),
           { status: 201, headers: { 'Content-Type': 'application/json' } },
@@ -412,7 +410,9 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
 
   describe('DELETE /api/escavador/v2/certificados/:id/autenticacoes/:autenticacaoId', () => {
     it('✅ sucesso: ids válidos retorna 204', async () => {
-      fetchSpy.mockResolvedValue(new Response(null, { status: 204 }));
+      fetchSpy.mockResolvedValue(
+        new Response(JSON.stringify({}), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+      );
 
       const res = await app.request('/api/escavador/v2/certificados/1/autenticacoes/5', {
         method: 'DELETE',
@@ -457,7 +457,7 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [
+            items: [
               { id: 1, nome: 'Superior Tribunal de Justiça', sigla: 'STJ' },
               { id: 2, nome: 'Tribunal de Justiça do Estado de São Paulo', sigla: 'TJ/SP' },
             ],
@@ -470,8 +470,8 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body).toHaveProperty('data');
-      expect(Array.isArray(body.data)).toBe(true);
+      expect(body).toHaveProperty('items');
+      expect(Array.isArray(body.items)).toBe(true);
     });
 
     it('❌ erro: retorna 500 quando upstream falha', async () => {
@@ -487,7 +487,7 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
     it('⊘ sem resultado: retorna 200 com array vazio', async () => {
       fetchSpy.mockResolvedValue(
         new Response(
-          JSON.stringify({ data: [] }),
+          JSON.stringify({ items: [] }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -496,7 +496,7 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect((body.data as Array<unknown>).length).toBe(0);
+      expect((body.items as Array<unknown>).length).toBe(0);
     });
   });
 
@@ -505,9 +505,9 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [
-              { id: 10, nome: '1ª Vara Cível', sistema_id: 2, estado: 'SP' },
-              { id: 11, nome: '2ª Vara Cível', sistema_id: 2, estado: 'SP' },
+            items: [
+              { id: 10, nome: '1ª Vara Cível', sistema_id: 2 },
+              { id: 11, nome: '2ª Vara Cível', sistema_id: 2 },
             ],
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
@@ -518,8 +518,8 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body).toHaveProperty('data');
-      expect(Array.isArray(body.data)).toBe(true);
+      expect(body).toHaveProperty('items');
+      expect(Array.isArray(body.items)).toBe(true);
     });
 
     it('❌ erro: retorna 500 quando upstream falha', async () => {
@@ -535,7 +535,7 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
     it('⊘ sem resultado: sistema_id inexistente retorna array vazio', async () => {
       fetchSpy.mockResolvedValue(
         new Response(
-          JSON.stringify({ data: [] }),
+          JSON.stringify({ items: [] }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -544,7 +544,7 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect((body.data as Array<unknown>).length).toBe(0);
+      expect((body.items as Array<unknown>).length).toBe(0);
     });
   });
 });

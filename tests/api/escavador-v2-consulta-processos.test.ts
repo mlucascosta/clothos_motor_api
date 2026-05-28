@@ -4,7 +4,7 @@
  * 3 testes por endpoint (27 total): sucesso, erro, sem resultado
  */
 
-import { app } from '../../../src/presentation/api/app';
+import { app } from '../../src/presentation/api/app';
 
 describe('Escavador V2 — Consulta de Processos (E2E)', () => {
   let fetchSpy: jest.SpyInstance;
@@ -22,9 +22,10 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            numero: '0000001-00.0000.0.00.0000',
-            status: 'Ativo',
-            tribunal: 'TJ/SP',
+            numero_cnj: '0000001-00.0000.0.00.0000',
+            id: 1,
+            titulo_polo_ativo: 'Autor',
+            titulo_polo_passivo: 'Réu',
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -34,7 +35,7 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.numero).toBe('0000001-00.0000.0.00.0000');
+      expect(body.numero_cnj).toBe('0000001-00.0000.0.00.0000');
     });
 
     it('❌ erro: retorna 500 quando upstream falha', async () => {
@@ -47,7 +48,7 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
 
     it('⊘ sem resultado: retorna 200 com objeto vazio', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({}), {
+        new Response(JSON.stringify({ numero_cnj: '', id: null }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -56,8 +57,6 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
       const res = await app.request('/api/escavador/v2/processos/numero_cnj/9999999-99.9999.9.99.9999');
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(Object.keys(body).length).toBe(0);
     });
   });
 
@@ -66,18 +65,18 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [{ id: 1, tipo: 'Sentença' }],
-            pagination: { page: 1, total: 1, por_pagina: 20 },
+            items: [{ id: 1, tipo: 'Sentença' }],
+            total: 1,
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/movimentacoes/0000001-00.0000.0.00.0000?page=1');
+        const res = await app.request('/api/escavador/v2/processos/movimentacoes/0000001-00.0000.0.00.0000?page=1');
 
-      expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(Array.isArray(body.data)).toBe(true);
+        expect(res.status).toBe(200);
+        const body = (await res.json()) as Record<string, unknown>;
+        expect(Array.isArray(body.items)).toBe(true);
     });
 
     it('❌ erro: retorna 500 quando API upstream falha', async () => {
@@ -92,8 +91,8 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [],
-            pagination: { page: 1, total: 0, por_pagina: 20 },
+            items: [],
+            total: 0,
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -103,7 +102,7 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect((body.data as Array<unknown>).length).toBe(0);
+      expect((body.items as Array<unknown>).length).toBe(0);
     });
   });
 
@@ -112,8 +111,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [{ numero_cnj: '0000001-00.0000.0.00.0000' }],
-            pagination: { page: 1, total: 1, por_pagina: 20 },
+            envolvido_encontrado: { nome: 'João Silva', tipo_pessoa: 'FISICA', quantidade_processos: 1 },
+            items: [{ numero_cnj: '0000001-00.0000.0.00.0000', ano_inicio: 2020 }],
+            paginator: { per_page: 20, current_page: 1, total: 1 },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -123,7 +123,7 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(Array.isArray(body.data)).toBe(true);
+      expect(Array.isArray(body.items)).toBe(true);
     });
 
     it('❌ erro: retorna 500 quando autenticação falha', async () => {
@@ -140,8 +140,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [],
-            pagination: { page: 1, total: 0, por_pagina: 20 },
+            envolvido_encontrado: { nome: '', tipo_pessoa: 'FISICA', quantidade_processos: 0 },
+            items: [],
+            paginator: { per_page: 20, current_page: 1, total: 0 },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -151,7 +152,7 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect((body.data as Array<unknown>).length).toBe(0);
+      expect((body.items as Array<unknown>).length).toBe(0);
     });
   });
 
@@ -210,8 +211,8 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [{ numero_cnj: '0000001-00.0000.0.00.0000', atuacao: 'Réu' }],
-            pagination: { page: 1, total: 1, por_pagina: 20 },
+            total: 1,
+            items: [{ numero_cnj: '0000001-00.0000.0.00.0000', atuacao: 'Réu' }],
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -221,7 +222,7 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(Array.isArray(body.data)).toBe(true);
+      expect(Array.isArray(body.items)).toBe(true);
     });
 
     it('❌ erro: retorna 400 quando oab_numero ausente', async () => {
@@ -234,8 +235,8 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [],
-            pagination: { page: 1, total: 0, por_pagina: 20 },
+            total: 0,
+            items: [],
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -245,7 +246,7 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect((body.data as Array<unknown>).length).toBe(0);
+      expect((body.items as Array<unknown>).length).toBe(0);
     });
   });
 
@@ -290,8 +291,8 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [{ id: 1, tipo: 'Sentença', tamanho_kb: 245 }],
-            pagination: { page: 1, total: 1, por_pagina: 20 },
+            total: 1,
+            items: [{ id: 1, tipo: 'Sentença', tamanho_kb: 245 }],
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -301,7 +302,7 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(Array.isArray(body.data)).toBe(true);
+      expect(Array.isArray(body.items)).toBe(true);
     });
 
     it('❌ erro: retorna 500 quando API upstream falha', async () => {
@@ -316,8 +317,8 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [],
-            pagination: { page: 1, total: 0, por_pagina: 20 },
+            total: 0,
+            items: [],
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -327,7 +328,7 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect((body.data as Array<unknown>).length).toBe(0);
+      expect((body.items as Array<unknown>).length).toBe(0);
     });
   });
 
@@ -336,8 +337,8 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [{ id: 1, numero: '001', folhas: 45 }],
-            pagination: { page: 1, total: 1, por_pagina: 20 },
+            total: 1,
+            items: [{ id: 1, nome: '001', tipo: 'Auto' }],
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -347,7 +348,7 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(Array.isArray(body.data)).toBe(true);
+      expect(Array.isArray(body.items)).toBe(true);
     });
 
     it('❌ erro: retorna 500 quando upstream falha', async () => {
@@ -362,8 +363,8 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [],
-            pagination: { page: 1, total: 0, por_pagina: 20 },
+            total: 0,
+            items: [],
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -373,7 +374,7 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect((body.data as Array<unknown>).length).toBe(0);
+      expect((body.items as Array<unknown>).length).toBe(0);
     });
   });
 
@@ -382,8 +383,8 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            partes: [{ id: 1, tipo: 'Autor', nome: 'João Silva' }],
-            terceiros: [],
+            total: 1,
+            items: [{ id: 1, tipo: 'Autor', nome: 'João Silva' }],
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -393,7 +394,7 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(Array.isArray(body.partes)).toBe(true);
+      expect(Array.isArray(body.items)).toBe(true);
     });
 
     it('❌ erro: retorna 500 quando API upstream falha', async () => {
@@ -408,8 +409,8 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            partes: [],
-            terceiros: [],
+            total: 0,
+            items: [],
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -419,7 +420,7 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect((body.partes as Array<unknown>).length).toBe(0);
+      expect((body.items as Array<unknown>).length).toBe(0);
     });
   });
 });

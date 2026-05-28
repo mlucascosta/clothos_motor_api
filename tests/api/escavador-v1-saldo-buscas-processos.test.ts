@@ -4,7 +4,7 @@
  * 3 testes por endpoint (27 total): sucesso, erro, sem resultado
  */
 
-import { app } from '../../../src/presentation/api/app';
+import { app } from '../../src/presentation/api/app';
 
 describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
   let fetchSpy: jest.SpyInstance;
@@ -21,7 +21,7 @@ describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
   describe('GET /api/escavador/v1/quantidade-creditos', () => {
     it('✅ sucesso: retorna 200 com saldo de créditos', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ saldo: 1000, moeda: 'BRL' }), {
+        new Response(JSON.stringify({ quantidade_creditos: 1000, saldo: 1000.0, saldo_descricao: 'R$ 1.000,00' }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -31,7 +31,7 @@ describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body).toHaveProperty('saldo');
+      expect(body.saldo).toBe(1000);
     });
 
     it('❌ erro: retorna 500 quando upstream falha', async () => {
@@ -44,7 +44,7 @@ describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
 
     it('⊘ sem resultado: retorna 200 com saldo zero', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ saldo: 0, moeda: 'BRL' }), {
+        new Response(JSON.stringify({ quantidade_creditos: 0, saldo: 0.0 }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -63,8 +63,8 @@ describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [{ id: 1, status: 'completed', created_at: '2024-05-27T10:00:00Z' }],
-            pagination: { page: 1, total: 1, por_pagina: 20 },
+            items: [{ id: 1, status: 'concluido', tipo: 'cpf' }],
+            paginator: { total: 1, total_pages: 1, current_page: 1, per_page: 20 },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -74,8 +74,8 @@ describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.data).toBeDefined();
-      expect(Array.isArray(body.data)).toBe(true);
+      expect(body.items).toBeDefined();
+      expect(Array.isArray(body.items)).toBe(true);
     });
 
     it('❌ erro: retorna 500 quando upstream falha', async () => {
@@ -90,8 +90,8 @@ describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [],
-            pagination: { page: 1, total: 0, por_pagina: 20 },
+            items: [],
+            paginator: { total: 0, total_pages: 0, current_page: 1, per_page: 20 },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -101,7 +101,7 @@ describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect((body.data as Array<unknown>).length).toBe(0);
+      expect((body.items as Array<unknown>).length).toBe(0);
     });
   });
 
@@ -139,7 +139,7 @@ describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
   describe('POST /api/escavador/v1/processos/tribunal/cpf-cnpj', () => {
     it('✅ sucesso: retorna 202 com busca iniciada', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ id: 'search-1', status: 'pending' }), {
+        new Response(JSON.stringify({ items: [{ id: 1, status: 'pendente' }] }), {
           status: 202,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -178,7 +178,7 @@ describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
   describe('POST /api/escavador/v1/processos/tribunal/oab', () => {
     it('✅ sucesso: retorna 202 com busca por OAB', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ id: 'search-2', status: 'pending' }), {
+        new Response(JSON.stringify({ items: [{ id: 2, status: 'pendente' }] }), {
           status: 202,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -186,7 +186,7 @@ describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
 
       const res = await app.request('/api/escavador/v1/processos/tribunal/oab', {
         method: 'POST',
-        body: JSON.stringify({ oab: '123456SP' }),
+        body: JSON.stringify({ numero_oab: '123456', estado_oab: 'SP' }),
         headers: { ...headers, 'Content-Type': 'application/json' },
       });
 
@@ -196,7 +196,7 @@ describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
     it('❌ erro: retorna 422 com OAB inválida', async () => {
       const res = await app.request('/api/escavador/v1/processos/tribunal/oab', {
         method: 'POST',
-        body: JSON.stringify({ oab: '' }),
+        body: JSON.stringify({ numero_oab: '', estado_oab: '' }),
         headers: { ...headers, 'Content-Type': 'application/json' },
       });
 
@@ -217,7 +217,7 @@ describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
   describe('POST /api/escavador/v1/processos/administrativo/nup', () => {
     it('✅ sucesso: retorna 202 com busca por NUP', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ id: 'search-3', status: 'pending' }), {
+        new Response(JSON.stringify({ id: 3, status: 'pending' }), {
           status: 202,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -256,7 +256,7 @@ describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
   describe('POST /api/escavador/v1/processos/pesquisar', () => {
     it('✅ sucesso: retorna 202 com busca por CNJ', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ id: 'search-4', status: 'pending' }), {
+        new Response(JSON.stringify({ id: 4, status: 'pending' }), {
           status: 202,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -295,7 +295,7 @@ describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
   describe('POST /api/escavador/v1/processos/tribunal/lote', () => {
     it('✅ sucesso: retorna 202 com busca em lote', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ id: 'lote-1', status: 'pending', total: 3 }), {
+        new Response(JSON.stringify({ items: [{ id: 5, status: 'pendente' }] }), {
           status: 202,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -304,10 +304,9 @@ describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
       const res = await app.request('/api/escavador/v1/processos/tribunal/lote', {
         method: 'POST',
         body: JSON.stringify({
-          processos: [
-            { numero_cnj: '0000001-00.0000.0.00.0000' },
-            { numero_cnj: '0000002-00.0000.0.00.0000' },
-          ],
+          tipo: 'busca_por_documento',
+          tribunais: ['tjsp'],
+          numero_documento: '12345678901',
         }),
         headers: { ...headers, 'Content-Type': 'application/json' },
       });
@@ -315,10 +314,10 @@ describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
       expect(res.status).toBe(202);
     });
 
-    it('❌ erro: retorna 422 com array vazio', async () => {
+    it('❌ erro: retorna 422 com body incompleto', async () => {
       const res = await app.request('/api/escavador/v1/processos/tribunal/lote', {
         method: 'POST',
-        body: JSON.stringify({ processos: [] }),
+        body: JSON.stringify({ tipo: 'busca_por_documento' }),
         headers: { ...headers, 'Content-Type': 'application/json' },
       });
 
@@ -339,7 +338,7 @@ describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
   describe('POST /api/escavador/v1/processos/tribunal/envolvido', () => {
     it('✅ sucesso: retorna 202 com busca por envolvido', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ id: 'search-env', status: 'pending' }), {
+        new Response(JSON.stringify({ items: [{ id: 6, status: 'pendente' }] }), {
           status: 202,
           headers: { 'Content-Type': 'application/json' },
         }),

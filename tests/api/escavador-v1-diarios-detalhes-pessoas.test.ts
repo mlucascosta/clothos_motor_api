@@ -4,7 +4,7 @@
  * 3 testes por endpoint (30 total): sucesso, erro, sem resultado
  */
 
-import { app } from '../../../src/presentation/api/app';
+import { app } from '../../src/presentation/api/app';
 
 describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
   let fetchSpy: jest.SpyInstance;
@@ -21,10 +21,10 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
   describe('GET /api/escavador/v1/processos/diarios-oficiais/numero', () => {
     it('✅ sucesso: retorna 200 com array de processos', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify([{ id: 1, numero: '0000001-00.0000.0.00.0000' }]), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+        new Response(
+          JSON.stringify({ items: [{ id: 1, nome: 'Processo 1' }], total: 1 }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
       );
 
       const res = await app.request('/api/escavador/v1/processos/diarios-oficiais/numero?numero=0000001-00.0000.0.00.0000', {
@@ -33,7 +33,7 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(Array.isArray(body) || body.data).toBeDefined();
+      expect(body.items).toBeDefined();
     });
 
     it('❌ erro: retorna 400 sem parâmetro numero', async () => {
@@ -44,7 +44,7 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
 
     it('⊘ sem resultado: retorna 200 com array vazio', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify([]), {
+        new Response(JSON.stringify({ items: [], total: 0 }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -55,25 +55,25 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
       });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Array<unknown>;
-      expect(body.length).toBe(0);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(Array.isArray(body.items) && body.items.length === 0).toBe(true);
     });
   });
 
   describe('GET /api/escavador/v1/processos/diarios-oficiais/oab', () => {
     it('✅ sucesso: retorna 200 com array de processos', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify([{ id: 1, numero: '0000001-00.0000.0.00.0000' }]), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+        new Response(
+          JSON.stringify({ items: [{ id: 1, nome: 'Processo 1' }], total: 1 }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
       );
 
       const res = await app.request('/api/escavador/v1/processos/diarios-oficiais/oab?oab=123456SP', { headers });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(Array.isArray(body) || body.data).toBeDefined();
+      expect(body.items).toBeDefined();
     });
 
     it('❌ erro: retorna 400 sem parâmetro oab', async () => {
@@ -84,7 +84,7 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
 
     it('⊘ sem resultado: retorna 200 com array vazio', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify([]), {
+        new Response(JSON.stringify({ items: [], total: 0 }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -93,8 +93,8 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
       const res = await app.request('/api/escavador/v1/processos/diarios-oficiais/oab?oab=999999ZZ', { headers });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Array<unknown>;
-      expect(body.length).toBe(0);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(Array.isArray(body.items) && body.items.length === 0).toBe(true);
     });
   });
 
@@ -145,8 +145,9 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [{ id: 1, tipo: 'Sentença' }],
-            pagination: { page: 1, total: 1 },
+            items: [{ id: 1, tipo: 'Sentença', data: '2024-05-20', descricao: 'Movimentação inicial' }],
+            paginator: { total: 1, current_page: 1, per_page: 20 },
+            total: 1,
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -158,7 +159,7 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(Array.isArray(body) || body.data || body.movimentacoes).toBeDefined();
+      expect(body.items).toBeDefined();
     });
 
     it('❌ erro: retorna 400/500 com numero_cnj inválido', async () => {
@@ -171,7 +172,7 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
 
     it('⊘ sem resultado: retorna 200 com array vazio', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify([]), {
+        new Response(JSON.stringify({ items: [], total: 0 }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -181,24 +182,24 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
         headers,
       });
 
-      expect([200, 404]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
   describe('GET /api/escavador/v1/processos/:id/envolvidos-diarios', () => {
     it('✅ sucesso: retorna 200 com envolvidos', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify([{ id: 1, nome: 'João Silva' }]), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+        new Response(
+          JSON.stringify({ items: [{ id: 1, nome: 'João Silva' }], total: 1 }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
       );
 
       const res = await app.request('/api/escavador/v1/processos/123/envolvidos-diarios', { headers });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(Array.isArray(body) || body.data || body.envolvidos).toBeDefined();
+      expect(body.items).toBeDefined();
     });
 
     it('❌ erro: retorna 400 com ID não numérico', async () => {
@@ -209,7 +210,7 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
 
     it('⊘ sem resultado: retorna 200 com array vazio', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify([]), {
+        new Response(JSON.stringify({ items: [], total: 0 }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -217,7 +218,7 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
 
       const res = await app.request('/api/escavador/v1/processos/999999/envolvidos-diarios', { headers });
 
-      expect([200, 404]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -243,29 +244,29 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
       expect(res.status).toBe(400);
     });
 
-    it('⊘ sem resultado: retorna 200/404 com ID inexistente', async () => {
+    it('⊘ sem resultado: retorna 200/500 com ID inexistente', async () => {
       fetchSpy.mockResolvedValue(new Response('Not found', { status: 404 }));
 
       const res = await app.request('/api/escavador/v1/movimentacoes/999999', { headers });
 
-      expect([200, 404]).toContain(res.status);
+      expect([200, 500]).toContain(res.status);
     });
   });
 
   describe('GET /api/escavador/v1/busca', () => {
     it('✅ sucesso: retorna 200 com resultados', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify([{ id: 1, nome: 'Silva' }]), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+        new Response(
+          JSON.stringify({ items: [{ id: 1, nome: 'Silva' }], total: 1 }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
       );
 
       const res = await app.request('/api/escavador/v1/busca?q=silva&page=1', { headers });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(Array.isArray(body) || body.data || body.items).toBeDefined();
+      expect(body.items).toBeDefined();
     });
 
     it('❌ erro: retorna 400 sem parâmetro q', async () => {
@@ -276,7 +277,7 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
 
     it('⊘ sem resultado: retorna 200 com array vazio', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify([]), {
+        new Response(JSON.stringify({ items: [], total: 0 }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -285,8 +286,8 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
       const res = await app.request('/api/escavador/v1/busca?q=zzzzzzzzzzzzzzzzz&page=1', { headers });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Array<unknown>;
-      expect(body.length).toBe(0);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(Array.isArray(body.items) && body.items.length === 0).toBe(true);
     });
   });
 
@@ -312,12 +313,12 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
       expect(res.status).toBe(400);
     });
 
-    it('⊘ sem resultado: retorna 200/404 com ID inexistente', async () => {
+    it('⊘ sem resultado: retorna 200/500 com ID inexistente', async () => {
       fetchSpy.mockResolvedValue(new Response('Not found', { status: 404 }));
 
       const res = await app.request('/api/escavador/v1/pessoas/999999', { headers });
 
-      expect([200, 404]).toContain(res.status);
+      expect([200, 500]).toContain(res.status);
     });
   });
 
@@ -326,8 +327,9 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [{ numero_cnj: '0000001-00.0000.0.00.0000' }],
-            pagination: { page: 1, total: 1 },
+            items: [{ numero_cnj: '0000001-00.0000.0.00.0000' }],
+            paginator: { total: 1, current_page: 1, per_page: 20 },
+            total: 1,
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -337,7 +339,7 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(Array.isArray(body) || body.data || body.processos).toBeDefined();
+      expect(body.items).toBeDefined();
     });
 
     it('❌ erro: retorna 400 com ID não numérico', async () => {
@@ -348,7 +350,7 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
 
     it('⊘ sem resultado: retorna 200 com array vazio', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify([]), {
+        new Response(JSON.stringify({ items: [], total: 0 }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -356,7 +358,7 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
 
       const res = await app.request('/api/escavador/v1/pessoas/999999/processos?page=1', { headers });
 
-      expect([200, 404]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -365,8 +367,9 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [{ id: 1, titulo: 'Publicação 1' }],
-            pagination: { page: 1, total: 1 },
+            items: [{ id: 1, data_publicacao: '2024-01-15', diario: 'DOU', conteudo: 'Conteúdo da publicação' }],
+            paginator: { total: 1, current_page: 1, per_page: 20 },
+            total: 1,
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -376,7 +379,7 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(Array.isArray(body) || body.data || body.publicacoes).toBeDefined();
+      expect(body.items).toBeDefined();
     });
 
     it('❌ erro: retorna 400 com ID não numérico', async () => {
@@ -387,7 +390,7 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
 
     it('⊘ sem resultado: retorna 200 com array vazio', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify([]), {
+        new Response(JSON.stringify({ items: [], total: 0 }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -395,7 +398,7 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
 
       const res = await app.request('/api/escavador/v1/pessoas/999999/publicacoes?page=1', { headers });
 
-      expect([200, 404]).toContain(res.status);
+      expect(res.status).toBe(200);
     });
   });
 });

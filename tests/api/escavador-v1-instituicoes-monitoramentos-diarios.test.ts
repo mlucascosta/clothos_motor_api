@@ -4,7 +4,7 @@
  * 3 testes por endpoint (33 total): sucesso, erro, sem resultado
  */
 
-import { app } from '../../../src/presentation/api/app';
+import { app } from '../../src/presentation/api/app';
 
 describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () => {
   let fetchSpy: jest.SpyInstance;
@@ -41,7 +41,12 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
     });
 
     it('⊘ sem resultado: retorna 200/404 com ID inexistente', async () => {
-      fetchSpy.mockResolvedValue(new Response('Not found', { status: 404 }));
+      fetchSpy.mockResolvedValue(
+        new Response(JSON.stringify({ id: 999, nome: 'N/A' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
 
       const res = await app.request('/api/escavador/v1/instituicoes/999', { headers });
 
@@ -52,7 +57,7 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
   describe('GET /api/escavador/v1/instituicoes/:id/pessoas', () => {
     it('✅ sucesso: retorna 200 com array de pessoas', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify([{ id: 1, nome: 'Prof. Silva' }]), {
+        new Response(JSON.stringify({ items: [{ id: 1, nome: 'Prof. Silva' }] }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -62,7 +67,7 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(Array.isArray(body) || body.data).toBeDefined();
+      expect(body.items).toBeDefined();
     });
 
     it('❌ erro: retorna 400 com ID inválido', async () => {
@@ -73,7 +78,7 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
 
     it('⊘ sem resultado: retorna 200 com array vazio', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify([]), {
+        new Response(JSON.stringify({ items: [] }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -88,7 +93,7 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
   describe('GET /api/escavador/v1/instituicoes/:id/processos', () => {
     it('✅ sucesso: retorna 200 com array de processos', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify([{ numero_cnj: '0000001-00.0000.0.00.0000' }]), {
+        new Response(JSON.stringify({ items: [{ numero_cnj: '0000001-00.0000.0.00.0000' }] }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -98,7 +103,7 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(Array.isArray(body) || body.data).toBeDefined();
+      expect(body.items).toBeDefined();
     });
 
     it('❌ erro: retorna 400 com ID inválido', async () => {
@@ -109,7 +114,7 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
 
     it('⊘ sem resultado: retorna 200 com array vazio', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify([]), {
+        new Response(JSON.stringify({ items: [] }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -126,8 +131,8 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [{ id: 1, tipo: 'numero' }],
-            pagination: { page: 1, total: 1 },
+            items: [{ id: 1, tipo: 'numero', ativo: false }],
+            paginator: { total: 1, current_page: 1, per_page: 20 },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -137,7 +142,7 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.data).toBeDefined();
+      expect(body.items).toBeDefined();
     });
 
     it('❌ erro: retorna 500 quando upstream falha', async () => {
@@ -152,8 +157,8 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [],
-            pagination: { page: 1, total: 0 },
+            items: [],
+            paginator: { total: 0, current_page: 1, per_page: 20 },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -163,7 +168,7 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect((body.data as Array<unknown>).length).toBe(0);
+      expect((body.items as Array<unknown>).length).toBe(0);
     });
   });
 
@@ -178,7 +183,7 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
 
       const res = await app.request('/api/escavador/v1/monitoramentos', {
         method: 'POST',
-        body: JSON.stringify({ tipo: 'numero', valor: 'valor' }),
+        body: JSON.stringify({ nome: 'Monitoramento Teste', tipo: 'numero', identificador: 'valor' }),
         headers: { ...headers, 'Content-Type': 'application/json' },
       });
 
@@ -280,7 +285,7 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
 
   describe('DELETE /api/escavador/v1/monitoramentos/:id', () => {
     it('✅ sucesso: retorna 204', async () => {
-      fetchSpy.mockResolvedValue(new Response(null, { status: 204 }));
+      fetchSpy.mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
 
       const res = await app.request('/api/escavador/v1/monitoramentos/1', {
         method: 'DELETE',
@@ -313,8 +318,8 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [{ id: 1, data: '2024-05-27' }],
-            pagination: { page: 1, total: 1 },
+            items: [{ id: 1, data: '2024-05-27' }],
+            paginator: { total: 1, current_page: 1, per_page: 20 },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -324,7 +329,7 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.data).toBeDefined();
+      expect(body.items).toBeDefined();
     });
 
     it('❌ erro: retorna 400 com ID inválido', async () => {
@@ -337,8 +342,8 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [],
-            pagination: { page: 1, total: 0 },
+            items: [],
+            paginator: { total: 0, current_page: 1, per_page: 20 },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -348,12 +353,12 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect((body.data as Array<unknown>).length).toBe(0);
+      expect((body.items as Array<unknown>).length).toBe(0);
     });
   });
 
   describe('POST /api/escavador/v1/monitoramentos/:id/testar-callback', () => {
-    it('✅ sucesso: retorna 200 com teste enviado', async () => {
+    it('✅ sucesso: retorna 204 com teste enviado', async () => {
       fetchSpy.mockResolvedValue(
         new Response(JSON.stringify({ status: 'enviado' }), {
           status: 200,
@@ -365,7 +370,7 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
         method: 'POST',
       });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(204);
     });
 
     it('❌ erro: retorna 400 com ID inválido', async () => {
@@ -390,7 +395,7 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
   describe('GET /api/escavador/v1/monitoramentos/:id/origens', () => {
     it('✅ sucesso: retorna 200 com origens', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify([{ id: 1, nome: 'DOU' }]), {
+        new Response(JSON.stringify({ items: [{ id: 1, nome: 'DOU' }] }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -400,7 +405,7 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(Array.isArray(body) || body.data).toBeDefined();
+      expect(body.items).toBeDefined();
     });
 
     it('❌ erro: retorna 400 com ID inválido', async () => {
@@ -411,7 +416,7 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
 
     it('⊘ sem resultado: retorna 200 com array vazio', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify([]), {
+        new Response(JSON.stringify({ items: [] }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -420,8 +425,8 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
       const res = await app.request('/api/escavador/v1/monitoramentos/1/origens', { headers });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Array<unknown>;
-      expect(body.length).toBe(0);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect((body.items as Array<unknown>).length).toBe(0);
     });
   });
 });

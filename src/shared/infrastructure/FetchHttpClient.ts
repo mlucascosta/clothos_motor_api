@@ -130,6 +130,10 @@ export class FetchHttpClient implements IHttpClient {
         return left(new SourceError('UPSTREAM_ERROR', source, `HTTP ${response.status}`));
       }
 
+      if (response.status === 204 || response.status === 205) {
+        return right(undefined as unknown as T);
+      }
+
       const data = (await response.json()) as T;
       return right(data);
     } catch (err) {

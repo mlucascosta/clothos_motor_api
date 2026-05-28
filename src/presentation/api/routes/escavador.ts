@@ -198,11 +198,8 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { z } from 'zod';
-import { rawStore } from '../../../infrastructure/persistence/index.js';
+import { handleOp, handleOpVoid } from '../../../shared/infrastructure/handleOp.js';
 import { EscavadorHttpClient } from '../../../infrastructure/providers/escavador/EscavadorHttpClient.js';
-import { isLeft } from '../../../shared/domain/Either.js';
-import type { Either } from '../../../shared/domain/Either.js';
-import type { SourceError } from '../../../shared/domain/errors/SourceError.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // IMPORTS — Operations V1 e V2
@@ -304,21 +301,6 @@ const buildHttp = () => {
 
 /** Router Hono que centraliza todas as rotas Escavador (V1 e V2) */
 const escavador = new Hono();
-
-async function handleOp<T>(
-  c: Context,
-  opts: { gateway: string; fonte: string; tipo_param: string | null; param: string | null; statusCode?: number },
-  execute: () => Promise<Either<SourceError, T>>,
-): Promise<Response> {
-  const result = await execute();
-  const base = { gateway: opts.gateway, fonte: opts.fonte, tipo_param: opts.tipo_param, param: opts.param, created_at: new Date() };
-  if (isLeft(result)) {
-    rawStore.save({ ...base, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500) as Response;
-  }
-  rawStore.save({ ...base, result: result.value, status: 'success' });
-  return c.json(result.value, (opts.statusCode ?? 200) as import('hono/utils/http-status').ContentfulStatusCode) as Response;
-}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // V1 — ESCAVADOR API V1 — 42 ENDPOINTS
@@ -927,113 +909,6 @@ escavador.post('/v1/monitoramentos', async (c) => {
   );
 });
 
-escavador.get('/v1/monitoramentos/:id', async (c) => {
-  const id = Number(c.req.param('id'));
-  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/obter', tipo_param: 'id', param: String(id) }, () =>
-    new ObterMonitoramento(buildHttp()).execute({ id }),
-  );
-});
-
-escavador.put('/v1/monitoramentos/:id', async (c) => {
-  const id = Number(c.req.param('id'));
-  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-
-  const body = await c.req.json().catch(() => null);
-  if (!body) return c.json({ error: 'Body inválido' }, 400);
-
-  const parsed = EditarMonitoramentoSchema.safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
-
-  const op = new EditarMonitoramento(buildHttp());
-  const input: Parameters<typeof op.execute>[0] = { id };
-  if (parsed.data.ativo !== undefined) input.ativo = parsed.data.ativo;
-  if (parsed.data.callback_url !== undefined) input.callback_url = parsed.data.callback_url;
-  if (parsed.data.nome !== undefined) input.nome = parsed.data.nome;
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/editar', tipo_param: 'id', param: String(id) }, () =>
-    op.execute(input),
-  );
-});
-
-escavador.delete('/v1/monitoramentos/:id', async (c) => {
-  const id = Number(c.req.param('id'));
-  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-  // DELETE — retorna 204, não usa handleOp
-
-  const op = new RemoverMonitoramento(buildHttp());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({ gateway: 'escavador-v1', fonte: 'monitoramentos/remover', tipo_param: 'id', param: String(id), result: { message: result.value.message }, status: 'error', error_kind: result.value.kind, created_at: new Date() });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({ gateway: 'escavador-v1', fonte: 'monitoramentos/remover', tipo_param: 'id', param: String(id), result: null, status: 'success', created_at: new Date() });
-  return c.body(null, 204);
-});
-
-escavador.get('/v1/monitoramentos/:id/aparicoes', async (c) => {
-  const id = Number(c.req.param('id'));
-  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-
-  const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/aparicoes', tipo_param: 'id', param: String(id) }, () =>
-    new ObterAparicoes(buildHttp()).execute({ id, pagina }),
-  );
-});
-
-escavador.post('/v1/monitoramentos/:id/testar-callback', async (c) => {
-  const id = Number(c.req.param('id'));
-  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-
-  const op = new TestarCallbackMonitoramento(buildHttp());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: 'escavador-v1',
-      fonte: 'monitoramentos/testar-callback',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: 'escavador-v1',
-    fonte: 'monitoramentos/testar-callback',
-    tipo_param: 'id',
-    param: String(id),
-    result: null,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.body(null, 204);
-});
-
-escavador.get('/v1/monitoramentos/:id/origens', async (c) => {
-  const id = Number(c.req.param('id'));
-  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/origens', tipo_param: 'id', param: String(id) }, () =>
-    new ObterOrigensMonitoramento(buildHttp()).execute({ id }),
-  );
-});
-
-// ══════════════════════════════════════════════════════════════════════════════════
-// SEÇÃO: MONITORAMENTOS TRIBUNAL (5 endpoints)
-// ══════════════════════════════════════════════════════════════════════════════════
-// Monitorar website de tribunal para novas publicações/movimentações.
-
-/**
- * GET /v1/monitoramentos/tribunal
- *
- * Listar monitoramentos de tribunal.
- *
- * @route GET /api/escavador/v1/monitoramentos/tribunal?page=1
- */
 escavador.get('/v1/monitoramentos/tribunal', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
   const ativoRaw = c.req.query('ativo');
@@ -1099,13 +974,73 @@ escavador.put('/v1/monitoramentos/tribunal/:id', async (c) => {
 escavador.delete('/v1/monitoramentos/tribunal/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+  return handleOpVoid(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/tribunal/remover', tipo_param: 'id', param: String(id) }, () =>
+    new RemoverMonitoramentoTribunal(buildHttp()).execute({ id }),
+  );
+});
 
-  const op = new RemoverMonitoramentoTribunal(buildHttp());
+// ══════════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: MONITORAMENTOS — :id routes
+// ══════════════════════════════════════════════════════════════════════════════════
+
+escavador.get('/v1/monitoramentos/:id', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+
+  return handleOp(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/obter', tipo_param: 'id', param: String(id) }, () =>
+    new ObterMonitoramento(buildHttp()).execute({ id }),
+  );
+});
+
+escavador.put('/v1/monitoramentos/:id', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+
+  const body = await c.req.json().catch(() => null);
+  if (!body) return c.json({ error: 'Body inválido' }, 400);
+
+  const parsed = EditarMonitoramentoSchema.safeParse(body);
+  if (!parsed.success)
+    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+
+  const op = new EditarMonitoramento(buildHttp());
+  const input: Parameters<typeof op.execute>[0] = { id };
+  if (parsed.data.ativo !== undefined) input.ativo = parsed.data.ativo;
+  if (parsed.data.callback_url !== undefined) input.callback_url = parsed.data.callback_url;
+  if (parsed.data.nome !== undefined) input.nome = parsed.data.nome;
+  return handleOp(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/editar', tipo_param: 'id', param: String(id) }, () =>
+    op.execute(input),
+  );
+});
+
+escavador.delete('/v1/monitoramentos/:id', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+  return handleOpVoid(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/remover', tipo_param: 'id', param: String(id) }, () =>
+    new RemoverMonitoramento(buildHttp()).execute({ id }),
+  );
+});
+
+escavador.get('/v1/monitoramentos/:id/aparicoes', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+
+  const pagina = Number(c.req.query('page') ?? '1');
+  return handleOp(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/aparicoes', tipo_param: 'id', param: String(id) }, () =>
+    new ObterAparicoes(buildHttp()).execute({ id, pagina }),
+  );
+});
+
+escavador.post('/v1/monitoramentos/:id/testar-callback', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+
+  const op = new TestarCallbackMonitoramento(buildHttp());
   const result = await op.execute({ id });
   if (isLeft(result)) {
     rawStore.save({
       gateway: 'escavador-v1',
-      fonte: 'monitoramentos/tribunal/remover',
+      fonte: 'monitoramentos/testar-callback',
       tipo_param: 'id',
       param: String(id),
       result: { message: result.value.message },
@@ -1117,7 +1052,7 @@ escavador.delete('/v1/monitoramentos/tribunal/:id', async (c) => {
   }
   rawStore.save({
     gateway: 'escavador-v1',
-    fonte: 'monitoramentos/tribunal/remover',
+    fonte: 'monitoramentos/testar-callback',
     tipo_param: 'id',
     param: String(id),
     result: null,
@@ -1125,6 +1060,15 @@ escavador.delete('/v1/monitoramentos/tribunal/:id', async (c) => {
     created_at: new Date(),
   });
   return c.body(null, 204);
+});
+
+escavador.get('/v1/monitoramentos/:id/origens', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
+
+  return handleOp(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/origens', tipo_param: 'id', param: String(id) }, () =>
+    new ObterOrigensMonitoramento(buildHttp()).execute({ id }),
+  );
 });
 
 // ══════════════════════════════════════════════════════════════════════════════════
@@ -1668,6 +1612,7 @@ escavador.post('/v2/processos/:id/atualizacao', async (c) => {
  */
 escavador.post('/v2/processos/:id/resumo', async (c) => {
   const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
   return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/resumo/solicitar', tipo_param: 'numero_cnj', param: String(id), statusCode: 202 }, () =>
     new SolicitarResumoProcesso(buildHttp()).execute({ id }),
   );
@@ -1694,6 +1639,7 @@ escavador.post('/v2/processos/:id/resumo', async (c) => {
  */
 escavador.get('/v2/processos/:id/resumo', async (c) => {
   const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
   return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/resumo/obter', tipo_param: 'numero_cnj', param: String(id) }, () =>
     new ObterResumoProcesso(buildHttp()).execute({ id }),
   );
@@ -1719,6 +1665,7 @@ escavador.get('/v2/processos/:id/resumo', async (c) => {
  */
 escavador.get('/v2/processos/:id/resumo/status', async (c) => {
   const id = Number(c.req.param('id'));
+  if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
   return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/resumo/status', tipo_param: 'numero_cnj', param: String(id) }, () =>
     new ObterStatusResumoProcesso(buildHttp()).execute({ id }),
   );
@@ -1770,30 +1717,6 @@ escavador.get('/v2/documentos/:id/download', async (c) => {
     created_at: new Date(),
   });
   return c.body(new Uint8Array(result.value), 200, { 'Content-Type': 'application/pdf' });
-});
-
-// ──── Certificados V2 ────
-
-/**
- * @route GET /v2/certificados
- * @description Listar certificados digitais (e-CNPJ/e-CPF) cadastrados
- * @returns {Array} Array de certificados com metadados
- * @status 200 - Certificados listados com sucesso
- * @status 500 - Erro ao consultar API Escavador
- * @example
- * GET /api/escavador/v2/certificados
- * // Resposta (200)
- * {
- *   "data": [
- *     { "id": 1, "nome": "Certificado ABC LTDA", "tipo": "e-CNPJ", "valido_ate": "2025-12-31", "created_at": "2024-01-15T08:00:00Z" }
- *   ]
- * }
- */
-escavador.get('/v2/certificados', async (c) => {
-  const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/monitoramentos/novos-processos/listar', tipo_param: null, param: null }, () =>
-    new ListarMonitoramentosNovosProcessos(buildHttp()).execute({ pagina }),
-  );
 });
 
 /**
@@ -1955,32 +1878,9 @@ escavador.patch('/v2/monitoramentos/novos-processos/:id', async (c) => {
 escavador.delete('/v2/monitoramentos/novos-processos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-
-  const op = new RemoverMonitoramentoNovosProcessos(buildHttp());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: 'escavador-v2',
-      fonte: 'v2/monitoramentos/novos-processos/remover',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: 'escavador-v2',
-    fonte: 'v2/monitoramentos/novos-processos/remover',
-    tipo_param: 'id',
-    param: String(id),
-    result: null,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.body(null, 204);
+  return handleOpVoid(c, { gateway: 'escavador-v2', fonte: 'v2/monitoramentos/novos-processos/remover', tipo_param: 'id', param: String(id) }, () =>
+    new RemoverMonitoramentoNovosProcessos(buildHttp()).execute({ id }),
+  );
 });
 
 escavador.get('/v2/monitoramentos/novos-processos/:id/resultados', async (c) => {
@@ -2109,32 +2009,9 @@ escavador.get('/v2/monitoramentos/processos/:id', async (c) => {
 escavador.delete('/v2/monitoramentos/processos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-
-  const op = new RemoverMonitoramentoProcesso(buildHttp());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: 'escavador-v2',
-      fonte: 'v2/monitoramentos/processos/remover',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: 'escavador-v2',
-    fonte: 'v2/monitoramentos/processos/remover',
-    tipo_param: 'id',
-    param: String(id),
-    result: null,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.body(null, 204);
+  return handleOpVoid(c, { gateway: 'escavador-v2', fonte: 'v2/monitoramentos/processos/remover', tipo_param: 'id', param: String(id) }, () =>
+    new RemoverMonitoramentoProcesso(buildHttp()).execute({ id }),
+  );
 });
 
 // ──── Callbacks V2 ────
@@ -2355,32 +2232,9 @@ escavador.get('/v2/certificados/:id', async (c) => {
 escavador.delete('/v2/certificados/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-
-  const op = new RemoverCertificado(buildHttp());
-  const result = await op.execute({ id });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: 'escavador-v2',
-      fonte: 'v2/certificados/remover',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: 'escavador-v2',
-    fonte: 'v2/certificados/remover',
-    tipo_param: 'id',
-    param: String(id),
-    result: null,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.body(null, 204);
+  return handleOpVoid(c, { gateway: 'escavador-v2', fonte: 'v2/certificados/remover', tipo_param: 'id', param: String(id) }, () =>
+    new RemoverCertificado(buildHttp()).execute({ id }),
+  );
 });
 
 /**
@@ -2450,32 +2304,9 @@ escavador.delete('/v2/certificados/:id/autenticacoes/:autenticacaoId', async (c)
   const autenticacaoId = Number(c.req.param('autenticacaoId'));
   if (Number.isNaN(id) || Number.isNaN(autenticacaoId))
     return c.json({ error: 'ID inválido' }, 400);
-
-  const op = new RemoverAutenticacaoCertificado(buildHttp());
-  const result = await op.execute({ id, autenticacaoId });
-  if (isLeft(result)) {
-    rawStore.save({
-      gateway: 'escavador-v2',
-      fonte: 'v2/certificados/autenticacoes/remover',
-      tipo_param: 'id',
-      param: String(id),
-      result: { message: result.value.message },
-      status: 'error',
-      error_kind: result.value.kind,
-      created_at: new Date(),
-    });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500);
-  }
-  rawStore.save({
-    gateway: 'escavador-v2',
-    fonte: 'v2/certificados/autenticacoes/remover',
-    tipo_param: 'id',
-    param: String(id),
-    result: null,
-    status: 'success',
-    created_at: new Date(),
-  });
-  return c.body(null, 204);
+  return handleOpVoid(c, { gateway: 'escavador-v2', fonte: 'v2/certificados/autenticacoes/remover', tipo_param: 'id', param: String(id) }, () =>
+    new RemoverAutenticacaoCertificado(buildHttp()).execute({ id, autenticacaoId }),
+  );
 });
 
 // ──── Tribunais V2 ────

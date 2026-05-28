@@ -1,10 +1,15 @@
 import { DataJudExecutor } from '../../../../src/infrastructure/providers/datajud/DataJudExecutor';
+import { BuscarProcessoPorNumero } from '../../../../src/infrastructure/providers/datajud/operations/BuscarProcessoPorNumero';
 import { isLeft, isRight, left, right } from '../../../../src/shared/domain/Either';
 import { SourceError } from '../../../../src/shared/domain/errors/SourceError';
 import type { IHttpClient } from '../../../../src/shared/infrastructure/IHttpClient';
 
 function makeHttp(mockFn: jest.Mock): IHttpClient {
   return { request: mockFn } as unknown as IHttpClient;
+}
+
+function makeBuscar(mockFn: jest.Mock): BuscarProcessoPorNumero {
+  return new BuscarProcessoPorNumero(makeHttp(mockFn));
 }
 
 describe('DataJudExecutor', () => {
@@ -31,7 +36,7 @@ describe('DataJudExecutor', () => {
 
   it('busca processo TJSP por CNJ', async () => {
     const mockFn = jest.fn().mockResolvedValue(right(validResponse));
-    const executor = new DataJudExecutor(makeHttp(mockFn));
+    const executor = new DataJudExecutor(makeBuscar(mockFn));
 
     const result = await executor.execute({
       ...baseContext,
@@ -50,7 +55,7 @@ describe('DataJudExecutor', () => {
     expect(mockFn).toHaveBeenCalledWith('/api_publica_tjsp/_search', {
       method: 'POST',
       body: {
-        query: { match: { numeroProcesso: '1004634-81.2023.8.26.0045' } },
+        query: { match: { numeroProcesso: '10046348120238260045' } },
         size: 1,
       },
     });
@@ -64,7 +69,7 @@ describe('DataJudExecutor', () => {
         hits: { total: { value: 0, relation: 'eq' }, hits: [] },
       }),
     );
-    const executor = new DataJudExecutor(makeHttp(mockFn));
+    const executor = new DataJudExecutor(makeBuscar(mockFn));
 
     const result = await executor.execute({
       ...baseContext,
@@ -80,7 +85,7 @@ describe('DataJudExecutor', () => {
   });
 
   it('retorna erro se identifierKind não for PROCESSO', async () => {
-    const executor = new DataJudExecutor(makeHttp(jest.fn()));
+    const executor = new DataJudExecutor(makeBuscar(jest.fn()));
 
     const result = await executor.execute({
       ...baseContext,
@@ -95,7 +100,7 @@ describe('DataJudExecutor', () => {
   });
 
   it('retorna SCHEMA_MISMATCH para CNJ inválido', async () => {
-    const executor = new DataJudExecutor(makeHttp(jest.fn()));
+    const executor = new DataJudExecutor(makeBuscar(jest.fn()));
 
     const result = await executor.execute({
       ...baseContext,
@@ -111,7 +116,7 @@ describe('DataJudExecutor', () => {
 
   it('propaga erro do http client', async () => {
     const mockFn = jest.fn().mockResolvedValue(left(new SourceError('TIMEOUT', 'datajud')));
-    const executor = new DataJudExecutor(makeHttp(mockFn));
+    const executor = new DataJudExecutor(makeBuscar(mockFn));
 
     const result = await executor.execute({
       ...baseContext,
@@ -126,7 +131,7 @@ describe('DataJudExecutor', () => {
   });
 
   it('sourceName é "datajud"', () => {
-    const executor = new DataJudExecutor(makeHttp(jest.fn()));
+    const executor = new DataJudExecutor(makeBuscar(jest.fn()));
     expect(executor.sourceName).toBe('datajud');
   });
 });

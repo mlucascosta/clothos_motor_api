@@ -20,8 +20,7 @@
  */
 
 import { Hono } from 'hono';
-import type { Context } from 'hono';
-import { rawStore } from '../../../infrastructure/persistence/index.js';
+import { handleOp } from '../../../shared/infrastructure/handleOp.js';
 import { DataJudHttpClient } from '../../../infrastructure/providers/datajud/DataJudHttpClient.js';
 import {
   DATAJUD_TRIBUNAIS,
@@ -36,9 +35,6 @@ import {
 } from '../../../infrastructure/providers/datajud/dtos/DataJudSearchRequestDto.js';
 import { BuscarGenericoDataJud } from '../../../infrastructure/providers/datajud/operations/BuscarGenericoDataJud.js';
 import { BuscarProcessoPorNumero } from '../../../infrastructure/providers/datajud/operations/BuscarProcessoPorNumero.js';
-import { isLeft } from '../../../shared/domain/Either.js';
-import type { Either } from '../../../shared/domain/Either.js';
-import type { SourceError } from '../../../shared/domain/errors/SourceError.js';
 
 const GW = 'datajud';
 const BASE_URL = 'https://api-publica.datajud.cnj.jus.br';
@@ -57,21 +53,6 @@ function validateTribunal(c: { req: { query: (key: string) => string | undefined
 }
 
 const datajud = new Hono();
-
-async function handleOp<T>(
-  c: Context,
-  opts: { gateway: string; fonte: string; tipo_param: string | null; param: string | null; statusCode?: number },
-  execute: () => Promise<Either<SourceError, T>>,
-): Promise<Response> {
-  const result = await execute();
-  const base = { gateway: opts.gateway, fonte: opts.fonte, tipo_param: opts.tipo_param, param: opts.param, created_at: new Date() };
-  if (isLeft(result)) {
-    rawStore.save({ ...base, result: { message: result.value.message }, status: 'error', error_kind: result.value.kind });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500) as Response;
-  }
-  rawStore.save({ ...base, result: result.value, status: 'success' });
-  return c.json(result.value, (opts.statusCode ?? 200) as import("hono/utils/http-status").ContentfulStatusCode) as Response;
-}
 
 /**
  * GET /tribunais

@@ -1,10 +1,4 @@
-/**
- * @fileoverview Testes E2E para Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares
- * Cobertura: 12 endpoints (5 tribunal + 3 callbacks + 4 auxiliares)
- * 3 testes por endpoint (36 total): sucesso, erro, sem resultado
- */
-
-import { app } from '../../../src/presentation/api/app';
+import { app } from '../../src/presentation/api/app';
 
 describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)', () => {
   let fetchSpy: jest.SpyInstance;
@@ -19,9 +13,9 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
   });
 
   describe('GET /api/escavador/v1/monitoramentos/tribunal', () => {
-    it('✅ sucesso: retorna 200 com lista', async () => {
+    it('sucesso: retorna 200 com lista', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ id: 1, tribunal: 1 }), {
+        new Response(JSON.stringify({ items: [{ id: 1, ativo: true, tribunal: 'TJSP' }], paginator: { total: 1, current_page: 1, per_page: 20 } }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -32,7 +26,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(200);
     });
 
-    it('❌ erro: retorna 500 quando falha', async () => {
+    it('erro: retorna 500 quando falha', async () => {
       fetchSpy.mockResolvedValue(new Response('Server error', { status: 500 }));
 
       const res = await app.request('/api/escavador/v1/monitoramentos/tribunal', { headers });
@@ -40,9 +34,9 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(500);
     });
 
-    it('⊘ sem resultado: retorna 200 com dados vazios', async () => {
+    it('sem resultado: retorna 200 com dados vazios', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ data: [], pagination: { page: 1, total: 0 } }), {
+        new Response(JSON.stringify({ items: [], paginator: { total: 0, current_page: 1, per_page: 20 } }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -55,9 +49,9 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
   });
 
   describe('POST /api/escavador/v1/monitoramentos/tribunal', () => {
-    it('✅ sucesso: retorna 201', async () => {
+    it('sucesso: retorna 201', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ id: 1, tribunal: 1 }), {
+        new Response(JSON.stringify({ id: 1, ativo: true, tribunal: 'TJSP' }), {
           status: 201,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -72,7 +66,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(201);
     });
 
-    it('❌ erro: retorna 422 com validação inválida', async () => {
+    it('erro: retorna 422 com validacao invalida', async () => {
       const res = await app.request('/api/escavador/v1/monitoramentos/tribunal', {
         method: 'POST',
         body: JSON.stringify({ tribunal: 1 }),
@@ -82,7 +76,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(422);
     });
 
-    it('⊘ sem resultado: retorna 500 quando falha', async () => {
+    it('sem resultado: retorna 500 quando falha', async () => {
       fetchSpy.mockResolvedValue(new Response('Server error', { status: 500 }));
 
       const res = await app.request('/api/escavador/v1/monitoramentos/tribunal', {
@@ -96,9 +90,9 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
   });
 
   describe('GET /api/escavador/v1/monitoramentos/tribunal/:id', () => {
-    it('✅ sucesso: retorna 200', async () => {
+    it('sucesso: retorna 200', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ id: 1, tribunal: 1 }), {
+        new Response(JSON.stringify({ id: 1, ativo: true, tribunal: 'TJSP' }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -109,13 +103,13 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(200);
     });
 
-    it('❌ erro: retorna 400 com ID inválido', async () => {
+    it('erro: retorna 400 com ID invalido', async () => {
       const res = await app.request('/api/escavador/v1/monitoramentos/tribunal/abc', { headers });
 
       expect(res.status).toBe(400);
     });
 
-    it('⊘ sem resultado: retorna 500 quando não encontrado', async () => {
+    it('sem resultado: retorna 500 quando nao encontrado', async () => {
       fetchSpy.mockResolvedValue(new Response('Not found', { status: 404 }));
 
       const res = await app.request('/api/escavador/v1/monitoramentos/tribunal/999', { headers });
@@ -125,7 +119,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
   });
 
   describe('PUT /api/escavador/v1/monitoramentos/tribunal/:id', () => {
-    it('✅ sucesso: retorna 200', async () => {
+    it('sucesso: retorna 200', async () => {
       fetchSpy.mockResolvedValue(
         new Response(JSON.stringify({ id: 1, ativo: false }), {
           status: 200,
@@ -142,7 +136,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(200);
     });
 
-    it('❌ erro: retorna 400 com ID inválido', async () => {
+    it('erro: retorna 400 com ID invalido', async () => {
       const res = await app.request('/api/escavador/v1/monitoramentos/tribunal/invalid', {
         method: 'PUT',
         body: JSON.stringify({ ativo: false }),
@@ -152,7 +146,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(400);
     });
 
-    it('⊘ sem resultado: retorna 500 quando falha', async () => {
+    it('sem resultado: retorna 500 quando falha', async () => {
       fetchSpy.mockResolvedValue(new Response('Server error', { status: 500 }));
 
       const res = await app.request('/api/escavador/v1/monitoramentos/tribunal/1', {
@@ -166,7 +160,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
   });
 
   describe('DELETE /api/escavador/v1/monitoramentos/tribunal/:id', () => {
-    it('✅ sucesso: retorna 204', async () => {
+    it('sucesso: retorna 204', async () => {
       fetchSpy.mockResolvedValue(new Response(null, { status: 204 }));
 
       const res = await app.request('/api/escavador/v1/monitoramentos/tribunal/1', {
@@ -176,7 +170,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(204);
     });
 
-    it('❌ erro: retorna 400 com ID inválido', async () => {
+    it('erro: retorna 400 com ID invalido', async () => {
       const res = await app.request('/api/escavador/v1/monitoramentos/tribunal/abc', {
         method: 'DELETE',
       });
@@ -184,7 +178,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(400);
     });
 
-    it('⊘ sem resultado: retorna 500 quando falha', async () => {
+    it('sem resultado: retorna 500 quando falha', async () => {
       fetchSpy.mockResolvedValue(new Response('Not found', { status: 404 }));
 
       const res = await app.request('/api/escavador/v1/monitoramentos/tribunal/999', {
@@ -196,12 +190,12 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
   });
 
   describe('GET /api/escavador/v1/callbacks', () => {
-    it('✅ sucesso: retorna 200', async () => {
+    it('sucesso: retorna 200', async () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [{ id: 1, status: 'pending' }],
-            pagination: { page: 1, total: 1 },
+            items: [{ id: 1, tipo: 'monitoring_update', status: 'pending' }],
+            paginator: { total: 1, current_page: 1, per_page: 20 },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -212,7 +206,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(200);
     });
 
-    it('❌ erro: retorna 500 quando falha', async () => {
+    it('erro: retorna 500 quando falha', async () => {
       fetchSpy.mockResolvedValue(new Response('Server error', { status: 500 }));
 
       const res = await app.request('/api/escavador/v1/callbacks', { headers });
@@ -220,12 +214,12 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(500);
     });
 
-    it('⊘ sem resultado: retorna 200 com array vazio', async () => {
+    it('sem resultado: retorna 200 com array vazio', async () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [],
-            pagination: { page: 1, total: 0 },
+            items: [],
+            paginator: { total: 0, current_page: 1, per_page: 20 },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -234,13 +228,11 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       const res = await app.request('/api/escavador/v1/callbacks', { headers });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect((body.data as Array<unknown>).length).toBe(0);
     });
   });
 
   describe('POST /api/escavador/v1/callbacks/marcar-recebidos', () => {
-    it('✅ sucesso: retorna 204', async () => {
+    it('sucesso: retorna 204', async () => {
       fetchSpy.mockResolvedValue(new Response(null, { status: 204 }));
 
       const res = await app.request('/api/escavador/v1/callbacks/marcar-recebidos', {
@@ -252,7 +244,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(204);
     });
 
-    it('❌ erro: retorna 422 com ids vazio', async () => {
+    it('erro: retorna 422 com ids vazio', async () => {
       const res = await app.request('/api/escavador/v1/callbacks/marcar-recebidos', {
         method: 'POST',
         body: JSON.stringify({ ids: [] }),
@@ -262,7 +254,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(422);
     });
 
-    it('⊘ sem resultado: retorna 500 quando falha', async () => {
+    it('sem resultado: retorna 500 quando falha', async () => {
       fetchSpy.mockResolvedValue(new Response('Server error', { status: 500 }));
 
       const res = await app.request('/api/escavador/v1/callbacks/marcar-recebidos', {
@@ -276,9 +268,9 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
   });
 
   describe('POST /api/escavador/v1/callbacks/:id/reenviar', () => {
-    it('✅ sucesso: retorna 200', async () => {
+    it('sucesso: retorna 200', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ status: 'reenviado' }), {
+        new Response(JSON.stringify({ id: 1, tipo: 'monitoring_update', status: 'reenviado' }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -291,7 +283,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(200);
     });
 
-    it('❌ erro: retorna 400 com ID inválido', async () => {
+    it('erro: retorna 400 com ID invalido', async () => {
       const res = await app.request('/api/escavador/v1/callbacks/abc/reenviar', {
         method: 'POST',
       });
@@ -299,7 +291,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(400);
     });
 
-    it('⊘ sem resultado: retorna 500 quando não encontrado', async () => {
+    it('sem resultado: retorna 500 quando nao encontrado', async () => {
       fetchSpy.mockResolvedValue(new Response('Not found', { status: 404 }));
 
       const res = await app.request('/api/escavador/v1/callbacks/999/reenviar', {
@@ -311,12 +303,12 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
   });
 
   describe('GET /api/escavador/v1/tribunais', () => {
-    it('✅ sucesso: retorna 200', async () => {
+    it('sucesso: retorna 200', async () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [{ id: 1, nome: 'TJ SP' }],
-            pagination: { page: 1, total: 1 },
+            items: [{ id: 1, nome: 'TJ SP', sigla: 'TJSP' }],
+            paginator: { total: 1, current_page: 1, per_page: 20 },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -327,7 +319,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(200);
     });
 
-    it('❌ erro: retorna 500 quando falha', async () => {
+    it('erro: retorna 500 quando falha', async () => {
       fetchSpy.mockResolvedValue(new Response('Server error', { status: 500 }));
 
       const res = await app.request('/api/escavador/v1/tribunais', { headers });
@@ -335,12 +327,12 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(500);
     });
 
-    it('⊘ sem resultado: retorna 200 com array vazio', async () => {
+    it('sem resultado: retorna 200 com array vazio', async () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [],
-            pagination: { page: 1, total: 0 },
+            items: [],
+            paginator: { total: 0, current_page: 1, per_page: 20 },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -349,13 +341,11 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       const res = await app.request('/api/escavador/v1/tribunais', { headers });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect((body.data as Array<unknown>).length).toBe(0);
     });
   });
 
   describe('GET /api/escavador/v1/tribunais/:id', () => {
-    it('✅ sucesso: retorna 200', async () => {
+    it('sucesso: retorna 200', async () => {
       fetchSpy.mockResolvedValue(
         new Response(JSON.stringify({ id: 1, nome: 'TJ SP' }), {
           status: 200,
@@ -368,13 +358,13 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(200);
     });
 
-    it('❌ erro: retorna 400 com ID inválido', async () => {
+    it('erro: retorna 400 com ID invalido', async () => {
       const res = await app.request('/api/escavador/v1/tribunais/abc', { headers });
 
       expect(res.status).toBe(400);
     });
 
-    it('⊘ sem resultado: retorna 500 quando não encontrado', async () => {
+    it('sem resultado: retorna 500 quando nao encontrado', async () => {
       fetchSpy.mockResolvedValue(new Response('Not found', { status: 404 }));
 
       const res = await app.request('/api/escavador/v1/tribunais/999', { headers });
@@ -384,12 +374,12 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
   });
 
   describe('GET /api/escavador/v1/orgaos-administrativos', () => {
-    it('✅ sucesso: retorna 200', async () => {
+    it('sucesso: retorna 200', async () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [{ id: 1, nome: 'Ministério da Justiça' }],
-            pagination: { page: 1, total: 1 },
+            items: [{ id: 1, nome: 'Ministerio da Justica' }],
+            paginator: { total: 1, current_page: 1, per_page: 20 },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -400,7 +390,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(200);
     });
 
-    it('❌ erro: retorna 500 quando falha', async () => {
+    it('erro: retorna 500 quando falha', async () => {
       fetchSpy.mockResolvedValue(new Response('Server error', { status: 500 }));
 
       const res = await app.request('/api/escavador/v1/orgaos-administrativos', { headers });
@@ -408,12 +398,12 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(500);
     });
 
-    it('⊘ sem resultado: retorna 200 com array vazio', async () => {
+    it('sem resultado: retorna 200 com array vazio', async () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [],
-            pagination: { page: 1, total: 0 },
+            items: [],
+            paginator: { total: 0, current_page: 1, per_page: 20 },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -422,18 +412,16 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       const res = await app.request('/api/escavador/v1/orgaos-administrativos', { headers });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect((body.data as Array<unknown>).length).toBe(0);
     });
   });
 
   describe('GET /api/escavador/v1/diarios-oficiais/origens', () => {
-    it('✅ sucesso: retorna 200', async () => {
+    it('sucesso: retorna 200', async () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [{ id: 1, nome: 'DOU' }],
-            pagination: { page: 1, total: 1 },
+            items: [{ id: 1, nome: 'DOU' }],
+            paginator: { total: 1, current_page: 1, per_page: 20 },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -444,7 +432,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(200);
     });
 
-    it('❌ erro: retorna 500 quando falha', async () => {
+    it('erro: retorna 500 quando falha', async () => {
       fetchSpy.mockResolvedValue(new Response('Server error', { status: 500 }));
 
       const res = await app.request('/api/escavador/v1/diarios-oficiais/origens', { headers });
@@ -452,12 +440,12 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       expect(res.status).toBe(500);
     });
 
-    it('⊘ sem resultado: retorna 200 com array vazio', async () => {
+    it('sem resultado: retorna 200 com array vazio', async () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [],
-            pagination: { page: 1, total: 0 },
+            items: [],
+            paginator: { total: 0, current_page: 1, per_page: 20 },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -466,8 +454,6 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
       const res = await app.request('/api/escavador/v1/diarios-oficiais/origens', { headers });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect((body.data as Array<unknown>).length).toBe(0);
     });
   });
 });

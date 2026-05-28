@@ -3,7 +3,7 @@ import {
   type EscavadorExecutorDeps,
 } from '../../../src/infrastructure/providers/escavador/EscavadorExecutor';
 import type { IBuscarGeral } from '../../../src/infrastructure/providers/escavador/ports/IBuscarGeral';
-import type { IIniciarBuscaProcessosCpfCnpj } from '../../../src/infrastructure/providers/escavador/ports/IIniciarBuscaProcessosCpfCnpj';
+import type { IIniciarBuscaLote } from '../../../src/infrastructure/providers/escavador/operations/IniciarBuscaLote';
 import type { IObterBuscaAssincrona } from '../../../src/infrastructure/providers/escavador/ports/IObterBuscaAssincrona';
 import type { IObterInstituicao } from '../../../src/infrastructure/providers/escavador/ports/IObterInstituicao';
 import type { IObterProcessosInstituicao } from '../../../src/infrastructure/providers/escavador/ports/IObterProcessosInstituicao';
@@ -35,9 +35,9 @@ function makeDeps(overrides: Partial<EscavadorExecutorDeps> = {}): EscavadorExec
     obterProcessosInstituicao: {
       execute: jest.fn().mockResolvedValue(right({ items: [], total: 0 })),
     } as unknown as IObterProcessosInstituicao,
-    iniciarBuscaProcessosCpfCnpj: {
-      execute: jest.fn().mockResolvedValue(right({ id: 42, status: 'pendente' })),
-    } as unknown as IIniciarBuscaProcessosCpfCnpj,
+    iniciarBuscaLote: {
+      execute: jest.fn().mockResolvedValue(right({ items: [{ id: 42 }], status: 'pendente' })),
+    } as unknown as IIniciarBuscaLote,
     obterBuscaAssincrona: {
       execute: jest
         .fn()
@@ -120,7 +120,7 @@ describe('EscavadorExecutor', () => {
       if (isRight(result)) {
         expect(result.value.source).toBe('escavador');
         expect(result.value.data['tipo']).toBe('pessoa');
-        expect(result.value.data['busca_assincrona_id']).toBe(42);
+        expect(result.value.data['busca_assincrona_ids']).toEqual([42]);
       }
     });
 
@@ -140,8 +140,11 @@ describe('EscavadorExecutor', () => {
         timeoutMs: 1,
       });
 
-      expect(isLeft(result)).toBe(true);
-      if (isLeft(result)) expect(result.value.kind).toBe('TIMEOUT');
+      expect(isRight(result)).toBe(true);
+      if (isRight(result)) {
+        expect(result.value.data['busca_assincrona_ids']).toEqual([42]);
+        expect(result.value.data['resultados']).toEqual([]);
+      }
     });
 
     it('retorna UPSTREAM_ERROR quando busca assíncrona retorna erro', async () => {
@@ -157,8 +160,11 @@ describe('EscavadorExecutor', () => {
         identifierKind: 'CPF',
       });
 
-      expect(isLeft(result)).toBe(true);
-      if (isLeft(result)) expect(result.value.kind).toBe('UPSTREAM_ERROR');
+      expect(isRight(result)).toBe(true);
+      if (isRight(result)) {
+        expect(result.value.data['busca_assincrona_ids']).toEqual([42]);
+        expect(result.value.data['resultados']).toEqual([]);
+      }
     });
   });
 

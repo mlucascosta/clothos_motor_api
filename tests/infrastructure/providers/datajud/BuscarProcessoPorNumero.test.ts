@@ -39,7 +39,7 @@ describe('BuscarProcessoPorNumero', () => {
       body: {
         query: {
           match: {
-            numeroProcesso: '1004634-81.2023.8.26.0045',
+            numeroProcesso: '10046348120238260045',
           },
         },
         size: 1,

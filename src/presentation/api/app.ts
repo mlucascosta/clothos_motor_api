@@ -5,6 +5,7 @@ import { datajud } from './routes/datajud.js';
 import { directdata } from './routes/directdata.js';
 import { escavador } from './routes/escavador.js';
 import { health } from './routes/health.js';
+import { infosimples } from './routes/infosimples.js';
 
 const app = new Hono();
 
@@ -15,6 +16,7 @@ app.route('/health', health);
 app.route('/api/escavador', escavador);
 app.route('/api/datajud', datajud);
 app.route('/api/directdata', directdata);
+app.route('/api/infosimples', infosimples);
 
 app.notFound((c) => c.json({ error: 'Rota não encontrada' }, 404));
 

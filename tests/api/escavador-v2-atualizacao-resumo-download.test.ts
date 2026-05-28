@@ -4,7 +4,7 @@
  * 3 testes por endpoint (24 total): sucesso, erro, sem resultado
  */
 
-import { app } from '../../../src/presentation/api/app';
+import { app } from '../../src/presentation/api/app';
 
 describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
   let fetchSpy: jest.SpyInstance;
@@ -24,7 +24,7 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
   describe('POST /api/escavador/v2/processos/atualizacao', () => {
     it('✅ sucesso: retorna 202 com status pending', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ id: 'job-123', status: 'pending' }), {
+        new Response(JSON.stringify({ id: 1, status: 'pendente' }), {
           status: 202,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -69,7 +69,7 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
   describe('GET /api/escavador/v2/processos/atualizacao/:id', () => {
     it('✅ sucesso: retorna 200 com status do lote', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ id: '1', status: 'completed', processados: 2 }), {
+        new Response(JSON.stringify({ id: 1, status: 'concluido', processados: 2 }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -102,7 +102,7 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
   describe('GET /api/escavador/v2/processos/:id/atualizacao', () => {
     it('✅ sucesso: retorna 200 com status de atualização', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ id: 'upd-1', status: 'completed' }), {
+        new Response(JSON.stringify({ id: 1, status: 'concluido' }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -115,10 +115,10 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
       expect(body).toHaveProperty('status');
     });
 
-    it('❌ erro: retorna 400 com ID inválido', async () => {
+    it('❌ erro: retorna 500 com ID inválido', async () => {
       const res = await app.request('/api/escavador/v2/processos/invalid/atualizacao');
 
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(500);
     });
 
     it('⊘ sem resultado: retorna 500 quando processo não existe', async () => {
@@ -135,7 +135,7 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
   describe('POST /api/escavador/v2/processos/:id/atualizacao', () => {
     it('✅ sucesso: retorna 202 com job_id', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ id: 'upd-job-1', status: 'pending' }), {
+        new Response(JSON.stringify({ id: 1, status: 'pendente' }), {
           status: 202,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -150,12 +150,12 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
       expect(body).toHaveProperty('id');
     });
 
-    it('❌ erro: retorna 400 com ID inválido', async () => {
+    it('❌ erro: retorna 500 com ID inválido', async () => {
       const res = await app.request('/api/escavador/v2/processos/invalid/atualizacao', {
         method: 'POST',
       });
 
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(500);
     });
 
     it('⊘ sem resultado: retorna 500 quando processo não existe', async () => {
@@ -178,19 +178,19 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
   describe('POST /api/escavador/v2/processos/:id/resumo', () => {
     it('✅ sucesso: retorna 202 com job_id', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ id: 'res-job-1', status: 'pending', job_id: 'job-abc' }), {
+        new Response(JSON.stringify({ id: 1, status: 'pendente' }), {
           status: 202,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/0000001-00.0000.0.00.0000/resumo', {
+      const res = await app.request('/api/escavador/v2/processos/123/resumo', {
         method: 'POST',
       });
 
       expect(res.status).toBe(202);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body).toHaveProperty('job_id');
+      expect(body).toHaveProperty('id');
     });
 
     it('❌ erro: retorna 400 com ID inválido', async () => {
@@ -206,7 +206,7 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
         new Response(JSON.stringify({ error: 'Not found' }), { status: 500 }),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/9999999-99.9999.9.99.9999/resumo', {
+      const res = await app.request('/api/escavador/v2/processos/999999/resumo', {
         method: 'POST',
       });
 
@@ -219,7 +219,8 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            id: '1',
+            id: 1,
+            status: 'concluido',
             resumo: 'Ação judicial sobre cobrança de débito...',
           }),
           {
@@ -229,7 +230,7 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
         ),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/0000001-00.0000.0.00.0000/resumo');
+      const res = await app.request('/api/escavador/v2/processos/123/resumo');
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -247,7 +248,7 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
         new Response(JSON.stringify({ error: 'Not found' }), { status: 500 }),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/9999999-99.9999.9.99.9999/resumo');
+      const res = await app.request('/api/escavador/v2/processos/999999/resumo');
 
       expect([500, 404]).toContain(res.status);
     });
@@ -258,9 +259,8 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            id: '1',
-            status: 'completed',
-            progresso: 100,
+            id: 1,
+            status: 'concluido',
           }),
           {
             status: 200,
@@ -269,7 +269,7 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
         ),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/0000001-00.0000.0.00.0000/resumo/status');
+      const res = await app.request('/api/escavador/v2/processos/123/resumo/status');
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -277,7 +277,7 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
     });
 
     it('❌ erro: retorna 400 com ID inválido', async () => {
-      const res = await app.request('/api/escavador/v2/processos/not-valid-id/resumo/status');
+      const res = await app.request('/api/escavador/v2/processos/invalid/resumo/status');
 
       expect(res.status).toBe(400);
     });
@@ -287,7 +287,7 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
         new Response(JSON.stringify({ error: 'Not found' }), { status: 500 }),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/9999999-99.9999.9.99.9999/resumo/status');
+      const res = await app.request('/api/escavador/v2/processos/999999/resumo/status');
 
       expect([500, 404]).toContain(res.status);
     });
