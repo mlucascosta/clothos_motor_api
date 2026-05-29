@@ -231,11 +231,11 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
     });
   });
 
-  describe('POST /api/escavador/v1/callbacks/marcar-recebidos', () => {
+  describe('POST /api/escavador/v1/callbacks/recebidos', () => {
     it('sucesso: retorna 204', async () => {
       fetchSpy.mockResolvedValue(new Response(null, { status: 204 }));
 
-      const res = await app.request('/api/escavador/v1/callbacks/marcar-recebidos', {
+      const res = await app.request('/api/escavador/v1/callbacks/recebidos', {
         method: 'POST',
         body: JSON.stringify({ ids: [1, 2, 3] }),
         headers: { ...headers, 'Content-Type': 'application/json' },
@@ -245,7 +245,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
     });
 
     it('erro: retorna 422 com ids vazio', async () => {
-      const res = await app.request('/api/escavador/v1/callbacks/marcar-recebidos', {
+      const res = await app.request('/api/escavador/v1/callbacks/recebidos', {
         method: 'POST',
         body: JSON.stringify({ ids: [] }),
         headers: { ...headers, 'Content-Type': 'application/json' },
@@ -257,7 +257,7 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
     it('sem resultado: retorna 500 quando falha', async () => {
       fetchSpy.mockResolvedValue(new Response('Server error', { status: 500 }));
 
-      const res = await app.request('/api/escavador/v1/callbacks/marcar-recebidos', {
+      const res = await app.request('/api/escavador/v1/callbacks/recebidos', {
         method: 'POST',
         body: JSON.stringify({ ids: [1, 2] }),
         headers: { ...headers, 'Content-Type': 'application/json' },

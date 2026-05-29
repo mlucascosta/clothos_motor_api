@@ -126,14 +126,14 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
       expect(Array.isArray(body.items)).toBe(true);
     });
 
-    it('❌ erro: retorna 500 quando autenticação falha', async () => {
+    it('❌ erro: retorna 401 quando autenticação falha', async () => {
       fetchSpy.mockResolvedValue(
         new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }),
       );
 
       const res = await app.request('/api/escavador/v2/envolvido/processos?nome=João&page=1');
 
-      expect(res.status).toBe(500);
+      expect(res.status).toBe(401);
     });
 
     it('⊘ sem resultado: retorna 200 com array vazio', async () => {

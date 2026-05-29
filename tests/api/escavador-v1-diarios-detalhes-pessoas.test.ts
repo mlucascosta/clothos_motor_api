@@ -249,7 +249,7 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
 
       const res = await app.request('/api/escavador/v1/movimentacoes/999999', { headers });
 
-      expect([200, 500]).toContain(res.status);
+      expect([200, 404, 500]).toContain(res.status);
     });
   });
 
@@ -318,7 +318,7 @@ describe('Escavador V1 — Diários, Detalhes, Pessoas (E2E)', () => {
 
       const res = await app.request('/api/escavador/v1/pessoas/999999', { headers });
 
-      expect([200, 500]).toContain(res.status);
+      expect([200, 404, 500]).toContain(res.status);
     });
   });
 

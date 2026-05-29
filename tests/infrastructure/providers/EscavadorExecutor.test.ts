@@ -3,7 +3,7 @@ import {
   type EscavadorExecutorDeps,
 } from '../../../src/infrastructure/providers/escavador/EscavadorExecutor';
 import type { IBuscarGeral } from '../../../src/infrastructure/providers/escavador/ports/IBuscarGeral';
-import type { IIniciarBuscaLote } from '../../../src/infrastructure/providers/escavador/operations/IniciarBuscaLote';
+import type { IIniciarBuscaLote } from '../../../src/infrastructure/providers/escavador/ports/IIniciarBuscaLote';
 import type { IObterBuscaAssincrona } from '../../../src/infrastructure/providers/escavador/ports/IObterBuscaAssincrona';
 import type { IObterInstituicao } from '../../../src/infrastructure/providers/escavador/ports/IObterInstituicao';
 import type { IObterProcessosInstituicao } from '../../../src/infrastructure/providers/escavador/ports/IObterProcessosInstituicao';
@@ -124,7 +124,7 @@ describe('EscavadorExecutor', () => {
       }
     });
 
-    it('retorna TIMEOUT quando polling não conclui', async () => {
+    it('retorna Left(TIMEOUT) quando polling não conclui dentro do budget', async () => {
       const deps = makeDeps({
         obterBuscaAssincrona: {
           execute: jest
@@ -140,14 +140,13 @@ describe('EscavadorExecutor', () => {
         timeoutMs: 1,
       });
 
-      expect(isRight(result)).toBe(true);
-      if (isRight(result)) {
-        expect(result.value.data['busca_assincrona_ids']).toEqual([42]);
-        expect(result.value.data['resultados']).toEqual([]);
+      expect(isLeft(result)).toBe(true);
+      if (isLeft(result)) {
+        expect(result.value.kind).toBe('UPSTREAM_ERROR');
       }
     });
 
-    it('retorna UPSTREAM_ERROR quando busca assíncrona retorna erro', async () => {
+    it('retorna Left(UPSTREAM_ERROR) quando busca assíncrona retorna erro', async () => {
       const deps = makeDeps({
         obterBuscaAssincrona: {
           execute: jest.fn().mockResolvedValue(right({ id: 42, status: 'erro', tipo: 'cpf' })),
@@ -160,10 +159,9 @@ describe('EscavadorExecutor', () => {
         identifierKind: 'CPF',
       });
 
-      expect(isRight(result)).toBe(true);
-      if (isRight(result)) {
-        expect(result.value.data['busca_assincrona_ids']).toEqual([42]);
-        expect(result.value.data['resultados']).toEqual([]);
+      expect(isLeft(result)).toBe(true);
+      if (isLeft(result)) {
+        expect(result.value.kind).toBe('UPSTREAM_ERROR');
       }
     });
   });

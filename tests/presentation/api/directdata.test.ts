@@ -40,7 +40,7 @@ describe('GET /api/directdata/:endpoint (DDD/SOLID)', () => {
   });
 
   it('CadastroPessoaFisica: resolve operation via registry, retorna 200 e persiste no MongoDB', async () => {
-    const res = await app.request('/api/directdata/CadastroPessoaFisica?CPF=455661039898');
+    const res = await app.request('/api/directdata/CadastroPessoaFisica?CPF=11144477735');
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as Record<string, unknown>;
@@ -52,14 +52,14 @@ describe('GET /api/directdata/:endpoint (DDD/SOLID)', () => {
         gateway: 'directdata',
         fonte: 'CadastroPessoaFisica',
         tipo_param: 'cpf',
-        param: '455661039898',
+        param: '11144477735',
         status: 'success',
       }),
     );
 
     const url = fetchSpy.mock.calls[0][0] as string;
     expect(url).toContain('TOKEN=');
-    expect(url).toContain('CPF=455661039898');
+    expect(url).toContain('CPF=11144477735');
   });
 
   it('CadastroPessoaJuridica: resolve operation via registry e persiste no MongoDB', async () => {
@@ -113,7 +113,7 @@ describe('GET /api/directdata/:endpoint (DDD/SOLID)', () => {
       .spyOn(global, 'fetch')
       .mockResolvedValue(new Response('Internal Server Error', { status: 500 }));
 
-    const res = await app.request('/api/directdata/CadastroPessoaFisica?CPF=455661039898');
+    const res = await app.request('/api/directdata/CadastroPessoaFisica?CPF=11144477735');
 
     expect(res.status).toBe(500);
     const body = (await res.json()) as Record<string, unknown>;
@@ -142,9 +142,9 @@ describe('GET /api/directdata/:endpoint (DDD/SOLID)', () => {
     expect(saveSpy).not.toHaveBeenCalled();
   });
 
-  it('retorna 500 quando endpoint não existe', async () => {
+  it('retorna 400 quando endpoint não existe', async () => {
     const res = await app.request('/api/directdata/EndpointInexistente');
 
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(400);
   });
 });
