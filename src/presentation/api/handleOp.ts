@@ -1,5 +1,5 @@
 /**
- * @fileoverview Re-exporta handleOp e handleOpVoid pré-configurados com o rawStore singleton.
+ * @fileoverview Re-exporta handleOp e handleOpVoid pré-configurados com os stores singleton.
  * As rotas HTTP devem importar deste módulo — nunca de shared/infrastructure/handleOp diretamente.
  * Isso mantém shared/ livre de dependências em infrastructure/.
  * @module presentation/api/handleOp
@@ -12,39 +12,31 @@ import {
   handleOp as _handleOp,
   handleOpVoid as _handleOpVoid,
 } from '@shared/infrastructure/handleOp.js';
-import { rawStore } from '@infrastructure/persistence/index.js';
+import { rawStore, queryRefStore } from '@infrastructure/persistence/index.js';
 
 /**
  * Handler para operações que retornam um corpo (200, 201, 202, etc.).
- * Pré-configurado com o rawStore MongoDB singleton para persistência de auditoria.
+ * Pré-configurado com rawStore e queryRefStore MongoDB singleton.
  *
- * @template T Tipo do valor retornado em sucesso
- * @param c Contexto Hono da requisição
- * @param opts Metadados de auditoria (gateway, fonte, tipo_param, param)
- * @param execute Função que executa a operação e retorna Either
- * @returns Resposta HTTP serializada com status semântico baseado no SourceError.kind
+ * Lê `X-Tenant-Id` e `X-Correlation-Id` automaticamente dos headers.
+ * Quando `X-Tenant-Id` está presente salva referência em `query_refs`.
  */
 export function handleOp<T>(
   c: Context,
   opts: { gateway: string; fonte: string; tipo_param: string | null; param: string | null; statusCode?: number },
   execute: () => Promise<Either<SourceError, T>>,
 ): Promise<Response> {
-  return _handleOp(c, opts, execute, rawStore);
+  return _handleOp(c, opts, execute, rawStore, queryRefStore);
 }
 
 /**
  * Handler para operações que retornam sem corpo (204 No Content).
- * Pré-configurado com o rawStore MongoDB singleton para persistência de auditoria.
- *
- * @param c Contexto Hono da requisição
- * @param opts Metadados de auditoria (gateway, fonte, tipo_param, param)
- * @param execute Função que executa a operação e retorna Either<SourceError, void>
- * @returns Resposta HTTP 204 em sucesso ou status semântico de erro
+ * Pré-configurado com rawStore e queryRefStore MongoDB singleton.
  */
 export function handleOpVoid(
   c: Context,
   opts: { gateway: string; fonte: string; tipo_param: string | null; param: string | null },
   execute: () => Promise<Either<SourceError, void>>,
 ): Promise<Response> {
-  return _handleOpVoid(c, opts, execute, rawStore);
+  return _handleOpVoid(c, opts, execute, rawStore, queryRefStore);
 }

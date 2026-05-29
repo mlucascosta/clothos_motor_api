@@ -1,6 +1,9 @@
-import { type Either, left, right } from '@shared/domain/Either.js';
+import { type Either, isLeft, left, right } from '@shared/domain/Either.js';
 import { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { HttpRequestOptions, IHttpClient } from './IHttpClient.js';
+
+/** Kinds que justificam retry (erros transitórios de upstream). */
+const RETRYABLE_KINDS = new Set(['UPSTREAM_ERROR', 'TIMEOUT']);
 
 /**
  * Configuração para cliente HTTP baseado em Fetch API.
@@ -40,6 +43,23 @@ export interface FetchHttpClientConfig {
    * @default 'http'
    */
   sourceName?: string;
+
+  /**
+   * Número máximo de tentativas (1 = sem retry — padrão).
+   * Retry apenas para erros transitórios: UPSTREAM_ERROR e TIMEOUT.
+   * Configure explicitamente (ex: 3) nos clientes que precisam de resiliência.
+   *
+   * @default 1
+   */
+  maxRetries?: number;
+
+  /**
+   * Delay base para backoff exponencial em milissegundos.
+   * Delays: base * 2^0, base * 2^1, base * 2^2, ...
+   *
+   * @default 200
+   */
+  retryBaseDelayMs?: number;
 }
 
 /**
@@ -52,6 +72,7 @@ export interface FetchHttpClientConfig {
  * - Classificar erros HTTP em SourceErrorKind apropriado
  * - Parsear e retornar respostas JSON
  * - Mesclar headers padrão com headers request
+ * - Retry com backoff exponencial para erros transitórios (UPSTREAM_ERROR, TIMEOUT)
  *
  * @implements {IHttpClient}
  *
@@ -75,7 +96,7 @@ export class FetchHttpClient implements IHttpClient {
   constructor(private readonly config: FetchHttpClientConfig) {}
 
   /**
-   * Executa uma requisição HTTP com tratamento automático de erros.
+   * Executa uma requisição HTTP com tratamento automático de erros e retry.
    *
    * Errors tratados:
    * - TimeoutError (AbortSignal timeout) → TIMEOUT
@@ -85,6 +106,8 @@ export class FetchHttpClient implements IHttpClient {
    * - Outros erros HTTP (5xx, etc) → UPSTREAM_ERROR
    * - Erros de rede/parsing → UPSTREAM_ERROR
    *
+   * Retry com backoff exponencial apenas para UPSTREAM_ERROR e TIMEOUT.
+   *
    * @template T Tipo da resposta esperada (JSON)
    * @param path Caminho relativo (ex: '/users/123')
    * @param options Opções de requisição (método, body, headers, etc)
@@ -93,6 +116,73 @@ export class FetchHttpClient implements IHttpClient {
   async request<T>(
     path: string,
     options: HttpRequestOptions = {},
+  ): Promise<Either<SourceError, T>> {
+    const maxRetries = this.config.maxRetries ?? 1;
+    const baseDelay = this.config.retryBaseDelayMs ?? 200;
+
+    let last: Either<SourceError, T> = left(
+      new SourceError('UPSTREAM_ERROR', this.config.sourceName ?? 'http', 'no attempts made'),
+    );
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      if (attempt > 0) {
+        await sleep(baseDelay * Math.pow(2, attempt - 1));
+      }
+
+      last = await this.attemptRequest<T>(path, options);
+
+      if (!isLeft(last)) return last;
+      if (!RETRYABLE_KINDS.has(last.value.kind)) return last;
+    }
+
+    return last;
+  }
+
+  /**
+   * Executa uma requisição HTTP e retorna dados binários brutos (ArrayBuffer).
+   *
+   * Idêntico ao request() mas sem parsing JSON.
+   * Retorna a resposta bruta como ArrayBuffer.
+   * Retry com backoff exponencial apenas para UPSTREAM_ERROR e TIMEOUT.
+   *
+   * @param path Caminho relativo (ex: '/docs/download')
+   * @param options Opções de requisição
+   * @returns Either contendo sucesso (ArrayBuffer) ou erro estruturado
+   */
+  async requestRaw(
+    path: string,
+    options: HttpRequestOptions = {},
+  ): Promise<Either<SourceError, ArrayBuffer>> {
+    const maxRetries = this.config.maxRetries ?? 1;
+    const baseDelay = this.config.retryBaseDelayMs ?? 200;
+
+    let last: Either<SourceError, ArrayBuffer> = left(
+      new SourceError('UPSTREAM_ERROR', this.config.sourceName ?? 'http', 'no attempts made'),
+    );
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      if (attempt > 0) {
+        await sleep(baseDelay * Math.pow(2, attempt - 1));
+      }
+
+      last = await this.attemptRequestRaw(path, options);
+
+      if (!isLeft(last)) return last;
+      if (!RETRYABLE_KINDS.has(last.value.kind)) return last;
+    }
+
+    return last;
+  }
+
+  /**
+   * Tentativa única de requisição JSON (sem retry).
+   * Chamada internamente por request().
+   *
+   * @private
+   */
+  private async attemptRequest<T>(
+    path: string,
+    options: HttpRequestOptions,
   ): Promise<Either<SourceError, T>> {
     const url = this.buildUrl(path, options.params);
     const timeoutMs = options.timeoutMs ?? this.config.defaultTimeoutMs ?? 30_000;
@@ -117,19 +207,15 @@ export class FetchHttpClient implements IHttpClient {
       if (response.status === 401 || response.status === 403) {
         return left(new SourceError('AUTH_FAILED', source, `HTTP ${response.status}`));
       }
-
       if (response.status === 404) {
         return left(new SourceError('NOT_FOUND', source));
       }
-
       if (response.status === 429) {
         return left(new SourceError('RATE_LIMITED', source));
       }
-
       if (!response.ok) {
         return left(new SourceError('UPSTREAM_ERROR', source, `HTTP ${response.status}`));
       }
-
       if (response.status === 204 || response.status === 205) {
         return right(undefined as unknown as T);
       }
@@ -141,28 +227,24 @@ export class FetchHttpClient implements IHttpClient {
         return left(new SourceError('TIMEOUT', source));
       }
       const safeMsg = err instanceof Error
-        ? err.message.replace(/([?&])(TOKEN|token|apikey|api_key|key|secret|password|passwd)=[^&\s]*/gi, '$1$2=[REDACTED]')
+        ? err.message.replace(
+            /([?&])(TOKEN|token|apikey|api_key|key|secret|password|passwd)=[^&\s]*/gi,
+            '$1$2=[REDACTED]',
+          )
         : 'network error';
       return left(new SourceError('UPSTREAM_ERROR', source, safeMsg));
     }
   }
 
   /**
-   * Executa uma requisição HTTP e retorna dados binários brutos (ArrayBuffer).
+   * Tentativa única de requisição binária (sem retry).
+   * Chamada internamente por requestRaw().
    *
-   * Idêntico ao request() mas sem parsing JSON.
-   * Retorna a resposta bruta como ArrayBuffer.
-   *
-   * Errors tratados:
-   * - Mesmos casos que request() (timeout, auth, rate-limit, etc)
-   *
-   * @param path Caminho relativo (ex: '/docs/download')
-   * @param options Opções de requisição
-   * @returns Either contendo sucesso (ArrayBuffer) ou erro estruturado
+   * @private
    */
-  async requestRaw(
+  private async attemptRequestRaw(
     path: string,
-    options: HttpRequestOptions = {},
+    options: HttpRequestOptions,
   ): Promise<Either<SourceError, ArrayBuffer>> {
     const url = this.buildUrl(path, options.params);
     const timeoutMs = options.timeoutMs ?? this.config.defaultTimeoutMs ?? 30_000;
@@ -185,15 +267,12 @@ export class FetchHttpClient implements IHttpClient {
       if (response.status === 401 || response.status === 403) {
         return left(new SourceError('AUTH_FAILED', source, `HTTP ${response.status}`));
       }
-
       if (response.status === 404) {
         return left(new SourceError('NOT_FOUND', source));
       }
-
       if (response.status === 429) {
         return left(new SourceError('RATE_LIMITED', source));
       }
-
       if (!response.ok) {
         return left(new SourceError('UPSTREAM_ERROR', source, `HTTP ${response.status}`));
       }
@@ -205,7 +284,10 @@ export class FetchHttpClient implements IHttpClient {
         return left(new SourceError('TIMEOUT', source));
       }
       const safeMsg = err instanceof Error
-        ? err.message.replace(/([?&])(TOKEN|token|apikey|api_key|key|secret|password|passwd)=[^&\s]*/gi, '$1$2=[REDACTED]')
+        ? err.message.replace(
+            /([?&])(TOKEN|token|apikey|api_key|key|secret|password|passwd)=[^&\s]*/gi,
+            '$1$2=[REDACTED]',
+          )
         : 'network error';
       return left(new SourceError('UPSTREAM_ERROR', source, safeMsg));
     }
@@ -249,4 +331,8 @@ export class FetchHttpClient implements IHttpClient {
 
     return qs ? `${url}?${qs}` : url;
   }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

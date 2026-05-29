@@ -40,6 +40,8 @@ export class DirectDataHttpClient implements IHttpClient {
         Accept: 'application/json',
       },
       defaultTimeoutMs: 60_000,
+      maxRetries: 3,
+      retryBaseDelayMs: 200,
     });
   }
 

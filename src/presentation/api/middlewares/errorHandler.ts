@@ -6,6 +6,7 @@
  */
 
 import type { Context, Next } from 'hono';
+import { logger } from '@shared/infrastructure/logger.js';
 
 /**
  * Middleware Hono que captura exceções não tratadas em handlers e middlewares subsequentes.
@@ -20,7 +21,7 @@ export async function errorHandler(c: Context, next: Next): Promise<Response> {
     await next();
     return c.res;
   } catch (err) {
-    console.error('Unhandled error:', err);
+    logger.error({ err }, 'Unhandled error');
     return c.json({ error: 'Erro interno do servidor' }, 500);
   }
 }

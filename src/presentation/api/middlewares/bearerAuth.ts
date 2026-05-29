@@ -5,34 +5,26 @@
  * @module presentation/api/middlewares/bearerAuth
  */
 
-import { createHash } from 'node:crypto';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import type { Context, Next } from 'hono';
 
 /**
  * Compara duas strings de forma imune a timing attacks.
  *
  * Estratégia:
- * 1. Aplica SHA-256 em ambas as strings para garantir que os buffers resultantes
- *    tenham sempre o mesmo comprimento (32 bytes), eliminando vazamento de tamanho.
- * 2. Realiza XOR bit a bit acumulando as diferenças em `diff`.
- * 3. Retorna `true` somente se `diff === 0` (nenhum bit diverge).
- *
- * O loop sempre percorre todos os 32 bytes, independentemente do conteúdo, evitando
- * que o tempo de execução varie com a posição do primeiro byte diferente.
+ * 1. Aplica SHA-256 em ambas as strings — buffers resultantes têm sempre 32 bytes,
+ *    eliminando vazamento de tamanho independentemente dos inputs.
+ * 2. Delega a comparação byte-a-byte para `crypto.timingSafeEqual` do Node.js,
+ *    que garante tempo constante e é auditado pelo projeto OpenSSL.
  *
  * @param a - Primeira string a comparar (ex.: token enviado pelo cliente).
  * @param b - Segunda string a comparar (ex.: segredo configurado no ambiente).
  * @returns `true` se as strings forem iguais; `false` caso contrário.
  */
-function timingSafeEqual(a: string, b: string): boolean {
-  const bufA = Buffer.from(createHash('sha256').update(a).digest());
-  const bufB = Buffer.from(createHash('sha256').update(b).digest());
-  if (bufA.length !== bufB.length) return false;
-  let diff = 0;
-  for (let i = 0; i < bufA.length; i++) {
-    diff |= bufA[i]! ^ bufB[i]!;
-  }
-  return diff === 0;
+function timingSafeStringEqual(a: string, b: string): boolean {
+  const hashA = createHash('sha256').update(a).digest();
+  const hashB = createHash('sha256').update(b).digest();
+  return timingSafeEqual(hashA, hashB);
 }
 
 /**
@@ -65,7 +57,7 @@ export async function bearerAuth(c: Context, next: Next): Promise<Response> {
   }
 
   const token = authHeader.slice(7);
-  if (!timingSafeEqual(token, secret)) {
+  if (!timingSafeStringEqual(token, secret)) {
     return c.json({ error: 'Não autorizado' }, 401);
   }
 

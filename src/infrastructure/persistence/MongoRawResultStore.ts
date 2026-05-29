@@ -9,6 +9,7 @@ import { type Collection, MongoClient } from 'mongodb';
 import type { IRawResultStore } from './IRawResultStore.js';
 import type { RawResultDoc } from './RawResultDoc.js';
 import { hashCpfIfNeeded } from '@shared/domain/privacy/hashCpf.js';
+import { logger } from '@shared/infrastructure/logger.js';
 
 /**
  * Store de resultados brutos em MongoDB.
@@ -59,7 +60,7 @@ export class MongoRawResultStore implements IRawResultStore {
         this.collection = col;
         return col;
       } catch (err) {
-        console.error('[MongoRawResultStore] connection failed:', err);
+        logger.error({ err }, 'MongoRawResultStore: connection failed');
         return null;
       } finally {
         this.connectingPromise = null;
@@ -87,11 +88,11 @@ export class MongoRawResultStore implements IRawResultStore {
       .then((col) => {
         if (!col) return;
         col.insertOne(safeDoc).catch((err) => {
-          console.error('[MongoRawResultStore] insertOne failed:', err);
+          logger.error({ err }, 'MongoRawResultStore: insertOne failed');
         });
       })
       .catch((err) => {
-        console.error('[MongoRawResultStore] save failed:', err);
+        logger.error({ err }, 'MongoRawResultStore: save failed');
       });
   }
 }

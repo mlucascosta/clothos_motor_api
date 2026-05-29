@@ -18,8 +18,9 @@
  * @property {string | null} param - Valor do parâmetro de busca (CPF em hash se tipo_param=cpf_cnpj, ou string literal)
  * @property {unknown} result - Resposta bruta da API (JSON parseado ou string)
  * @property {'success' | 'error'} status - Status da requisição (sucesso ou erro)
- * @property {string} [error_kind] - Tipo de erro se status='error' (ex: "TIMEOUT", "AUTH_FAILED", "UPSTREAM_ERROR")
- * @property {Date} created_at - Timestamp de criação do registro (para TTL e limpeza)
+ * @property {string} [error_kind]     - Tipo de erro se status='error' (ex: "TIMEOUT", "AUTH_FAILED", "UPSTREAM_ERROR")
+ * @property {string} [correlationId]  - ID de correlação para rastreamento distribuído; chave que une este doc ao query_refs correspondente
+ * @property {Date}   created_at       - Timestamp de criação do registro (para TTL e limpeza)
  */
 export interface RawResultDoc {
   gateway: string;
@@ -29,5 +30,6 @@ export interface RawResultDoc {
   result: unknown;
   status: 'success' | 'error';
   error_kind?: string;
+  correlationId?: string;
   created_at: Date;
 }
