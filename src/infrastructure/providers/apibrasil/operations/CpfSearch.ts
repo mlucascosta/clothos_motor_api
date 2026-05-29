@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { CpfSearchSchema } from '../dtos/CpfSearchDto.js';
+import type { CpfSearchDto } from '../dtos/CpfSearchDto.js';
 import type { ICpfSearch } from '../ports/ICpfSearch.js';
 
 export class CpfSearch implements ICpfSearch {
@@ -20,7 +21,7 @@ export class CpfSearch implements ICpfSearch {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, CpfSearchDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

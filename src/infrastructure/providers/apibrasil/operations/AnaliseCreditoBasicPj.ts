@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { AnaliseCreditoBasicPjSchema } from '../dtos/AnaliseCreditoBasicPjDto.js';
+import type { AnaliseCreditoBasicPjDto } from '../dtos/AnaliseCreditoBasicPjDto.js';
 import type { IAnaliseCreditoBasicPj } from '../ports/IAnaliseCreditoBasicPj.js';
 
 export class AnaliseCreditoBasicPj implements IAnaliseCreditoBasicPj {
@@ -20,7 +21,7 @@ export class AnaliseCreditoBasicPj implements IAnaliseCreditoBasicPj {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, AnaliseCreditoBasicPjDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { DecodificadorPrecificadorSchema } from '../dtos/DecodificadorPrecificadorDto.js';
+import type { DecodificadorPrecificadorDto } from '../dtos/DecodificadorPrecificadorDto.js';
 import type { IDecodificadorPrecificador } from '../ports/IDecodificadorPrecificador.js';
 
 export class DecodificadorPrecificador implements IDecodificadorPrecificador {
@@ -20,7 +21,7 @@ export class DecodificadorPrecificador implements IDecodificadorPrecificador {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, DecodificadorPrecificadorDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

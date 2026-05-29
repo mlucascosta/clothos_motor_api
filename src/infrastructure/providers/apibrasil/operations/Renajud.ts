@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { RenajudSchema } from '../dtos/RenajudDto.js';
+import type { RenajudDto } from '../dtos/RenajudDto.js';
 import type { IRenajud } from '../ports/IRenajud.js';
 
 export class Renajud implements IRenajud {
@@ -20,7 +21,7 @@ export class Renajud implements IRenajud {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, RenajudDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

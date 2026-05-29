@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { SituacaoEleitoralSchema } from '../dtos/SituacaoEleitoralDto.js';
+import type { SituacaoEleitoralDto } from '../dtos/SituacaoEleitoralDto.js';
 import type { ISituacaoEleitoral } from '../ports/ISituacaoEleitoral.js';
 
 export class SituacaoEleitoral implements ISituacaoEleitoral {
@@ -20,7 +21,7 @@ export class SituacaoEleitoral implements ISituacaoEleitoral {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, SituacaoEleitoralDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

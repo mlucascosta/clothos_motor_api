@@ -29,5 +29,5 @@ export interface IInfosimplesOperation<T = unknown> {
    */
   execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>>;
+  ): Promise<Either<SourceError, T>>;
 }

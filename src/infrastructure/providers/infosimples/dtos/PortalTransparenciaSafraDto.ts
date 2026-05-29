@@ -30,3 +30,4 @@ export const PortalTransparenciaSafraResponseSchema = z.object({
 });
 
 export type PortalTransparenciaSafraItem = z.infer<typeof PortalTransparenciaSafraItemSchema>;
+export type PortalTransparenciaSafraResponse = z.infer<typeof PortalTransparenciaSafraResponseSchema>;

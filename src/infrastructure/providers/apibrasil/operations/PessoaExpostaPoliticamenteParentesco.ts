@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { PessoaExpostaPoliticamenteParentescoSchema } from '../dtos/PessoaExpostaPoliticamenteParentescoDto.js';
+import type { PessoaExpostaPoliticamenteParentescoDto } from '../dtos/PessoaExpostaPoliticamenteParentescoDto.js';
 import type { IPessoaExpostaPoliticamenteParentesco } from '../ports/IPessoaExpostaPoliticamenteParentesco.js';
 
 export class PessoaExpostaPoliticamenteParentesco implements IPessoaExpostaPoliticamenteParentesco {
@@ -20,7 +21,7 @@ export class PessoaExpostaPoliticamenteParentesco implements IPessoaExpostaPolit
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, PessoaExpostaPoliticamenteParentescoDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

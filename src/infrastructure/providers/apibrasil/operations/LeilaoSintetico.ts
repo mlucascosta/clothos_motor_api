@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { LeilaoSinteticoSchema } from '../dtos/LeilaoSinteticoDto.js';
+import type { LeilaoSinteticoDto } from '../dtos/LeilaoSinteticoDto.js';
 import type { ILeilaoSintetico } from '../ports/ILeilaoSintetico.js';
 
 export class LeilaoSintetico implements ILeilaoSintetico {
@@ -20,7 +21,7 @@ export class LeilaoSintetico implements ILeilaoSintetico {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, LeilaoSinteticoDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

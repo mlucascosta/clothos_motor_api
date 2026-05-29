@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { CpfSociodemograficosSchema } from '../dtos/CpfSociodemograficosDto.js';
+import type { CpfSociodemograficosDto } from '../dtos/CpfSociodemograficosDto.js';
 import type { ICpfSociodemograficos } from '../ports/ICpfSociodemograficos.js';
 
 export class CpfSociodemograficos implements ICpfSociodemograficos {
@@ -20,7 +21,7 @@ export class CpfSociodemograficos implements ICpfSociodemograficos {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, CpfSociodemograficosDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

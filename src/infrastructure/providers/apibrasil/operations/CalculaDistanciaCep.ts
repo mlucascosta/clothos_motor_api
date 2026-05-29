@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { CalculaDistanciaCepSchema } from '../dtos/CalculaDistanciaCepDto.js';
+import type { CalculaDistanciaCepDto } from '../dtos/CalculaDistanciaCepDto.js';
 import type { ICalculaDistanciaCep } from '../ports/ICalculaDistanciaCep.js';
 
 export class CalculaDistanciaCep implements ICalculaDistanciaCep {
@@ -20,7 +21,7 @@ export class CalculaDistanciaCep implements ICalculaDistanciaCep {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, CalculaDistanciaCepDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

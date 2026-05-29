@@ -54,6 +54,8 @@ const ResponseSchema = z.object({
   data_count: z.number(),
 });
 
+type CadastroPessoaJuridicaResponse = z.infer<typeof ResponseSchema>;
+
 /**
  * Operation para endpoint `/consultas/receita-federal/cnpj`.
  * Consulta cadastro de pessoa jurídica na Receita Federal.
@@ -62,7 +64,7 @@ const ResponseSchema = z.object({
  * @implements {IInfosimplesOperation<CadastroPessoaJuridicaData>}
  */
 export class CadastroPessoaJuridica
-  implements IInfosimplesOperation<CadastroPessoaJuridicaData>
+  implements IInfosimplesOperation<CadastroPessoaJuridicaResponse>
 {
   readonly path = 'consultas/receita-federal/cnpj';
   readonly requiredParams = ['cnpj'];
@@ -73,23 +75,11 @@ export class CadastroPessoaJuridica
    * Executa consulta de CNPJ na Receita Federal.
    *
    * @param {Record<string, string | undefined>} params - Query params (deve conter `cnpj`)
-   * @returns {Promise<Either<SourceError, { code, data, errors, ... }>>}
+   * @returns {Promise<Either<SourceError, CadastroPessoaJuridicaResponse>>}
    */
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<
-    Either<
-      SourceError,
-      {
-        code: number;
-        code_message: string;
-        header: Record<string, unknown>;
-        data: CadastroPessoaJuridicaData[] | null;
-        errors: string[];
-        data_count: number;
-      }
-    >
-  > {
+  ): Promise<Either<SourceError, CadastroPessoaJuridicaResponse>> {
     // Limpar params undefined
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {

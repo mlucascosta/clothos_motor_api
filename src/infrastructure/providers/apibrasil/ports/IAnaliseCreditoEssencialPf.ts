@@ -5,6 +5,7 @@
 
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { AnaliseCreditoEssencialPfDto } from '../dtos/AnaliseCreditoEssencialPfDto.js';
 
 export interface IAnaliseCreditoEssencialPf {
   readonly path: string;
@@ -12,5 +13,5 @@ export interface IAnaliseCreditoEssencialPf {
   readonly type: string;
   execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>>;
+  ): Promise<Either<SourceError, AnaliseCreditoEssencialPfDto>>;
 }

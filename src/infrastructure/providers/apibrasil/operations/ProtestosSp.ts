@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { ProtestosSpSchema } from '../dtos/ProtestosSpDto.js';
+import type { ProtestosSpDto } from '../dtos/ProtestosSpDto.js';
 import type { IProtestosSp } from '../ports/IProtestosSp.js';
 
 export class ProtestosSp implements IProtestosSp {
@@ -20,7 +21,7 @@ export class ProtestosSp implements IProtestosSp {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, ProtestosSpDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

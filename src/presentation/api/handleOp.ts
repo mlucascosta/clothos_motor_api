@@ -44,7 +44,7 @@ export function handleOp<T>(
 export function handleOpVoid(
   c: Context,
   opts: { gateway: string; fonte: string; tipo_param: string | null; param: string | null },
-  execute: () => Promise<Either<SourceError, void | unknown>>,
+  execute: () => Promise<Either<SourceError, void>>,
 ): Promise<Response> {
   return _handleOpVoid(c, opts, execute, rawStore);
 }

@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { LimitePjSchema } from '../dtos/LimitePjDto.js';
+import type { LimitePjDto } from '../dtos/LimitePjDto.js';
 import type { ILimitePj } from '../ports/ILimitePj.js';
 
 export class LimitePj implements ILimitePj {
@@ -20,7 +21,7 @@ export class LimitePj implements ILimitePj {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, LimitePjDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

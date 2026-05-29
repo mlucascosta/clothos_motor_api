@@ -5,6 +5,7 @@
 
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { CnpjCadastralDto } from '../dtos/CnpjCadastralDto.js';
 
 export interface ICnpjCadastral {
   readonly path: string;
@@ -12,5 +13,5 @@ export interface ICnpjCadastral {
   readonly type: string;
   execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>>;
+  ): Promise<Either<SourceError, CnpjCadastralDto>>;
 }

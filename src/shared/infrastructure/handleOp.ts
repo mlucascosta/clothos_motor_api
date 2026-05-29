@@ -68,7 +68,7 @@ export async function handleOp<T>(
 export async function handleOpVoid(
   c: Context,
   opts: { gateway: string; fonte: string; tipo_param: string | null; param: string | null },
-  execute: () => Promise<Either<SourceError, void | unknown>>,
+  execute: () => Promise<Either<SourceError, void>>,
   store: IRawResultStore,
 ): Promise<Response> {
   const result = await execute();

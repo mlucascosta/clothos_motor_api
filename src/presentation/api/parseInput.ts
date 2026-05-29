@@ -6,7 +6,16 @@
  * @module presentation/api/parseInput
  */
 
-import type { ZodType, ZodTypeDef } from 'zod';
+/**
+ * Interface estrutural mínima para qualquer schema Zod (v3.25+ compatível).
+ * Evita depender da hierarquia de classes interna do Zod, que sofreu breaking
+ * changes em 3.25 (propriedades de instância em ZodType).
+ */
+interface SafeParseSchema<T> {
+  safeParse(data: unknown):
+    | { success: true; data: T }
+    | { success: false; error: { issues: unknown[] } };
+}
 
 /**
  * Resultado de validação de input de rota.
@@ -37,7 +46,7 @@ export type ParseInputResult<T> =
  * // result.data está tipado como MySchema
  */
 export function parseInput<T>(
-  schema: ZodType<T, ZodTypeDef, unknown>,
+  schema: SafeParseSchema<T>,
   value: unknown,
   errorMessage = 'Payload inválido',
 ): ParseInputResult<T> {

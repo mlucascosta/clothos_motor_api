@@ -19,7 +19,7 @@ export class IeptbProtestosDetalhes implements IInfosimplesOperation<IeptbProtes
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, IeptbProtestosDetalhesSpItem>> {
     const cleanParams: Record<string, string> = {};
     for (const [k, v] of Object.entries(params)) {
       if (v !== undefined && v !== '') cleanParams[k] = v;

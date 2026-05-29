@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { AcertaEssencialPositivoSchema } from '../dtos/AcertaEssencialPositivoDto.js';
+import type { AcertaEssencialPositivoDto } from '../dtos/AcertaEssencialPositivoDto.js';
 import type { IAcertaEssencialPositivo } from '../ports/IAcertaEssencialPositivo.js';
 
 export class AcertaEssencialPositivo implements IAcertaEssencialPositivo {
@@ -20,7 +21,7 @@ export class AcertaEssencialPositivo implements IAcertaEssencialPositivo {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, AcertaEssencialPositivoDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

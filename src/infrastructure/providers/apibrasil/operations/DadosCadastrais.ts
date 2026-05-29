@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { DadosCadastraisSchema } from '../dtos/DadosCadastraisDto.js';
+import type { DadosCadastraisDto } from '../dtos/DadosCadastraisDto.js';
 import type { IDadosCadastrais } from '../ports/IDadosCadastrais.js';
 
 export class DadosCadastrais implements IDadosCadastrais {
@@ -20,7 +21,7 @@ export class DadosCadastrais implements IDadosCadastrais {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, DadosCadastraisDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { VeiculosDocumentoPjSchema } from '../dtos/VeiculosDocumentoPjDto.js';
+import type { VeiculosDocumentoPjDto } from '../dtos/VeiculosDocumentoPjDto.js';
 import type { IVeiculosDocumentoPj } from '../ports/IVeiculosDocumentoPj.js';
 
 export class VeiculosDocumentoPj implements IVeiculosDocumentoPj {
@@ -20,7 +21,7 @@ export class VeiculosDocumentoPj implements IVeiculosDocumentoPj {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, VeiculosDocumentoPjDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

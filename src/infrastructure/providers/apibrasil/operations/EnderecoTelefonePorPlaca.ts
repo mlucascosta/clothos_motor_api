@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { EnderecoTelefonePorPlacaSchema } from '../dtos/EnderecoTelefonePorPlacaDto.js';
+import type { EnderecoTelefonePorPlacaDto } from '../dtos/EnderecoTelefonePorPlacaDto.js';
 import type { IEnderecoTelefonePorPlaca } from '../ports/IEnderecoTelefonePorPlaca.js';
 
 export class EnderecoTelefonePorPlaca implements IEnderecoTelefonePorPlaca {
@@ -20,7 +21,7 @@ export class EnderecoTelefonePorPlaca implements IEnderecoTelefonePorPlaca {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, EnderecoTelefonePorPlacaDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

@@ -9,14 +9,14 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IInfosimplesOperation } from '../ports/IInfosimplesOperation.js';
-import { PortalTransparenciaSeguroResponseSchema, type PortalTransparenciaSeguroItem } from '../dtos/PortalTransparenciaSeguroDto.js';
+import { PortalTransparenciaSeguroResponseSchema, type PortalTransparenciaSeguroResponse } from '../dtos/PortalTransparenciaSeguroDto.js';
 
-export class PortalTransparenciaSeguro implements IInfosimplesOperation<PortalTransparenciaSeguroItem> {
+export class PortalTransparenciaSeguro implements IInfosimplesOperation<PortalTransparenciaSeguroResponse> {
   readonly path = 'consultas/portal-transparencia/seguro';
 
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(params: Record<string, string | undefined>): Promise<Either<SourceError, unknown>> {
+  async execute(params: Record<string, string | undefined>): Promise<Either<SourceError, PortalTransparenciaSeguroResponse>> {
     const cleanParams: Record<string, string> = {};
     for (const [k, v] of Object.entries(params)) {
       if (v !== undefined && v !== '') cleanParams[k] = v;

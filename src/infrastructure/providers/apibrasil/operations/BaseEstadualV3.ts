@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { BaseEstadualV3Schema } from '../dtos/BaseEstadualV3Dto.js';
+import type { BaseEstadualV3Dto } from '../dtos/BaseEstadualV3Dto.js';
 import type { IBaseEstadualV3 } from '../ports/IBaseEstadualV3.js';
 
 export class BaseEstadualV3 implements IBaseEstadualV3 {
@@ -20,7 +21,7 @@ export class BaseEstadualV3 implements IBaseEstadualV3 {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, BaseEstadualV3Dto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

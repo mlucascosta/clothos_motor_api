@@ -16,7 +16,7 @@ export class RegistradoresCertidDownload implements IInfosimplesOperation<Regist
 
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(params: Record<string, string | undefined>): Promise<Either<SourceError, unknown>> {
+  async execute(params: Record<string, string | undefined>): Promise<Either<SourceError, RegistradoresCertidDownloadItem>> {
     const cleanParams: Record<string, string> = {};
     for (const [k, v] of Object.entries(params)) {
       if (v !== undefined && v !== '') cleanParams[k] = v;

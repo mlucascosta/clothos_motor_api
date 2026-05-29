@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { CertidaoNegativaDeDebitosPjSchema } from '../dtos/CertidaoNegativaDeDebitosPjDto.js';
+import type { CertidaoNegativaDeDebitosPjDto } from '../dtos/CertidaoNegativaDeDebitosPjDto.js';
 import type { ICertidaoNegativaDeDebitosPj } from '../ports/ICertidaoNegativaDeDebitosPj.js';
 
 export class CertidaoNegativaDeDebitosPj implements ICertidaoNegativaDeDebitosPj {
@@ -20,7 +21,7 @@ export class CertidaoNegativaDeDebitosPj implements ICertidaoNegativaDeDebitosPj
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, CertidaoNegativaDeDebitosPjDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

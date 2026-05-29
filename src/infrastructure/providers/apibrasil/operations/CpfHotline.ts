@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { CpfHotlineSchema } from '../dtos/CpfHotlineDto.js';
+import type { CpfHotlineDto } from '../dtos/CpfHotlineDto.js';
 import type { ICpfHotline } from '../ports/ICpfHotline.js';
 
 export class CpfHotline implements ICpfHotline {
@@ -20,7 +21,7 @@ export class CpfHotline implements ICpfHotline {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, CpfHotlineDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

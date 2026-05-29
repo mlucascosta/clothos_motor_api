@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { DocumentoFrotaSchema } from '../dtos/DocumentoFrotaDto.js';
+import type { DocumentoFrotaDto } from '../dtos/DocumentoFrotaDto.js';
 import type { IDocumentoFrota } from '../ports/IDocumentoFrota.js';
 
 export class DocumentoFrota implements IDocumentoFrota {
@@ -20,7 +21,7 @@ export class DocumentoFrota implements IDocumentoFrota {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, DocumentoFrotaDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

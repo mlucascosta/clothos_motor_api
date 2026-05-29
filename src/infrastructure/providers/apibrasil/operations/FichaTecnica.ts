@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { FichaTecnicaSchema } from '../dtos/FichaTecnicaDto.js';
+import type { FichaTecnicaDto } from '../dtos/FichaTecnicaDto.js';
 import type { IFichaTecnica } from '../ports/IFichaTecnica.js';
 
 export class FichaTecnica implements IFichaTecnica {
@@ -20,7 +21,7 @@ export class FichaTecnica implements IFichaTecnica {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, FichaTecnicaDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

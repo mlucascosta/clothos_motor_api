@@ -5,6 +5,7 @@
 
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { DddAnatelDto } from '../dtos/DddAnatelDto.js';
 
 export interface IDddAnatel {
   readonly path: string;
@@ -12,5 +13,5 @@ export interface IDddAnatel {
   readonly type: string;
   execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>>;
+  ): Promise<Either<SourceError, DddAnatelDto>>;
 }

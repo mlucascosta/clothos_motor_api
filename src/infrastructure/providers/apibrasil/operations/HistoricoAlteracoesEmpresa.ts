@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { HistoricoAlteracoesEmpresaSchema } from '../dtos/HistoricoAlteracoesEmpresaDto.js';
+import type { HistoricoAlteracoesEmpresaDto } from '../dtos/HistoricoAlteracoesEmpresaDto.js';
 import type { IHistoricoAlteracoesEmpresa } from '../ports/IHistoricoAlteracoesEmpresa.js';
 
 export class HistoricoAlteracoesEmpresa implements IHistoricoAlteracoesEmpresa {
@@ -20,7 +21,7 @@ export class HistoricoAlteracoesEmpresa implements IHistoricoAlteracoesEmpresa {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, HistoricoAlteracoesEmpresaDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

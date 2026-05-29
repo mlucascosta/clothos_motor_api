@@ -29,3 +29,4 @@ export const PortalTransparenciaPetiResponseSchema = z.object({
 });
 
 export type PortalTransparenciaPetiItem = z.infer<typeof PortalTransparenciaPetiItemSchema>;
+export type PortalTransparenciaPetiResponse = z.infer<typeof PortalTransparenciaPetiResponseSchema>;

@@ -30,3 +30,4 @@ export const PortalTransparenciaBolsaResponseSchema = z.object({
 });
 
 export type PortalTransparenciaBolsaItem = z.infer<typeof PortalTransparenciaBolsaItemSchema>;
+export type PortalTransparenciaBolsaResponse = z.infer<typeof PortalTransparenciaBolsaResponseSchema>;

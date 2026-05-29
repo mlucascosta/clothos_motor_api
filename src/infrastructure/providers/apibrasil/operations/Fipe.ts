@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { FipeSchema } from '../dtos/FipeDto.js';
+import type { FipeDto } from '../dtos/FipeDto.js';
 import type { IFipe } from '../ports/IFipe.js';
 
 export class Fipe implements IFipe {
@@ -20,7 +21,7 @@ export class Fipe implements IFipe {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, FipeDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

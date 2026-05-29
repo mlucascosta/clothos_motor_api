@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { CpfRelatorioSchema } from '../dtos/CpfRelatorioDto.js';
+import type { CpfRelatorioDto } from '../dtos/CpfRelatorioDto.js';
 import type { ICpfRelatorio } from '../ports/ICpfRelatorio.js';
 
 export class CpfRelatorio implements ICpfRelatorio {
@@ -20,7 +21,7 @@ export class CpfRelatorio implements ICpfRelatorio {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, CpfRelatorioDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

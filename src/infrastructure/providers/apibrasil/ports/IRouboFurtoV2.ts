@@ -5,6 +5,7 @@
 
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { RouboFurtoV2Dto } from '../dtos/RouboFurtoV2Dto.js';
 
 export interface IRouboFurtoV2 {
   readonly path: string;
@@ -12,5 +13,5 @@ export interface IRouboFurtoV2 {
   readonly type: string;
   execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>>;
+  ): Promise<Either<SourceError, RouboFurtoV2Dto>>;
 }

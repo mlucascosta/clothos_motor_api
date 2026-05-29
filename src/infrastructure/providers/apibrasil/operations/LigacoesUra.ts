@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { LigacoesUraSchema } from '../dtos/LigacoesUraDto.js';
+import type { LigacoesUraDto } from '../dtos/LigacoesUraDto.js';
 import type { ILigacoesUra } from '../ports/ILigacoesUra.js';
 
 export class LigacoesUra implements ILigacoesUra {
@@ -20,7 +21,7 @@ export class LigacoesUra implements ILigacoesUra {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, LigacoesUraDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { RouboFurtoV2Schema } from '../dtos/RouboFurtoV2Dto.js';
+import type { RouboFurtoV2Dto } from '../dtos/RouboFurtoV2Dto.js';
 import type { IRouboFurtoV2 } from '../ports/IRouboFurtoV2.js';
 
 export class RouboFurtoV2 implements IRouboFurtoV2 {
@@ -20,7 +21,7 @@ export class RouboFurtoV2 implements IRouboFurtoV2 {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, RouboFurtoV2Dto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

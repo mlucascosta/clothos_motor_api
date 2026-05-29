@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { DebitosRestricoesSchema } from '../dtos/DebitosRestricoesDto.js';
+import type { DebitosRestricoesDto } from '../dtos/DebitosRestricoesDto.js';
 import type { IDebitosRestricoes } from '../ports/IDebitosRestricoes.js';
 
 export class DebitosRestricoes implements IDebitosRestricoes {
@@ -20,7 +21,7 @@ export class DebitosRestricoes implements IDebitosRestricoes {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, DebitosRestricoesDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

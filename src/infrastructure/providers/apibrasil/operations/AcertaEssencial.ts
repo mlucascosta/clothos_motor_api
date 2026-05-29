@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { AcertaEssencialSchema } from '../dtos/AcertaEssencialDto.js';
+import type { AcertaEssencialDto } from '../dtos/AcertaEssencialDto.js';
 import type { IAcertaEssencial } from '../ports/IAcertaEssencial.js';
 
 export class AcertaEssencial implements IAcertaEssencial {
@@ -20,7 +21,7 @@ export class AcertaEssencial implements IAcertaEssencial {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, AcertaEssencialDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

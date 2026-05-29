@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { CnhPorCpfSchema } from '../dtos/CnhPorCpfDto.js';
+import type { CnhPorCpfDto } from '../dtos/CnhPorCpfDto.js';
 import type { ICnhPorCpf } from '../ports/ICnhPorCpf.js';
 
 export class CnhPorCpf implements ICnhPorCpf {
@@ -20,7 +21,7 @@ export class CnhPorCpf implements ICnhPorCpf {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, CnhPorCpfDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

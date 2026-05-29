@@ -16,7 +16,7 @@ export class CnisPreInscricao implements IInfosimplesOperation<CnisPreInscricaoI
 
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(params: Record<string, string | undefined>): Promise<Either<SourceError, unknown>> {
+  async execute(params: Record<string, string | undefined>): Promise<Either<SourceError, CnisPreInscricaoItem>> {
     const cleanParams: Record<string, string> = {};
     for (const [k, v] of Object.entries(params)) {
       if (v !== undefined && v !== '') cleanParams[k] = v;

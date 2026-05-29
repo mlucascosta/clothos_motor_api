@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { HistoricoVeiculosPfPjSchema } from '../dtos/HistoricoVeiculosPfPjDto.js';
+import type { HistoricoVeiculosPfPjDto } from '../dtos/HistoricoVeiculosPfPjDto.js';
 import type { IHistoricoVeiculosPfPj } from '../ports/IHistoricoVeiculosPfPj.js';
 
 export class HistoricoVeiculosPfPj implements IHistoricoVeiculosPfPj {
@@ -20,7 +21,7 @@ export class HistoricoVeiculosPfPj implements IHistoricoVeiculosPfPj {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, HistoricoVeiculosPfPjDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

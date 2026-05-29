@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { AnaliticoVeicularSchema } from '../dtos/AnaliticoVeicularDto.js';
+import type { AnaliticoVeicularDto } from '../dtos/AnaliticoVeicularDto.js';
 import type { IAnaliticoVeicular } from '../ports/IAnaliticoVeicular.js';
 
 export class AnaliticoVeicular implements IAnaliticoVeicular {
@@ -20,7 +21,7 @@ export class AnaliticoVeicular implements IAnaliticoVeicular {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, AnaliticoVeicularDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

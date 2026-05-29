@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { ProtestosNacionalBaseSchema } from '../dtos/ProtestosNacionalBaseDto.js';
+import type { ProtestosNacionalBaseDto } from '../dtos/ProtestosNacionalBaseDto.js';
 import type { IProtestosNacionalBase } from '../ports/IProtestosNacionalBase.js';
 
 export class ProtestosNacionalBase implements IProtestosNacionalBase {
@@ -20,7 +21,7 @@ export class ProtestosNacionalBase implements IProtestosNacionalBase {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, ProtestosNacionalBaseDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

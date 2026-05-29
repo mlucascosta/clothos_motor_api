@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { DebitosV4Schema } from '../dtos/DebitosV4Dto.js';
+import type { DebitosV4Dto } from '../dtos/DebitosV4Dto.js';
 import type { IDebitosV4 } from '../ports/IDebitosV4.js';
 
 export class DebitosV4 implements IDebitosV4 {
@@ -20,7 +21,7 @@ export class DebitosV4 implements IDebitosV4 {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, DebitosV4Dto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

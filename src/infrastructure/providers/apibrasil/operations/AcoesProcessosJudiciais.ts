@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { AcoesProcessosJudiciaisSchema } from '../dtos/AcoesProcessosJudiciaisDto.js';
+import type { AcoesProcessosJudiciaisDto } from '../dtos/AcoesProcessosJudiciaisDto.js';
 import type { IAcoesProcessosJudiciais } from '../ports/IAcoesProcessosJudiciais.js';
 
 export class AcoesProcessosJudiciais implements IAcoesProcessosJudiciais {
@@ -20,7 +21,7 @@ export class AcoesProcessosJudiciais implements IAcoesProcessosJudiciais {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, AcoesProcessosJudiciaisDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { BetSafeComplianceSchema } from '../dtos/BetSafeComplianceDto.js';
+import type { BetSafeComplianceDto } from '../dtos/BetSafeComplianceDto.js';
 import type { IBetSafeCompliance } from '../ports/IBetSafeCompliance.js';
 
 export class BetSafeCompliance implements IBetSafeCompliance {
@@ -20,7 +21,7 @@ export class BetSafeCompliance implements IBetSafeCompliance {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, BetSafeComplianceDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

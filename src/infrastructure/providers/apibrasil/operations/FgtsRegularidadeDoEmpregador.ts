@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { FgtsRegularidadeDoEmpregadorSchema } from '../dtos/FgtsRegularidadeDoEmpregadorDto.js';
+import type { FgtsRegularidadeDoEmpregadorDto } from '../dtos/FgtsRegularidadeDoEmpregadorDto.js';
 import type { IFgtsRegularidadeDoEmpregador } from '../ports/IFgtsRegularidadeDoEmpregador.js';
 
 export class FgtsRegularidadeDoEmpregador implements IFgtsRegularidadeDoEmpregador {
@@ -20,7 +21,7 @@ export class FgtsRegularidadeDoEmpregador implements IFgtsRegularidadeDoEmpregad
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, FgtsRegularidadeDoEmpregadorDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

@@ -18,7 +18,7 @@ export class IeptbProtestos implements IInfosimplesOperation<IeptbProtestosItem>
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, IeptbProtestosItem>> {
     const cleanParams: Record<string, string> = {};
     for (const [k, v] of Object.entries(params)) {
       if (v !== undefined && v !== '') cleanParams[k] = v;

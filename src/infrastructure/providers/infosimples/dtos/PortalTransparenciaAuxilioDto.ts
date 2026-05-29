@@ -30,3 +30,4 @@ export const PortalTransparenciaAuxilioResponseSchema = z.object({
 });
 
 export type PortalTransparenciaAuxilioItem = z.infer<typeof PortalTransparenciaAuxilioItemSchema>;
+export type PortalTransparenciaAuxilioResponse = z.infer<typeof PortalTransparenciaAuxilioResponseSchema>;

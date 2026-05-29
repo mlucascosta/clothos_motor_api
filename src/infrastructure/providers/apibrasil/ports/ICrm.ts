@@ -5,6 +5,7 @@
 
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { CrmDto } from '../dtos/CrmDto.js';
 
 export interface ICrm {
   readonly path: string;
@@ -12,5 +13,5 @@ export interface ICrm {
   readonly type: string;
   execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>>;
+  ): Promise<Either<SourceError, CrmDto>>;
 }

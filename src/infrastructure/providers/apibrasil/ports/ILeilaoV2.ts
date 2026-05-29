@@ -5,6 +5,7 @@
 
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { LeilaoV2Dto } from '../dtos/LeilaoV2Dto.js';
 
 export interface ILeilaoV2 {
   readonly path: string;
@@ -12,5 +13,5 @@ export interface ILeilaoV2 {
   readonly type: string;
   execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>>;
+  ): Promise<Either<SourceError, LeilaoV2Dto>>;
 }

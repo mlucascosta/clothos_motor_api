@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { ComplianceBasicSchema } from '../dtos/ComplianceBasicDto.js';
+import type { ComplianceBasicDto } from '../dtos/ComplianceBasicDto.js';
 import type { IComplianceBasic } from '../ports/IComplianceBasic.js';
 
 export class ComplianceBasic implements IComplianceBasic {
@@ -20,7 +21,7 @@ export class ComplianceBasic implements IComplianceBasic {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, ComplianceBasicDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

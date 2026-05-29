@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { BancoCentralInabilitadosSchema } from '../dtos/BancoCentralInabilitadosDto.js';
+import type { BancoCentralInabilitadosDto } from '../dtos/BancoCentralInabilitadosDto.js';
 import type { IBancoCentralInabilitados } from '../ports/IBancoCentralInabilitados.js';
 
 export class BancoCentralInabilitados implements IBancoCentralInabilitados {
@@ -20,7 +21,7 @@ export class BancoCentralInabilitados implements IBancoCentralInabilitados {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, BancoCentralInabilitadosDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

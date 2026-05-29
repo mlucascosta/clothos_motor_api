@@ -27,3 +27,4 @@ export const PortalTransparenciaBuscaResponseSchema = z.object({
 });
 
 export type PortalTransparenciaBuscaItem = z.infer<typeof PortalTransparenciaBuscaItemSchema>;
+export type PortalTransparenciaBuscaResponse = z.infer<typeof PortalTransparenciaBuscaResponseSchema>;

@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { RiscoPositivoPjSchema } from '../dtos/RiscoPositivoPjDto.js';
+import type { RiscoPositivoPjDto } from '../dtos/RiscoPositivoPjDto.js';
 import type { IRiscoPositivoPj } from '../ports/IRiscoPositivoPj.js';
 
 export class RiscoPositivoPj implements IRiscoPositivoPj {
@@ -20,7 +21,7 @@ export class RiscoPositivoPj implements IRiscoPositivoPj {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, RiscoPositivoPjDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { ScrAnaliticoResumoBacenPjSchema } from '../dtos/ScrAnaliticoResumoBacenPjDto.js';
+import type { ScrAnaliticoResumoBacenPjDto } from '../dtos/ScrAnaliticoResumoBacenPjDto.js';
 import type { IScrAnaliticoResumoBacenPj } from '../ports/IScrAnaliticoResumoBacenPj.js';
 
 export class ScrAnaliticoResumoBacenPj implements IScrAnaliticoResumoBacenPj {
@@ -20,7 +21,7 @@ export class ScrAnaliticoResumoBacenPj implements IScrAnaliticoResumoBacenPj {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, ScrAnaliticoResumoBacenPjDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

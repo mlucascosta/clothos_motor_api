@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { CreditosSimplesPfSchema } from '../dtos/CreditosSimplesPfDto.js';
+import type { CreditosSimplesPfDto } from '../dtos/CreditosSimplesPfDto.js';
 import type { ICreditosSimplesPf } from '../ports/ICreditosSimplesPf.js';
 
 export class CreditosSimplesPf implements ICreditosSimplesPf {
@@ -20,7 +21,7 @@ export class CreditosSimplesPf implements ICreditosSimplesPf {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, CreditosSimplesPfDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

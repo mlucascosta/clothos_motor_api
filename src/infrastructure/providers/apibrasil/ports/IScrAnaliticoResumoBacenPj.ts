@@ -5,6 +5,7 @@
 
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { ScrAnaliticoResumoBacenPjDto } from '../dtos/ScrAnaliticoResumoBacenPjDto.js';
 
 export interface IScrAnaliticoResumoBacenPj {
   readonly path: string;
@@ -12,5 +13,5 @@ export interface IScrAnaliticoResumoBacenPj {
   readonly type: string;
   execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>>;
+  ): Promise<Either<SourceError, ScrAnaliticoResumoBacenPjDto>>;
 }

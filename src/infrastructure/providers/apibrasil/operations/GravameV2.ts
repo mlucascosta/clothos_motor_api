@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { GravameV2Schema } from '../dtos/GravameV2Dto.js';
+import type { GravameV2Dto } from '../dtos/GravameV2Dto.js';
 import type { IGravameV2 } from '../ports/IGravameV2.js';
 
 export class GravameV2 implements IGravameV2 {
@@ -20,7 +21,7 @@ export class GravameV2 implements IGravameV2 {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, GravameV2Dto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

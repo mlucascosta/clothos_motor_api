@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { ReceitaFederalPfV3Schema } from '../dtos/ReceitaFederalPfV3Dto.js';
+import type { ReceitaFederalPfV3Dto } from '../dtos/ReceitaFederalPfV3Dto.js';
 import type { IReceitaFederalPfV3 } from '../ports/IReceitaFederalPfV3.js';
 
 export class ReceitaFederalPfV3 implements IReceitaFederalPfV3 {
@@ -20,7 +21,7 @@ export class ReceitaFederalPfV3 implements IReceitaFederalPfV3 {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, ReceitaFederalPfV3Dto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

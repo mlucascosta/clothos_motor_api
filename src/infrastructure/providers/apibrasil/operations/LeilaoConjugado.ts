@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { LeilaoConjugadoSchema } from '../dtos/LeilaoConjugadoDto.js';
+import type { LeilaoConjugadoDto } from '../dtos/LeilaoConjugadoDto.js';
 import type { ILeilaoConjugado } from '../ports/ILeilaoConjugado.js';
 
 export class LeilaoConjugado implements ILeilaoConjugado {
@@ -20,7 +21,7 @@ export class LeilaoConjugado implements ILeilaoConjugado {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, LeilaoConjugadoDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

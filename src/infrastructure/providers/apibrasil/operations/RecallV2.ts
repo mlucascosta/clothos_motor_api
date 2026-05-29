@@ -9,6 +9,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { RecallV2Schema } from '../dtos/RecallV2Dto.js';
+import type { RecallV2Dto } from '../dtos/RecallV2Dto.js';
 import type { IRecallV2 } from '../ports/IRecallV2.js';
 
 export class RecallV2 implements IRecallV2 {
@@ -20,7 +21,7 @@ export class RecallV2 implements IRecallV2 {
 
   async execute(
     params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, unknown>> {
+  ): Promise<Either<SourceError, RecallV2Dto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

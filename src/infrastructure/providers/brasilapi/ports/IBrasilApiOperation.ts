@@ -25,7 +25,7 @@ import type { SourceError } from '@shared/domain/errors/SourceError.js';
  *   }
  * }
  */
-export interface IBrasilApiOperation {
+export interface IBrasilApiOperation<T = unknown> {
   /**
    * Path relativo do endpoint na BrasilAPI, podendo conter placeholders.
    * Exemplos: `'/cnpj/v1/{cnpj}'`, `'/registrobr/v1/{domain}'`.
@@ -41,5 +41,5 @@ export interface IBrasilApiOperation {
    *   os parâmetros obrigatórios e retornar `left(SourceError)` se faltar algo.
    * @returns `Either` com {@link SourceError} em falha ou o payload tipado em sucesso.
    */
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, unknown>>;
+  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, T>>;
 }
