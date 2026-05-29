@@ -16,6 +16,7 @@ import { logger } from 'hono/logger';
 import { bearerAuth } from './middlewares/bearerAuth.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { apibrasil } from './routes/apibrasil.js';
+import { brasilapi } from './routes/brasilapi.js';
 import { datajud } from './routes/datajud.js';
 import { directdata } from './routes/directdata.js';
 import { escavador } from './routes/escavador.js';
@@ -30,6 +31,7 @@ app.use('/api/*', bearerAuth);
 
 app.route('/health', health);
 app.route('/api/apibrasil', apibrasil);
+app.route('/api/brasilapi', brasilapi);
 app.route('/api/escavador', escavador);
 app.route('/api/datajud', datajud);
 app.route('/api/directdata', directdata);
