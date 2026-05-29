@@ -1,13 +1,12 @@
 /**
- * @fileoverview Port compartilhada para todas as operations do APIBrasil.
- * Usada pelo registry e pela rota como tipo genérico.
- * @module infrastructure/providers/apibrasil/ports/IApiBrasilOperation
+ * @fileoverview Port para operation ApiRntrc.
+ * @module infrastructure/providers/apibrasil/ports/IApiRntrc
  */
 
 import type { Either } from '../../../../shared/domain/Either.js';
 import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 
-export interface IApiBrasilOperation {
+export interface IApiRntrc {
   readonly path: string;
   readonly creditValue: number;
   readonly type: string;

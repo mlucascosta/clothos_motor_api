@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { handleOp } from '../handleOp.js';
 import { ApiBrasilHttpClient } from '../../../infrastructure/providers/apibrasil/ApiBrasilHttpClient.js';
 import type { IApiBrasilOperation } from '../../../infrastructure/providers/apibrasil/ports/IApiBrasilOperation.js';
-import { apibrasilEndpoints, resolveOperation } from '../../../infrastructure/providers/apibrasil/operations/registry.js';
+import { apibrasilRegistry, resolveOperation } from '../../../infrastructure/providers/apibrasil/operations/registry.js';
 import { apibrasilRequiredParams } from '../../../infrastructure/providers/apibrasil/operations/validation-map.js';
 
 const GW = 'apibrasil';
@@ -40,11 +40,9 @@ apibrasil.post('/:endpoint{.+}', async (c) => {
   }
 
   // Check if endpoint exists in registry
-  if (!apibrasilEndpoints[endpoint]) {
+  if (!apibrasilRegistry[endpoint]) {
     return c.json({ error: `Operação desconhecida: ${endpoint}` }, 400);
   }
-
-  const config = apibrasilEndpoints[endpoint]!;
 
   let operation: IApiBrasilOperation;
   try {

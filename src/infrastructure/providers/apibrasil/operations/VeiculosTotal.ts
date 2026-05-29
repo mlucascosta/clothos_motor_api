@@ -1,0 +1,40 @@
+/**
+ * @fileoverview Operation VeiculosTotal — APIBrasil API.
+ * @module infrastructure/providers/apibrasil/operations/VeiculosTotal
+ */
+
+import { isLeft } from '../../../../shared/domain/Either.js';
+import type { Either } from '../../../../shared/domain/Either.js';
+import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
+import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
+import { VeiculosTotalSchema } from '../dtos/VeiculosTotalDto.js';
+import type { IVeiculosTotal } from '../ports/IVeiculosTotal.js';
+
+export class VeiculosTotal implements IVeiculosTotal {
+  readonly path = '/veiculos-total';
+  readonly creditValue = 30.0;
+  readonly type = 'vehicles';
+
+  constructor(private readonly http: IHttpClient) {}
+
+  async execute(
+    params: Record<string, string | undefined>,
+  ): Promise<Either<SourceError, unknown>> {
+    const cleanParams: Record<string, string> = {};
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined && value !== '') {
+        cleanParams[key] = value;
+      }
+    }
+
+    const result = await this.http.request<unknown>(this.path, {
+      method: 'POST',
+      body: cleanParams,
+    });
+
+    if (isLeft(result)) return result;
+
+    return parseOrSchemaError(VeiculosTotalSchema, result.value, 'apibrasil');
+  }
+}
