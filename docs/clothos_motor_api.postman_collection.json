@@ -1,0 +1,1986 @@
+{
+  "info": {
+    "name": "Clothos Motor API",
+    "_postman_id": "c10th0s-m0t0r-4p1-c011-3ct10n00001",
+    "description": "Todas as rotas do clothos_motor_api. Configure as variáveis `base_url` e `motor_secret` antes de usar.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "motor_secret",
+      "value": "SEU_MOTOR_INTERNAL_SECRET_AQUI",
+      "type": "string"
+    },
+    {
+      "key": "numero_cnj",
+      "value": "0000001-00.2023.8.26.0001",
+      "type": "string"
+    },
+    {
+      "key": "processo_id",
+      "value": "123456",
+      "type": "string"
+    },
+    {
+      "key": "monitoramento_id",
+      "value": "789",
+      "type": "string"
+    },
+    {
+      "key": "callback_id",
+      "value": "42",
+      "type": "string"
+    },
+    {
+      "key": "pessoa_id",
+      "value": "111",
+      "type": "string"
+    },
+    {
+      "key": "instituicao_id",
+      "value": "222",
+      "type": "string"
+    },
+    {
+      "key": "tribunal_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "certificado_id",
+      "value": "333",
+      "type": "string"
+    },
+    {
+      "key": "autenticacao_id",
+      "value": "444",
+      "type": "string"
+    },
+    {
+      "key": "busca_assincrona_id",
+      "value": "555",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{motor_secret}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Escavador V1",
+      "item": [
+        {
+          "name": "Créditos",
+          "item": [
+            {
+              "name": "GET quantidade-creditos",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/quantidade-creditos",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "quantidade-creditos"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Buscas Assíncronas",
+          "item": [
+            {
+              "name": "GET buscas-assincronas (lista)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/buscas-assincronas?page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "buscas-assincronas"],
+                  "query": [{ "key": "page", "value": "1" }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET buscas-assincronas/:id",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/buscas-assincronas/{{busca_assincrona_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "buscas-assincronas", "{{busca_assincrona_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST processos/tribunal/cpf-cnpj",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cpf_cnpj\": \"00000000000\",\n  \"tribunais\": [\"TJSP\", \"TJRJ\"]\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/processos/tribunal/cpf-cnpj",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "processos", "tribunal", "cpf-cnpj"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST processos/tribunal/envolvido",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"João da Silva\",\n  \"tribunais\": [\"TJSP\"]\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/processos/tribunal/envolvido",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "processos", "tribunal", "envolvido"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST processos/tribunal/oab",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"oab\": \"SP123456\",\n  \"tribunais\": [\"TJSP\"]\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/processos/tribunal/oab",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "processos", "tribunal", "oab"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST processos/administrativo/nup",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nup\": \"00000.000000/0000-00\",\n  \"orgaos\": []\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/processos/administrativo/nup",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "processos", "administrativo", "nup"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST processos/pesquisar (por número)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"numero_processo\": \"{{numero_cnj}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/processos/pesquisar",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "processos", "pesquisar"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST processos/tribunal/lote",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "[{\"cpf_cnpj\": \"00000000000\"}, {\"cpf_cnpj\": \"11111111111\"}]",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/processos/tribunal/lote",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "processos", "tribunal", "lote"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Processos",
+          "item": [
+            {
+              "name": "GET diarios-oficiais/numero",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/processos/diarios-oficiais/numero?numero={{numero_cnj}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "processos", "diarios-oficiais", "numero"],
+                  "query": [{ "key": "numero", "value": "{{numero_cnj}}" }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET diarios-oficiais/oab",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/processos/diarios-oficiais/oab?oab=SP123456",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "processos", "diarios-oficiais", "oab"],
+                  "query": [{ "key": "oab", "value": "SP123456" }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET processos/:numero_cnj",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/processos/{{numero_cnj}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "processos", "{{numero_cnj}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET processos/:numero_cnj/movimentacoes",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/processos/{{numero_cnj}}/movimentacoes?page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "processos", "{{numero_cnj}}", "movimentacoes"],
+                  "query": [{ "key": "page", "value": "1" }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET processos/:id/envolvidos-diarios",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/processos/{{processo_id}}/envolvidos-diarios",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "processos", "{{processo_id}}", "envolvidos-diarios"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET movimentacoes/:id",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/movimentacoes/{{processo_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "movimentacoes", "{{processo_id}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Busca Geral",
+          "item": [
+            {
+              "name": "GET busca",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/busca?q=João da Silva&page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "busca"],
+                  "query": [
+                    { "key": "q", "value": "João da Silva" },
+                    { "key": "tipo", "value": "", "disabled": true },
+                    { "key": "page", "value": "1" }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Pessoas",
+          "item": [
+            {
+              "name": "GET pessoas/:id",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/pessoas/{{pessoa_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "pessoas", "{{pessoa_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET pessoas/:id/processos",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/pessoas/{{pessoa_id}}/processos?page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "pessoas", "{{pessoa_id}}", "processos"],
+                  "query": [{ "key": "page", "value": "1" }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET pessoas/:id/publicacoes",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/pessoas/{{pessoa_id}}/publicacoes?page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "pessoas", "{{pessoa_id}}", "publicacoes"],
+                  "query": [{ "key": "page", "value": "1" }]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Instituições",
+          "item": [
+            {
+              "name": "GET instituicoes/:id",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/instituicoes/{{instituicao_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "instituicoes", "{{instituicao_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET instituicoes/:id/pessoas",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/instituicoes/{{instituicao_id}}/pessoas?page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "instituicoes", "{{instituicao_id}}", "pessoas"],
+                  "query": [{ "key": "page", "value": "1" }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET instituicoes/:id/processos",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/instituicoes/{{instituicao_id}}/processos?page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "instituicoes", "{{instituicao_id}}", "processos"],
+                  "query": [{ "key": "page", "value": "1" }]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Monitoramentos (Diários Oficiais)",
+          "item": [
+            {
+              "name": "GET monitoramentos",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/monitoramentos?page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "monitoramentos"],
+                  "query": [{ "key": "page", "value": "1" }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST monitoramentos",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Monitor João Silva\",\n  \"tipo\": \"pessoa\",\n  \"filtro\": \"João Silva\",\n  \"callback_url\": \"https://meu-app.example.com/callbacks/escavador\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/monitoramentos",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "monitoramentos"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET monitoramentos/:id",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/monitoramentos/{{monitoramento_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "monitoramentos", "{{monitoramento_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT monitoramentos/:id",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"ativo\": true,\n  \"callback_url\": \"https://meu-app.example.com/callbacks/escavador\",\n  \"nome\": \"Monitor Atualizado\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/monitoramentos/{{monitoramento_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "monitoramentos", "{{monitoramento_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "DELETE monitoramentos/:id",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/monitoramentos/{{monitoramento_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "monitoramentos", "{{monitoramento_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET monitoramentos/:id/aparicoes",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/monitoramentos/{{monitoramento_id}}/aparicoes",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "monitoramentos", "{{monitoramento_id}}", "aparicoes"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST monitoramentos/:id/testar-callback",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/monitoramentos/{{monitoramento_id}}/testar-callback",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "monitoramentos", "{{monitoramento_id}}", "testar-callback"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET monitoramentos/:id/origens",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/monitoramentos/{{monitoramento_id}}/origens",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "monitoramentos", "{{monitoramento_id}}", "origens"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Monitoramentos (Tribunais)",
+          "item": [
+            {
+              "name": "GET monitoramentos/tribunal",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/monitoramentos/tribunal?page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "monitoramentos", "tribunal"],
+                  "query": [{ "key": "page", "value": "1" }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST monitoramentos/tribunal",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tribunal\": \"TJSP\",\n  \"filtro\": \"00000000000\",\n  \"callback_url\": \"https://meu-app.example.com/callbacks/escavador\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/monitoramentos/tribunal",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "monitoramentos", "tribunal"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET monitoramentos/tribunal/:id",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/monitoramentos/tribunal/{{monitoramento_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "monitoramentos", "tribunal", "{{monitoramento_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT monitoramentos/tribunal/:id",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"ativo\": true,\n  \"callback_url\": \"https://meu-app.example.com/callbacks/escavador\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/monitoramentos/tribunal/{{monitoramento_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "monitoramentos", "tribunal", "{{monitoramento_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "DELETE monitoramentos/tribunal/:id",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/monitoramentos/tribunal/{{monitoramento_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "monitoramentos", "tribunal", "{{monitoramento_id}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Callbacks",
+          "item": [
+            {
+              "name": "GET callbacks",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/callbacks?page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "callbacks"],
+                  "query": [{ "key": "page", "value": "1" }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST callbacks/recebidos",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"ids\": [1, 2, 3]\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/callbacks/recebidos",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "callbacks", "recebidos"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST callbacks/:id/reenviar",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/callbacks/{{callback_id}}/reenviar",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "callbacks", "{{callback_id}}", "reenviar"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Tribunais e Diários",
+          "item": [
+            {
+              "name": "GET tribunais",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/tribunais",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "tribunais"],
+                  "query": [{ "key": "tipo", "value": "", "disabled": true }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET tribunais/:id",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/tribunais/{{tribunal_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "tribunais", "{{tribunal_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET orgaos-administrativos",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/orgaos-administrativos?page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "orgaos-administrativos"],
+                  "query": [{ "key": "page", "value": "1" }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET diarios-oficiais/origens",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v1/diarios-oficiais/origens",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v1", "diarios-oficiais", "origens"],
+                  "query": [{ "key": "estado", "value": "SP", "disabled": true }]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Escavador V2",
+      "item": [
+        {
+          "name": "Processos",
+          "item": [
+            {
+              "name": "GET processos/numero_cnj/:numero",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/processos/numero_cnj/{{numero_cnj}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "processos", "numero_cnj", "{{numero_cnj}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET processos/movimentacoes/:numero_cnj",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/processos/movimentacoes/{{numero_cnj}}?page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "processos", "movimentacoes", "{{numero_cnj}}"],
+                  "query": [{ "key": "page", "value": "1" }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET processos/:numero_cnj/documentos",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/processos/{{numero_cnj}}/documentos?page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "processos", "{{numero_cnj}}", "documentos"],
+                  "query": [{ "key": "page", "value": "1" }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET processos/:numero_cnj/autos",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/processos/{{numero_cnj}}/autos?page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "processos", "{{numero_cnj}}", "autos"],
+                  "query": [{ "key": "page", "value": "1" }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET processos/:numero_cnj/envolvidos",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/processos/{{numero_cnj}}/envolvidos",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "processos", "{{numero_cnj}}", "envolvidos"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST processos/atualizacao (lote)",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "[\"{{numero_cnj}}\"]",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/processos/atualizacao",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "processos", "atualizacao"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET processos/atualizacao/:id",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/processos/atualizacao/{{processo_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "processos", "atualizacao", "{{processo_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST processos/:id/atualizacao (unitário)",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/processos/{{processo_id}}/atualizacao",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "processos", "{{processo_id}}", "atualizacao"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET processos/:id/atualizacao (status)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/processos/{{processo_id}}/atualizacao",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "processos", "{{processo_id}}", "atualizacao"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST processos/:id/resumo (solicitar)",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/processos/{{processo_id}}/resumo",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "processos", "{{processo_id}}", "resumo"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET processos/:id/resumo",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/processos/{{processo_id}}/resumo",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "processos", "{{processo_id}}", "resumo"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET processos/:id/resumo/status",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/processos/{{processo_id}}/resumo/status",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "processos", "{{processo_id}}", "resumo", "status"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Envolvido",
+          "item": [
+            {
+              "name": "GET envolvido/processos (por CPF/CNPJ)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/envolvido/processos?cpf_cnpj=00000000000&page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "envolvido", "processos"],
+                  "query": [
+                    { "key": "cpf_cnpj", "value": "00000000000" },
+                    { "key": "nome", "value": "", "disabled": true },
+                    { "key": "page", "value": "1" }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET envolvido/resumo",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/envolvido/resumo?cpf_cnpj=00000000000",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "envolvido", "resumo"],
+                  "query": [
+                    { "key": "cpf_cnpj", "value": "00000000000" },
+                    { "key": "nome", "value": "", "disabled": true }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Advogados",
+          "item": [
+            {
+              "name": "GET processos/advogado",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/processos/advogado?oab=SP123456&page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "processos", "advogado"],
+                  "query": [
+                    { "key": "oab", "value": "SP123456" },
+                    { "key": "page", "value": "1" }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET processos/advogado/resumo",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/processos/advogado/resumo?oab=SP123456",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "processos", "advogado", "resumo"],
+                  "query": [{ "key": "oab", "value": "SP123456" }]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Documentos",
+          "item": [
+            {
+              "name": "GET documentos/:id/download",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/documentos/{{processo_id}}/download",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "documentos", "{{processo_id}}", "download"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Monitoramentos (Novos Processos)",
+          "item": [
+            {
+              "name": "GET monitoramentos/novos-processos",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/monitoramentos/novos-processos?page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "monitoramentos", "novos-processos"],
+                  "query": [{ "key": "page", "value": "1" }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST monitoramentos/novos-processos",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tipo\": \"cpf_cnpj\",\n  \"valor\": \"00000000000\",\n  \"callback_url\": \"https://meu-app.example.com/callbacks/escavador\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/monitoramentos/novos-processos",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "monitoramentos", "novos-processos"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET monitoramentos/novos-processos/:id",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/monitoramentos/novos-processos/{{monitoramento_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "monitoramentos", "novos-processos", "{{monitoramento_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PATCH monitoramentos/novos-processos/:id",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"ativo\": false\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/monitoramentos/novos-processos/{{monitoramento_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "monitoramentos", "novos-processos", "{{monitoramento_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "DELETE monitoramentos/novos-processos/:id",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/monitoramentos/novos-processos/{{monitoramento_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "monitoramentos", "novos-processos", "{{monitoramento_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET monitoramentos/novos-processos/:id/resultados",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/monitoramentos/novos-processos/{{monitoramento_id}}/resultados",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "monitoramentos", "novos-processos", "{{monitoramento_id}}", "resultados"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Monitoramentos (Processos Existentes)",
+          "item": [
+            {
+              "name": "GET monitoramentos/processos",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/monitoramentos/processos?page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "monitoramentos", "processos"],
+                  "query": [{ "key": "page", "value": "1" }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST monitoramentos/processos",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "[\"{{numero_cnj}}\"]",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/monitoramentos/processos",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "monitoramentos", "processos"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET monitoramentos/processos/:id",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/monitoramentos/processos/{{monitoramento_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "monitoramentos", "processos", "{{monitoramento_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "DELETE monitoramentos/processos/:id",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/monitoramentos/processos/{{monitoramento_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "monitoramentos", "processos", "{{monitoramento_id}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Callbacks",
+          "item": [
+            {
+              "name": "GET callbacks",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/callbacks?page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "callbacks"],
+                  "query": [{ "key": "page", "value": "1" }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST callbacks/recebidos",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"ids\": [1, 2, 3]\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/callbacks/recebidos",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "callbacks", "recebidos"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST callbacks/:id/reenviar",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/callbacks/{{callback_id}}/reenviar",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "callbacks", "{{callback_id}}", "reenviar"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Certificados",
+          "item": [
+            {
+              "name": "GET certificados",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/certificados?page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "certificados"],
+                  "query": [{ "key": "page", "value": "1" }]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST certificados",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nome\": \"Certificado Acme\",\n  \"arquivo\": \"base64encodedcert\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/certificados",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "certificados"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET certificados/:id",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/certificados/{{certificado_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "certificados", "{{certificado_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "DELETE certificados/:id",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/certificados/{{certificado_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "certificados", "{{certificado_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST certificados/:id/autenticacoes",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tribunal\": \"TJSP\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/certificados/{{certificado_id}}/autenticacoes",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "certificados", "{{certificado_id}}", "autenticacoes"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "DELETE certificados/:id/autenticacoes/:autenticacaoId",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/certificados/{{certificado_id}}/autenticacoes/{{autenticacao_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "certificados", "{{certificado_id}}", "autenticacoes", "{{autenticacao_id}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Tribunais",
+          "item": [
+            {
+              "name": "GET tribunais/sistemas",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/tribunais/sistemas",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "tribunais", "sistemas"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "GET tribunais",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/escavador/v2/tribunais?page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "escavador", "v2", "tribunais"],
+                  "query": [{ "key": "page", "value": "1" }]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "DataJud (CNJ)",
+      "item": [
+        {
+          "name": "GET tribunais",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/datajud/tribunais",
+              "host": ["{{base_url}}"],
+              "path": ["api", "datajud", "tribunais"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST buscar (DSL livre)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": {\n    \"match\": {\n      \"numeroProcesso\": \"{{numero_cnj}}\"\n    }\n  },\n  \"size\": 10\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/datajud/buscar?tribunal=tjsp",
+              "host": ["{{base_url}}"],
+              "path": ["api", "datajud", "buscar"],
+              "query": [{ "key": "tribunal", "value": "tjsp" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST processo (por número CNJ)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroProcesso\": \"{{numero_cnj}}\",\n  \"size\": 10\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/datajud/processo?tribunal=tjsp",
+              "host": ["{{base_url}}"],
+              "path": ["api", "datajud", "processo"],
+              "query": [{ "key": "tribunal", "value": "tjsp" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST classe (por nome)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"classeNome\": \"Procedimento Comum\",\n  \"size\": 10\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/datajud/classe?tribunal=tjsp",
+              "host": ["{{base_url}}"],
+              "path": ["api", "datajud", "classe"],
+              "query": [{ "key": "tribunal", "value": "tjsp" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST classe (por código TPU)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"classeCodigo\": 7,\n  \"size\": 10\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/datajud/classe?tribunal=tjsp",
+              "host": ["{{base_url}}"],
+              "path": ["api", "datajud", "classe"],
+              "query": [{ "key": "tribunal", "value": "tjsp" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST orgao-julgador",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orgaoJulgador\": \"1ª Vara Cível\",\n  \"size\": 10\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/datajud/orgao-julgador?tribunal=tjsp",
+              "host": ["{{base_url}}"],
+              "path": ["api", "datajud", "orgao-julgador"],
+              "query": [{ "key": "tribunal", "value": "tjsp" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST envolvido (por CPF/CNPJ)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpfCnpj\": \"00000000000\",\n  \"size\": 10\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/datajud/envolvido?tribunal=tjsp",
+              "host": ["{{base_url}}"],
+              "path": ["api", "datajud", "envolvido"],
+              "query": [{ "key": "tribunal", "value": "tjsp" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST envolvido (por nome)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"João da Silva\",\n  \"size\": 10\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/datajud/envolvido?tribunal=tjsp",
+              "host": ["{{base_url}}"],
+              "path": ["api", "datajud", "envolvido"],
+              "query": [{ "key": "tribunal", "value": "tjsp" }]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "DirectData",
+      "description": "Rotas dinâmicas (GET). Envie parâmetros via query string. ~128 operações disponíveis. Exemplos representativos abaixo.",
+      "item": [
+        {
+          "name": "GET CPF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/directdata/CPF?CPF=00000000000",
+              "host": ["{{base_url}}"],
+              "path": ["api", "directdata", "CPF"],
+              "query": [{ "key": "CPF", "value": "00000000000" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET CNPJ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/directdata/CNPJ?CNPJ=00000000000100",
+              "host": ["{{base_url}}"],
+              "path": ["api", "directdata", "CNPJ"],
+              "query": [{ "key": "CNPJ", "value": "00000000000100" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET PLACA",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/directdata/PLACA?PLACA=ABC1234",
+              "host": ["{{base_url}}"],
+              "path": ["api", "directdata", "PLACA"],
+              "query": [{ "key": "PLACA", "value": "ABC1234" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET NOME",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/directdata/NOME?NOME=João da Silva",
+              "host": ["{{base_url}}"],
+              "path": ["api", "directdata", "NOME"],
+              "query": [{ "key": "NOME", "value": "João da Silva" }]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "ApiBrasil",
+      "description": "Rotas dinâmicas (POST). Envie parâmetros no body JSON. ~88 operações disponíveis. Exemplos representativos abaixo.",
+      "item": [
+        {
+          "name": "POST cpf_dados",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"00000000000\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/apibrasil/cpf_dados",
+              "host": ["{{base_url}}"],
+              "path": ["api", "apibrasil", "cpf_dados"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST cpf_lite",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"00000000000\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/apibrasil/cpf_lite",
+              "host": ["{{base_url}}"],
+              "path": ["api", "apibrasil", "cpf_lite"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST cnpj",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cnpj\": \"00000000000100\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/apibrasil/cnpj",
+              "host": ["{{base_url}}"],
+              "path": ["api", "apibrasil", "cnpj"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST fipe (por placa)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"ABC1234\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/apibrasil/fipe",
+              "host": ["{{base_url}}"],
+              "path": ["api", "apibrasil", "fipe"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST cep",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cep\": \"01310100\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/apibrasil/cep",
+              "host": ["{{base_url}}"],
+              "path": ["api", "apibrasil", "cep"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST situacao_eleitoral",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"00000000000\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/apibrasil/situacao_eleitoral",
+              "host": ["{{base_url}}"],
+              "path": ["api", "apibrasil", "situacao_eleitoral"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST antifraude_chave_pix",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"00000000000\",\n  \"chave\": \"00000000000\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/apibrasil/antifraude_chave_pix",
+              "host": ["{{base_url}}"],
+              "path": ["api", "apibrasil", "antifraude_chave_pix"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "BrasilAPI",
+      "description": "Rotas dinâmicas (POST). API pública brasileira sem custo. 3 operações disponíveis.",
+      "item": [
+        {
+          "name": "POST cnpj (dados cadastrais)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cnpj\": \"00000000000100\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/brasilapi/cnpj",
+              "host": ["{{base_url}}"],
+              "path": ["api", "brasilapi", "cnpj"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST registrobr (domínio .br)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"domain\": \"exemplo.com.br\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/brasilapi/registrobr",
+              "host": ["{{base_url}}"],
+              "path": ["api", "brasilapi", "registrobr"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST cvm_corretora (por CNPJ)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cnpj\": \"02332886000104\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/brasilapi/cvm_corretora",
+              "host": ["{{base_url}}"],
+              "path": ["api", "brasilapi", "cvm_corretora"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST cvm_corretoras (lista todas)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/brasilapi/cvm_corretoras",
+              "host": ["{{base_url}}"],
+              "path": ["api", "brasilapi", "cvm_corretoras"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Infosimples",
+      "description": "Rotas dinâmicas (POST). Aceita alias curto (cpf, cnpj) ou path completo.",
+      "item": [
+        {
+          "name": "POST cpf (alias curto — Receita Federal PF)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"000.000.000-00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/infosimples/cpf",
+              "host": ["{{base_url}}"],
+              "path": ["api", "infosimples", "cpf"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST cnpj (alias curto — Receita Federal PJ)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cnpj\": \"00.000.000/0001-00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/infosimples/cnpj",
+              "host": ["{{base_url}}"],
+              "path": ["api", "infosimples", "cnpj"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST consultas/receita-federal/cpf",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"000.000.000-00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/infosimples/consultas/receita-federal/cpf",
+              "host": ["{{base_url}}"],
+              "path": ["api", "infosimples", "consultas", "receita-federal", "cpf"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST consultas/receita-federal/cnpj",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cnpj\": \"00.000.000/0001-00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/infosimples/consultas/receita-federal/cnpj",
+              "host": ["{{base_url}}"],
+              "path": ["api", "infosimples", "consultas", "receita-federal", "cnpj"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST consultas/cenprot-sp/protestos (CPF ou CNPJ)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"000.000.000-00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/infosimples/consultas/cenprot-sp/protestos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "infosimples", "consultas", "cenprot-sp", "protestos"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST consultas/ieptb/protestos (CPF ou CNPJ)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cnpj\": \"00.000.000/0001-00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/infosimples/consultas/ieptb/protestos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "infosimples", "consultas", "ieptb", "protestos"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST consultas/bcb/valores-receber (CPF ou CNPJ)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"000.000.000-00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/infosimples/consultas/bcb/valores-receber",
+              "host": ["{{base_url}}"],
+              "path": ["api", "infosimples", "consultas", "bcb", "valores-receber"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST consultas/b3/participantes",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cnpj\": \"00.000.000/0001-00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/infosimples/consultas/b3/participantes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "infosimples", "consultas", "b3", "participantes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST consultas/portal-transparencia/ceis (CPF ou CNPJ)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"000.000.000-00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/infosimples/consultas/portal-transparencia/ceis",
+              "host": ["{{base_url}}"],
+              "path": ["api", "infosimples", "consultas", "portal-transparencia", "ceis"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST consultas/mpf/certidao-negativa (CPF ou CNPJ)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpf\": \"000.000.000-00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/infosimples/consultas/mpf/certidao-negativa",
+              "host": ["{{base_url}}"],
+              "path": ["api", "infosimples", "consultas", "mpf", "certidao-negativa"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
