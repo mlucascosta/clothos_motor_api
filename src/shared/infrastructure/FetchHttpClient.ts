@@ -140,7 +140,10 @@ export class FetchHttpClient implements IHttpClient {
       if (err instanceof DOMException && err.name === 'TimeoutError') {
         return left(new SourceError('TIMEOUT', source));
       }
-      return left(new SourceError('UPSTREAM_ERROR', source, err));
+      const safeMsg = err instanceof Error
+        ? err.message.replace(/([?&])(TOKEN|token|apikey|api_key|key|secret|password|passwd)=[^&\s]*/gi, '$1$2=[REDACTED]')
+        : 'network error';
+      return left(new SourceError('UPSTREAM_ERROR', source, safeMsg));
     }
   }
 
@@ -201,7 +204,10 @@ export class FetchHttpClient implements IHttpClient {
       if (err instanceof DOMException && err.name === 'TimeoutError') {
         return left(new SourceError('TIMEOUT', source));
       }
-      return left(new SourceError('UPSTREAM_ERROR', source, err));
+      const safeMsg = err instanceof Error
+        ? err.message.replace(/([?&])(TOKEN|token|apikey|api_key|key|secret|password|passwd)=[^&\s]*/gi, '$1$2=[REDACTED]')
+        : 'network error';
+      return left(new SourceError('UPSTREAM_ERROR', source, safeMsg));
     }
   }
 

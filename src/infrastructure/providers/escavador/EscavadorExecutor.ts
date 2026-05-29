@@ -15,7 +15,7 @@ import { SourceError } from '../../../shared/domain/errors/SourceError.js';
 import type { BuscaResultItem } from './dtos/BuscaGeralDto.js';
 import type { ProcessoResumido } from './dtos/PessoaDto.js';
 import type { IBuscarGeral } from './ports/IBuscarGeral.js';
-import type { IIniciarBuscaLote } from './operations/IniciarBuscaLote.js';
+import type { IIniciarBuscaLote } from './ports/IIniciarBuscaLote.js';
 import type { IObterBuscaAssincrona } from './ports/IObterBuscaAssincrona.js';
 import type { IObterInstituicao } from './ports/IObterInstituicao.js';
 import type { IObterPessoa } from './ports/IObterPessoa.js';
@@ -174,9 +174,17 @@ export class EscavadorExecutor implements ISourceExecutor {
     );
 
     const allResultados: unknown[] = [];
+    let pollFailures = 0;
     for (const pr of pollResults) {
-      if (isLeft(pr)) continue;
+      if (isLeft(pr)) {
+        pollFailures++;
+        continue;
+      }
       allResultados.push(pr.value.resultado);
+    }
+
+    if (pollFailures === pollResults.length) {
+      return left(new SourceError('UPSTREAM_ERROR', this.sourceName, 'Todos os polls falharam'));
     }
 
     const processos = allResultados.flatMap((r) =>
@@ -217,12 +225,17 @@ export class EscavadorExecutor implements ISourceExecutor {
     const deadline = Date.now() + Math.max(budgetMs, 0);
     let attempts = 0;
 
-    while (attempts < MAX_POLL_ATTEMPTS && Date.now() < deadline) {
+    do {
       const result = await this.deps.obterBuscaAssincrona.execute({ id });
 
       if (isLeft(result)) return result;
 
-      const status = result.value.status?.toUpperCase();
+      const rawStatus = result.value.status ?? '';
+      const status = rawStatus
+        .toUpperCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036F]/g, '');
+
       if (status === 'SUCESSO' || status === 'CONCLUIDO') {
         return right({ resultado: result.value.resposta ?? result.value.resultado });
       }
@@ -233,9 +246,11 @@ export class EscavadorExecutor implements ISourceExecutor {
         );
       }
 
-      await this.sleep(POLL_INTERVAL_MS);
       attempts++;
-    }
+      if (attempts < MAX_POLL_ATTEMPTS && Date.now() < deadline) {
+        await this.sleep(POLL_INTERVAL_MS);
+      }
+    } while (attempts < MAX_POLL_ATTEMPTS && Date.now() < deadline);
 
     return left(new SourceError('TIMEOUT', this.sourceName, 'Polling esgotado sem conclusão'));
   }

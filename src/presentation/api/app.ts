@@ -1,5 +1,19 @@
+/**
+ * @fileoverview Configuração da aplicação Hono — entrada do motor de consultas.
+ *
+ * Ordem dos middlewares globais:
+ * 1. logger — request/response logging estruturado
+ * 2. errorHandler — captura exceções não tratadas em toda a cadeia
+ * 3. bearerAuth (apenas /api/*) — autenticação interna via MOTOR_INTERNAL_SECRET
+ *
+ * Rotas públicas: /health
+ * Rotas protegidas: /api/escavador, /api/datajud, /api/directdata, /api/infosimples
+ * @module presentation/api/app
+ */
+
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
+import { bearerAuth } from './middlewares/bearerAuth.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { datajud } from './routes/datajud.js';
 import { directdata } from './routes/directdata.js';
@@ -11,6 +25,7 @@ const app = new Hono();
 
 app.use('*', logger());
 app.use('*', errorHandler);
+app.use('/api/*', bearerAuth);
 
 app.route('/health', health);
 app.route('/api/escavador', escavador);

@@ -25,44 +25,48 @@ export class MongoRawResultStore implements IRawResultStore {
   private client: MongoClient | null = null;
   /** @type {Collection<RawResultDoc> | null} Collection raw_results */
   private collection: Collection<RawResultDoc> | null = null;
-  /** @type {boolean} Flag para evitar múltiplas conexões concorrentes */
-  private connecting = false;
+  /** @type {Promise<Collection<RawResultDoc> | null> | null} Promise compartilhada durante conexão */
+  private connectingPromise: Promise<Collection<RawResultDoc> | null> | null = null;
 
   /**
    * Conecta ao MongoDB na primeira chamada (lazy singleton).
    * Cria índices na collection se conexão bem-sucedida.
    * Se já conectado, retorna collection existente.
-   * Se conectando, retorna null (debounce de múltiplas tentativas).
+   * Se conectando, aguarda a mesma Promise em vez de descartar.
    *
    * @async
    * @private
    * @returns {Promise<Collection<RawResultDoc> | null>} Collection pronta ou null em falha/desabilitado
    */
-  private async connect(): Promise<Collection<RawResultDoc> | null> {
-    if (this.collection) return this.collection;
-    if (this.connecting) return null;
+  private connect(): Promise<Collection<RawResultDoc> | null> {
+    if (this.collection) return Promise.resolve(this.collection);
+    if (this.connectingPromise) return this.connectingPromise;
 
     const connString = process.env['MONGODB_CLOUD_STRING'];
-    if (!connString) return null;
+    if (!connString) return Promise.resolve(null);
 
-    this.connecting = true;
-    try {
-      this.client = new MongoClient(connString);
-      await this.client.connect();
-      const db = this.client.db('clothos_motor');
-      const col = db.collection<RawResultDoc>('raw_results');
+    this.connectingPromise = (async () => {
+      try {
+        this.client = new MongoClient(connString);
+        await this.client.connect();
+        const db = this.client.db('clothos_motor');
+        const col = db.collection<RawResultDoc>('raw_results');
 
-      await col.createIndex({ gateway: 1, created_at: -1 });
-      await col.createIndex({ tipo_param: 1, param: 1, created_at: -1 });
-      await col.createIndex({ status: 1, created_at: -1 });
+        await col.createIndex({ gateway: 1, created_at: -1 });
+        await col.createIndex({ tipo_param: 1, param: 1, created_at: -1 });
+        await col.createIndex({ status: 1, created_at: -1 });
 
-      this.collection = col;
-      return col;
-    } catch (err) {
-      console.error('[MongoRawResultStore] connection failed:', err);
-      this.connecting = false;
-      return null;
-    }
+        this.collection = col;
+        return col;
+      } catch (err) {
+        console.error('[MongoRawResultStore] connection failed:', err);
+        return null;
+      } finally {
+        this.connectingPromise = null;
+      }
+    })();
+
+    return this.connectingPromise;
   }
 
   /**
