@@ -4,14 +4,14 @@
  * @module infrastructure/providers/directdata/operations/AnbimaCertificadoEDU
  */
 
-import { isLeft } from '../../../../shared/domain/Either.js';
-import type { Either } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
+import { isLeft } from '@shared/domain/Either.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { AnbimaCertificadoEDURetornoSchema } from '../dtos/AnbimaCertificadoEDUDto.js';
 import { DirectDataMetaDadosSchema } from '../dtos/DirectDataResponseDto.js';
 import type { IAnbimaCertificadoEDU } from '../ports/IAnbimaCertificadoEDU.js';
-import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { z } from 'zod';
 
 const ResponseSchema = z.object({

@@ -3,8 +3,8 @@
  * @module infrastructure/providers/apibrasil/ports/IAgregadosV2
  */
 
-import type { Either } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
 
 export interface IAgregadosV2 {
   readonly path: string;

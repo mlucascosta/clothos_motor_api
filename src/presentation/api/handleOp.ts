@@ -6,13 +6,13 @@
  */
 
 import type { Context } from 'hono';
-import type { Either } from '../../shared/domain/Either.js';
-import type { SourceError } from '../../shared/domain/errors/SourceError.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import {
   handleOp as _handleOp,
   handleOpVoid as _handleOpVoid,
-} from '../../shared/infrastructure/handleOp.js';
-import { rawStore } from '../../infrastructure/persistence/index.js';
+} from '@shared/infrastructure/handleOp.js';
+import { rawStore } from '@infrastructure/persistence/index.js';
 
 /**
  * Handler para operações que retornam um corpo (200, 201, 202, etc.).

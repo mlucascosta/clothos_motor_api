@@ -3,7 +3,7 @@
  * @module infrastructure/providers/apibrasil/operations/registry
  */
 
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import type { IApiBrasilOperation } from '../ports/IApiBrasilOperation.js';
 
 import { AcertaCompletoPositivoPf } from './AcertaCompletoPositivoPf.js';

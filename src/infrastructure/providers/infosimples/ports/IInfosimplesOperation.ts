@@ -4,8 +4,8 @@
  * @module infrastructure/providers/infosimples/ports/IInfosimplesOperation
  */
 
-import type { Either } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
 
 /**
  * Port genérico que define o contrato de toda operation do Infosimples.

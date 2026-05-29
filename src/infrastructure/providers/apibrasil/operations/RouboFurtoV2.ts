@@ -3,11 +3,11 @@
  * @module infrastructure/providers/apibrasil/operations/RouboFurtoV2
  */
 
-import { isLeft } from '../../../../shared/domain/Either.js';
-import type { Either } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
-import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
+import { isLeft } from '@shared/domain/Either.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { RouboFurtoV2Schema } from '../dtos/RouboFurtoV2Dto.js';
 import type { IRouboFurtoV2 } from '../ports/IRouboFurtoV2.js';
 

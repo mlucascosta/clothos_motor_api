@@ -4,8 +4,8 @@
  * @module infrastructure/providers/apibrasil/ports/IApiBrasilOperation
  */
 
-import type { Either } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
 
 export interface IApiBrasilOperation {
   readonly path: string;

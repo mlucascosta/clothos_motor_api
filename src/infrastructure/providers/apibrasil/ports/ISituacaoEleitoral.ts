@@ -3,8 +3,8 @@
  * @module infrastructure/providers/apibrasil/ports/ISituacaoEleitoral
  */
 
-import type { Either } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
 
 export interface ISituacaoEleitoral {
   readonly path: string;

@@ -1,10 +1,10 @@
-import { isLeft } from '../../../../shared/domain/Either.js';
-import type { Either } from '../../../../shared/domain/Either.js';
-import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
+import { isLeft } from '@shared/domain/Either.js';
+import type { Either } from '@shared/domain/Either.js';
+import { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import type { ListarAparicaoResponse } from '../dtos/MonitoramentoDto.js';
 import { ListarAparicaoResponseSchema } from '../dtos/MonitoramentoDto.js';
-import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IObterAparicoes } from '../ports/IObterAparicoes.js';
 
 export class ObterAparicoes implements IObterAparicoes {

@@ -4,13 +4,13 @@
  * @module infrastructure/providers/infosimples/InfosimplesHttpClient
  */
 
-import type { Either } from '../../../shared/domain/Either.js';
-import type { SourceError } from '../../../shared/domain/errors/SourceError.js';
-import { FetchHttpClient } from '../../../shared/infrastructure/FetchHttpClient.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import { FetchHttpClient } from '@shared/infrastructure/FetchHttpClient.js';
 import type {
   HttpRequestOptions,
   IHttpClient,
-} from '../../../shared/infrastructure/IHttpClient.js';
+} from '@shared/infrastructure/IHttpClient.js';
 
 /**
  * Cliente HTTP Infosimples v2 com autenticação via query param token.

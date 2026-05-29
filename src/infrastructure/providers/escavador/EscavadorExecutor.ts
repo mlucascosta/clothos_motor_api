@@ -9,9 +9,9 @@ import type {
   ISourceExecutor,
   SourceContext,
   SourceResult,
-} from '../../../application/queries/ports/ISourceExecutor.js';
-import { type Either, isLeft, left, right } from '../../../shared/domain/Either.js';
-import { SourceError } from '../../../shared/domain/errors/SourceError.js';
+} from '@application/queries/ports/ISourceExecutor.js';
+import { type Either, isLeft, left, right } from '@shared/domain/Either.js';
+import { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { BuscaResultItem } from './dtos/BuscaGeralDto.js';
 import type { ProcessoResumido } from './dtos/PessoaDto.js';
 import type { IBuscarGeral } from './ports/IBuscarGeral.js';

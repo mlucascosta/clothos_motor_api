@@ -3,11 +3,11 @@
  * @module infrastructure/providers/apibrasil/operations/ReceitaFederalPjV3
  */
 
-import { isLeft } from '../../../../shared/domain/Either.js';
-import type { Either } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
-import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
+import { isLeft } from '@shared/domain/Either.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { ReceitaFederalPjV3Schema } from '../dtos/ReceitaFederalPjV3Dto.js';
 import type { IReceitaFederalPjV3 } from '../ports/IReceitaFederalPjV3.js';
 

@@ -4,13 +4,13 @@
  * @module infrastructure/providers/escavador/EscavadorHttpClient
  */
 
-import type { Either } from '../../../shared/domain/Either.js';
-import type { SourceError } from '../../../shared/domain/errors/SourceError.js';
-import { FetchHttpClient } from '../../../shared/infrastructure/FetchHttpClient.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import { FetchHttpClient } from '@shared/infrastructure/FetchHttpClient.js';
 import type {
   HttpRequestOptions,
   IHttpClient,
-} from '../../../shared/infrastructure/IHttpClient.js';
+} from '@shared/infrastructure/IHttpClient.js';
 
 /**
  * Cliente HTTP Escavador v1 com autenticação e defaults pré-configurados.

@@ -34,10 +34,10 @@
 
 import { Hono } from 'hono';
 import { handleOp } from '../handleOp.js';
-import { DirectDataHttpClient } from '../../../infrastructure/providers/directdata/DirectDataHttpClient.js';
-import type { IDirectDataOperation } from '../../../infrastructure/providers/directdata/ports/IDirectDataOperation.js';
-import { resolveOperation } from '../../../infrastructure/providers/directdata/operations/registry.js';
-import { directDataRequiredParams } from '../../../infrastructure/providers/directdata/operations/validation-map.js';
+import { DirectDataHttpClient } from '@infrastructure/providers/directdata/DirectDataHttpClient.js';
+import type { IDirectDataOperation } from '@infrastructure/providers/directdata/ports/IDirectDataOperation.js';
+import { resolveOperation } from '@infrastructure/providers/directdata/operations/registry.js';
+import { directDataRequiredParams } from '@infrastructure/providers/directdata/operations/validation-map.js';
 
 const GW = 'directdata';
 const BASE_URL = 'https://apiv3.directd.com.br';

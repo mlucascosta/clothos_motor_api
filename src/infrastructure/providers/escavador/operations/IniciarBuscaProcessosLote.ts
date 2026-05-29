@@ -1,7 +1,7 @@
-import { isLeft } from '../../../../shared/domain/Either.js';
-import type { Either } from '../../../../shared/domain/Either.js';
-import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
+import { isLeft } from '@shared/domain/Either.js';
+import type { Either } from '@shared/domain/Either.js';
+import { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import {
   type IniciarBuscaLoteResponse,
   IniciarBuscaLoteResponseSchema,
@@ -10,7 +10,7 @@ import type {
   IIniciarBuscaProcessosLote,
   IniciarBuscaProcessosLoteInput,
 } from '../ports/IIniciarBuscaProcessosLote.js';
-import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 
 export class IniciarBuscaProcessosLote implements IIniciarBuscaProcessosLote {
   constructor(private readonly http: IHttpClient) {}

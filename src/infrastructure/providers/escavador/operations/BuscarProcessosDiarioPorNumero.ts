@@ -1,13 +1,13 @@
-import { isLeft } from '../../../../shared/domain/Either.js';
-import type { Either } from '../../../../shared/domain/Either.js';
-import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
+import { isLeft } from '@shared/domain/Either.js';
+import type { Either } from '@shared/domain/Either.js';
+import { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { type BuscaGeralResponse, BuscaGeralResponseSchema } from '../dtos/BuscaGeralDto.js';
 import type {
   BuscarProcessosDiarioPorNumeroInput,
   IBuscarProcessosDiarioPorNumero,
 } from '../ports/IBuscarProcessosDiarioPorNumero.js';
-import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 
 export class BuscarProcessosDiarioPorNumero implements IBuscarProcessosDiarioPorNumero {
   constructor(private readonly http: IHttpClient) {}

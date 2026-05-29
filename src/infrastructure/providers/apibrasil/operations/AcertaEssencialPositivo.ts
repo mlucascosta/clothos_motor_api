@@ -3,11 +3,11 @@
  * @module infrastructure/providers/apibrasil/operations/AcertaEssencialPositivo
  */
 
-import { isLeft } from '../../../../shared/domain/Either.js';
-import type { Either } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
-import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
+import { isLeft } from '@shared/domain/Either.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { AcertaEssencialPositivoSchema } from '../dtos/AcertaEssencialPositivoDto.js';
 import type { IAcertaEssencialPositivo } from '../ports/IAcertaEssencialPositivo.js';
 

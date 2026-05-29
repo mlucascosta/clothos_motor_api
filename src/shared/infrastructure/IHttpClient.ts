@@ -1,5 +1,5 @@
-import type { Either } from '../domain/Either.js';
-import type { SourceError } from '../domain/errors/SourceError.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
 
 /**
  * Opções de configuração para uma requisição HTTP.

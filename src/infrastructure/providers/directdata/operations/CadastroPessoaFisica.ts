@@ -4,14 +4,14 @@
  * @module infrastructure/providers/directdata/operations/CadastroPessoaFisica
  */
 
-import { isLeft } from '../../../../shared/domain/Either.js';
-import type { Either } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
+import { isLeft } from '@shared/domain/Either.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { CadastroPessoaFisicaRetornoSchema } from '../dtos/CadastroPessoaFisicaDto.js';
 import { DirectDataMetaDadosSchema } from '../dtos/DirectDataResponseDto.js';
 import type { ICadastroPessoaFisica } from '../ports/ICadastroPessoaFisica.js';
-import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { z } from 'zod';
 
 const ResponseSchema = z.object({

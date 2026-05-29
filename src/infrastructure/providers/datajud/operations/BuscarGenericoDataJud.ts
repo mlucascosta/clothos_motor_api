@@ -4,9 +4,9 @@
  * @module infrastructure/providers/datajud/operations/BuscarGenericoDataJud
  */
 
-import { isLeft, type Either, left, right } from '../../../../shared/domain/Either.js';
-import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
+import { isLeft, type Either, left, right } from '@shared/domain/Either.js';
+import { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { getDataJudPath } from '../DataJudTribunais.js';
 import {
   type DataJudSearchResponseDto,
@@ -16,7 +16,7 @@ import type {
   BuscarGenericoDataJudInput,
   IBuscarGenericoDataJud,
 } from '../ports/IBuscarGenericoDataJud.js';
-import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 
 /**
  * Operação de busca genérica no DataJud (POST /{tribunal}/_search).

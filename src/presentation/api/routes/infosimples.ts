@@ -10,10 +10,10 @@
 
 import { Hono } from 'hono';
 import { handleOp } from '../handleOp.js';
-import { InfosimplesHttpClient } from '../../../infrastructure/providers/infosimples/InfosimplesHttpClient.js';
-import { resolveOperation } from '../../../infrastructure/providers/infosimples/operations/registry.js';
-import type { OneOfGroup, ValidationRule } from '../../../infrastructure/providers/infosimples/operations/validation-map.js';
-import { infosimplesRequiredParams } from '../../../infrastructure/providers/infosimples/operations/validation-map.js';
+import { InfosimplesHttpClient } from '@infrastructure/providers/infosimples/InfosimplesHttpClient.js';
+import { resolveOperation } from '@infrastructure/providers/infosimples/operations/registry.js';
+import type { OneOfGroup, ValidationRule } from '@infrastructure/providers/infosimples/operations/validation-map.js';
+import { infosimplesRequiredParams } from '@infrastructure/providers/infosimples/operations/validation-map.js';
 
 const GW = 'infosimples';
 const BASE_URL = 'https://api.infosimples.com/api/v2/';

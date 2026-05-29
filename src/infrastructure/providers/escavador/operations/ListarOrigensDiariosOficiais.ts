@@ -1,10 +1,10 @@
-import { isLeft } from '../../../../shared/domain/Either.js';
-import type { Either } from '../../../../shared/domain/Either.js';
-import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
+import { isLeft } from '@shared/domain/Either.js';
+import type { Either } from '@shared/domain/Either.js';
+import { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import type { ListarOrigensDiariosResponse } from '../dtos/DiarioOficialDto.js';
 import { ListarOrigensDiariosResponseSchema } from '../dtos/DiarioOficialDto.js';
-import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IListarOrigensDiariosOficiais } from '../ports/IListarOrigensDiariosOficiais.js';
 
 export class ListarOrigensDiariosOficiais implements IListarOrigensDiariosOficiais {

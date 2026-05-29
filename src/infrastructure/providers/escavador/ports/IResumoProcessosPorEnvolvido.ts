@@ -1,5 +1,5 @@
-import type { Either } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { ResumoEnvolvido } from '../operations/v2/ResumoProcessosPorEnvolvido.js';
 
 export type { ResumoEnvolvido };

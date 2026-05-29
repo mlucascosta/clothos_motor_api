@@ -4,8 +4,8 @@
  * @module infrastructure/providers/escavador/ports/IListarBuscasAssincronas
  */
 
-import type { Either } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { ListarBuscasAssincronasResponse } from '../dtos/BuscaAssincronaDto.js';
 
 /**

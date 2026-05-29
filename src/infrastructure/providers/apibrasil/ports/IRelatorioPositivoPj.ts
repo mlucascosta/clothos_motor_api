@@ -3,8 +3,8 @@
  * @module infrastructure/providers/apibrasil/ports/IRelatorioPositivoPj
  */
 
-import type { Either } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
 
 export interface IRelatorioPositivoPj {
   readonly path: string;

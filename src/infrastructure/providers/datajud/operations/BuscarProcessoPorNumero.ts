@@ -4,13 +4,13 @@
  * @module infrastructure/providers/datajud/operations/BuscarProcessoPorNumero
  */
 
-import { isLeft, type Either, left, right } from '../../../../shared/domain/Either.js';
-import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
+import { isLeft, type Either, left, right } from '@shared/domain/Either.js';
+import { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { getDataJudPath } from '../DataJudTribunais.js';
 import type { DataJudSearchResponseDto } from '../dtos/DataJudSearchResponseDto.js';
 import { DataJudSearchResponseSchema } from '../dtos/DataJudSearchResponseDto.js';
-import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 
 /**
  * Input para busca por número de processo.

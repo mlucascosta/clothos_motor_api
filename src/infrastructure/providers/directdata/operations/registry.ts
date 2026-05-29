@@ -3,7 +3,7 @@
  * @module infrastructure/providers/directdata/operations/registry
  */
 
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import type { IDirectDataOperation } from '../ports/IDirectDataOperation.js';
 
 import { AML } from './AML.js';

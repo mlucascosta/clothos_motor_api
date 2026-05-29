@@ -3,8 +3,8 @@
  * @module infrastructure/providers/datajud/operations/IBuscarProcessoPorNumero
  */
 
-import type { Either } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { BuscarProcessoPorNumeroInput } from './BuscarProcessoPorNumero.js';
 import type { DataJudSearchResponseDto } from '../dtos/DataJudSearchResponseDto.js';
 

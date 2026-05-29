@@ -3,11 +3,11 @@
  * Endpoint: POST consultas/mp/sp/inquerito-civil
  * @module infrastructure/providers/infosimples/operations/MpSpInquiritoCivil
  */
-import { isLeft } from '../../../../shared/domain/Either.js';
-import type { Either } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
-import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
+import { isLeft } from '@shared/domain/Either.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IInfosimplesOperation } from '../ports/IInfosimplesOperation.js';
 import { MpSpInquiritoCivilResponseSchema, type MpSpInquiritoCivilItem } from '../dtos/MpSpInquiritoCivilDto.js';
 

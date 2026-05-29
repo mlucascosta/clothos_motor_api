@@ -8,7 +8,7 @@
 import { type Collection, MongoClient } from 'mongodb';
 import type { IRawResultStore } from './IRawResultStore.js';
 import type { RawResultDoc } from './RawResultDoc.js';
-import { hashCpfIfNeeded } from '../../shared/domain/privacy/hashCpf.js';
+import { hashCpfIfNeeded } from '@shared/domain/privacy/hashCpf.js';
 
 /**
  * Store de resultados brutos em MongoDB.

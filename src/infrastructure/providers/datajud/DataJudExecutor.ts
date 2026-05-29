@@ -4,9 +4,9 @@
  * @module infrastructure/providers/datajud/DataJudExecutor
  */
 
-import { isLeft, left, right, type Either } from '../../../shared/domain/Either.js';
-import { SourceError } from '../../../shared/domain/errors/SourceError.js';
-import type { ISourceExecutor, SourceContext, SourceResult } from '../../../application/queries/ports/ISourceExecutor.js';
+import { isLeft, left, right, type Either } from '@shared/domain/Either.js';
+import { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { ISourceExecutor, SourceContext, SourceResult } from '@application/queries/ports/ISourceExecutor.js';
 import { extrairSiglaDoCNJ } from './CNJHelper.js';
 import type { IBuscarProcessoPorNumero } from './operations/IBuscarProcessoPorNumero.js';
 
@@ -14,14 +14,47 @@ import type { IBuscarProcessoPorNumero } from './operations/IBuscarProcessoPorNu
  * Executor de consultas DataJud.
  * Determina automaticamente o tribunal pelo dígito do CNJ e delega a busca.
  *
+ * **Restrições:**
+ * - Aceita apenas `identifierKind === 'PROCESSO'` (número CNJ formatado)
+ * - Rejeita CPF e CNPJ com `UPSTREAM_ERROR`
+ * - Custo fixo: 1 crédito por consulta (independente do número de resultados)
+ *
  * @class DataJudExecutor
  * @implements {ISourceExecutor}
+ *
+ * @example
+ * ```typescript
+ * const executor = new DataJudExecutor(new BuscarProcessoPorNumero(http));
+ * const result = await executor.execute({
+ *   identifier: '0000001-12.2023.8.26.0001',
+ *   identifierKind: 'PROCESSO',
+ *   tenantId: 'acme',
+ * });
+ * ```
  */
 export class DataJudExecutor implements ISourceExecutor {
+  /** Nome canônico do provider — usado em logs e persistência de auditoria */
   readonly sourceName = 'datajud';
 
+  /**
+   * Constrói o executor DataJud com a operação de busca injetada.
+   *
+   * @param {IBuscarProcessoPorNumero} buscarPorNumero - Operação que executa a busca no tribunal correto
+   */
   constructor(private readonly buscarPorNumero: IBuscarProcessoPorNumero) {}
 
+  /**
+   * Executa consulta de processo judicial no DataJud.
+   *
+   * **Pipeline:**
+   * 1. Valida que `identifierKind === 'PROCESSO'` — rejeita CPF/CNPJ
+   * 2. Extrai sigla do tribunal a partir do número CNJ via `extrairSiglaDoCNJ()`
+   * 3. Delega busca para `IBuscarProcessoPorNumero.execute()`
+   * 4. Mapeia hits do Elasticsearch para `SourceResult.data`
+   *
+   * @param {SourceContext} context - Contexto da consulta com `identifier` (número CNJ) e `identifierKind`
+   * @returns {Promise<Either<SourceError, SourceResult>>} Resultado com lista de processos ou erro tipado
+   */
   async execute(context: SourceContext): Promise<Either<SourceError, SourceResult>> {
     const start = Date.now();
 

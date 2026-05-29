@@ -4,8 +4,8 @@
  * @module infrastructure/providers/escavador/ports/IBuscarGeral
  */
 
-import type { Either } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { BuscaGeralResponse } from '../dtos/BuscaGeralDto.js';
 
 /**

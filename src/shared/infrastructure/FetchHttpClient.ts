@@ -1,5 +1,5 @@
-import { type Either, left, right } from '../domain/Either.js';
-import { SourceError } from '../domain/errors/SourceError.js';
+import { type Either, left, right } from '@shared/domain/Either.js';
+import { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { HttpRequestOptions, IHttpClient } from './IHttpClient.js';
 
 /**

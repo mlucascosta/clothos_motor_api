@@ -1,6 +1,6 @@
-import { isLeft, type Either, right } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
+import { isLeft, type Either, right } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import type { IMarcarCallbacksRecebidos } from '../ports/IMarcarCallbacksRecebidos.js';
 
 export class MarcarCallbacksRecebidos implements IMarcarCallbacksRecebidos {

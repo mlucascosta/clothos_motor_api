@@ -1,5 +1,5 @@
-import type { Either } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { PublicacoesResponse } from '../dtos/PublicacaoDto.js';
 
 export interface BuscarPublicacoesInput {

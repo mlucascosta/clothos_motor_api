@@ -1,6 +1,6 @@
-import { isLeft, type Either, right } from '../../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../../shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '../../../../../shared/infrastructure/IHttpClient.js';
+import { isLeft, type Either, right } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import type { IRemoverCertificado } from '../../ports/IRemoverCertificado.js';
 
 export class RemoverCertificado implements IRemoverCertificado {

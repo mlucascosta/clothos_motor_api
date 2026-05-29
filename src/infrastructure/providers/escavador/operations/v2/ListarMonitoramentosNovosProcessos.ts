@@ -1,12 +1,12 @@
-import { isLeft } from '../../../../../shared/domain/Either.js';
-import type { Either } from '../../../../../shared/domain/Either.js';
-import { SourceError } from '../../../../../shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '../../../../../shared/infrastructure/IHttpClient.js';
+import { isLeft } from '@shared/domain/Either.js';
+import type { Either } from '@shared/domain/Either.js';
+import { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import {
   type ListarMonitoramentosNovosProcessosResponse,
   ListarMonitoramentosNovosProcessosResponseSchema,
 } from '../../dtos/v2/MonitoramentoV2Dto.js';
-import { parseOrSchemaError } from '../../../../../shared/domain/parseOrSchemaError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IListarMonitoramentosNovosProcessos } from '../../ports/IListarMonitoramentosNovosProcessos.js';
 
 export class ListarMonitoramentosNovosProcessos implements IListarMonitoramentosNovosProcessos {

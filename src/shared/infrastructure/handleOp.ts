@@ -6,11 +6,11 @@
  */
 
 import type { Context } from 'hono';
-import type { StatusCode } from 'hono/utils/http-status';
-import type { Either } from '../domain/Either.js';
-import { isLeft } from '../domain/Either.js';
-import type { SourceError, SourceErrorKind } from '../domain/errors/SourceError.js';
-import type { IRawResultStore } from '../../infrastructure/persistence/IRawResultStore.js';
+import type { ContentfulStatusCode, StatusCode } from 'hono/utils/http-status';
+import type { Either } from '@shared/domain/Either.js';
+import { isLeft } from '@shared/domain/Either.js';
+import type { SourceError, SourceErrorKind } from '@shared/domain/errors/SourceError.js';
+import type { IRawResultStore } from '@infrastructure/persistence/IRawResultStore.js';
 
 const KIND_TO_STATUS: Record<SourceErrorKind, StatusCode> = {
   NOT_FOUND: 404,
@@ -50,7 +50,7 @@ export async function handleOp<T>(
       status: 'error',
       error_kind: result.value.kind,
     });
-    const errStatus = KIND_TO_STATUS[result.value.kind] ?? 500;
+    const errStatus = (KIND_TO_STATUS[result.value.kind] ?? 500) as ContentfulStatusCode;
     return c.json({ error: result.value.message, kind: result.value.kind }, errStatus) as Response;
   }
 
@@ -87,7 +87,7 @@ export async function handleOpVoid(
       status: 'error',
       error_kind: result.value.kind,
     });
-    const errStatus = KIND_TO_STATUS[result.value.kind] ?? 500;
+    const errStatus = (KIND_TO_STATUS[result.value.kind] ?? 500) as ContentfulStatusCode;
     return c.json({ error: result.value.message, kind: result.value.kind }, errStatus) as Response;
   }
 

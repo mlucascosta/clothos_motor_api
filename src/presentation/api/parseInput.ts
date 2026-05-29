@@ -6,7 +6,7 @@
  * @module presentation/api/parseInput
  */
 
-import type { ZodType, ZodTypeAny } from 'zod';
+import type { ZodType, ZodTypeDef } from 'zod';
 
 /**
  * Resultado de validação de input de rota.
@@ -37,7 +37,7 @@ export type ParseInputResult<T> =
  * // result.data está tipado como MySchema
  */
 export function parseInput<T>(
-  schema: ZodType<T, ZodTypeAny, unknown>,
+  schema: ZodType<T, ZodTypeDef, unknown>,
   value: unknown,
   errorMessage = 'Payload inválido',
 ): ParseInputResult<T> {

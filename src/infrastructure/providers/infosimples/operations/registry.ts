@@ -5,7 +5,7 @@
  * @module infrastructure/providers/infosimples/operations/registry
  */
 
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import type { IInfosimplesOperation } from '../ports/IInfosimplesOperation.js';
 import { CadastroPessoaFisica } from './CadastroPessoaFisica.js';
 import { CadastroPessoaJuridica } from './CadastroPessoaJuridica.js';

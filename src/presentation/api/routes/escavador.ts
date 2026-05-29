@@ -192,7 +192,7 @@
  *
  * @see {@link EscavadorHttpClient} — Cliente HTTP para V1
  * @see {@link EscavadorV2HttpClient} — Cliente HTTP para V2
- * @see ../../../infrastructure/providers/escavador/operations — Implementations dos operations
+ * @see @infrastructure/providers/escavador/operations — Implementations dos operations
  */
 
 import { Hono } from 'hono';
@@ -200,96 +200,96 @@ import type { Context } from 'hono';
 import { z } from 'zod';
 import { handleOp, handleOpVoid } from '../handleOp.js';
 import { parseInput } from '../parseInput.js';
-import { isLeft } from '../../../shared/domain/Either.js';
-import { rawStore } from '../../../infrastructure/persistence/index.js';
-import { EscavadorHttpClient } from '../../../infrastructure/providers/escavador/EscavadorHttpClient.js';
+import { isLeft } from '@shared/domain/Either.js';
+import { rawStore } from '@infrastructure/persistence/index.js';
+import { EscavadorHttpClient } from '@infrastructure/providers/escavador/EscavadorHttpClient.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // IMPORTS — Operations V1 e V2
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { BuscarGeral } from '../../../infrastructure/providers/escavador/operations/BuscarGeral.js';
-import { ListarBuscasAssincronas } from '../../../infrastructure/providers/escavador/operations/ListarBuscasAssincronas.js';
-import { ObterBuscaAssincrona } from '../../../infrastructure/providers/escavador/operations/ObterBuscaAssincrona.js';
-import { BuscarProcessosDiarioPorNumero } from '../../../infrastructure/providers/escavador/operations/BuscarProcessosDiarioPorNumero.js';
-import { BuscarProcessosDiarioPorOab } from '../../../infrastructure/providers/escavador/operations/BuscarProcessosDiarioPorOab.js';
-import { BuscarPublicacoes } from '../../../infrastructure/providers/escavador/operations/BuscarPublicacoes.js';
-import { CriarMonitoramento } from '../../../infrastructure/providers/escavador/operations/CriarMonitoramento.js';
-import { CriarMonitoramentoTribunal } from '../../../infrastructure/providers/escavador/operations/CriarMonitoramentoTribunal.js';
-import { EditarMonitoramento } from '../../../infrastructure/providers/escavador/operations/EditarMonitoramento.js';
-import { EditarMonitoramentoTribunal } from '../../../infrastructure/providers/escavador/operations/EditarMonitoramentoTribunal.js';
-import { IniciarBuscaProcesso } from '../../../infrastructure/providers/escavador/operations/IniciarBuscaProcesso.js';
-import { IniciarBuscaProcessoNup } from '../../../infrastructure/providers/escavador/operations/IniciarBuscaProcessoNup.js';
+import { BuscarGeral } from '@infrastructure/providers/escavador/operations/BuscarGeral.js';
+import { ListarBuscasAssincronas } from '@infrastructure/providers/escavador/operations/ListarBuscasAssincronas.js';
+import { ObterBuscaAssincrona } from '@infrastructure/providers/escavador/operations/ObterBuscaAssincrona.js';
+import { BuscarProcessosDiarioPorNumero } from '@infrastructure/providers/escavador/operations/BuscarProcessosDiarioPorNumero.js';
+import { BuscarProcessosDiarioPorOab } from '@infrastructure/providers/escavador/operations/BuscarProcessosDiarioPorOab.js';
+import { BuscarPublicacoes } from '@infrastructure/providers/escavador/operations/BuscarPublicacoes.js';
+import { CriarMonitoramento } from '@infrastructure/providers/escavador/operations/CriarMonitoramento.js';
+import { CriarMonitoramentoTribunal } from '@infrastructure/providers/escavador/operations/CriarMonitoramentoTribunal.js';
+import { EditarMonitoramento } from '@infrastructure/providers/escavador/operations/EditarMonitoramento.js';
+import { EditarMonitoramentoTribunal } from '@infrastructure/providers/escavador/operations/EditarMonitoramentoTribunal.js';
+import { IniciarBuscaProcesso } from '@infrastructure/providers/escavador/operations/IniciarBuscaProcesso.js';
+import { IniciarBuscaProcessoNup } from '@infrastructure/providers/escavador/operations/IniciarBuscaProcessoNup.js';
 // ──── Operations V1 ────
-import { IniciarBuscaLote } from '../../../infrastructure/providers/escavador/operations/IniciarBuscaLote.js';
-import { IniciarBuscaProcessosLote } from '../../../infrastructure/providers/escavador/operations/IniciarBuscaProcessosLote.js';
-import { IniciarBuscaProcessosOab } from '../../../infrastructure/providers/escavador/operations/IniciarBuscaProcessosOab.js';
-import { ListarCallbacks } from '../../../infrastructure/providers/escavador/operations/ListarCallbacks.js';
-import { ListarMonitoramentos } from '../../../infrastructure/providers/escavador/operations/ListarMonitoramentos.js';
-import { ListarMonitoramentosTribunal } from '../../../infrastructure/providers/escavador/operations/ListarMonitoramentosTribunal.js';
-import { ListarOrgaosAdministrativos } from '../../../infrastructure/providers/escavador/operations/ListarOrgaosAdministrativos.js';
-import { ListarOrigensDiariosOficiais } from '../../../infrastructure/providers/escavador/operations/ListarOrigensDiariosOficiais.js';
-import { ListarTribunais } from '../../../infrastructure/providers/escavador/operations/ListarTribunais.js';
-import { MarcarCallbacksRecebidos } from '../../../infrastructure/providers/escavador/operations/MarcarCallbacksRecebidos.js';
-import { ObterAparicoes } from '../../../infrastructure/providers/escavador/operations/ObterAparicoes.js';
-import { ObterDetalhesProcesso } from '../../../infrastructure/providers/escavador/operations/ObterDetalhesProcesso.js';
-import { ObterEnvolvidosProcesso } from '../../../infrastructure/providers/escavador/operations/ObterEnvolvidosProcesso.js';
-import { ObterInstituicao } from '../../../infrastructure/providers/escavador/operations/ObterInstituicao.js';
-import { ObterMonitoramento } from '../../../infrastructure/providers/escavador/operations/ObterMonitoramento.js';
-import { ObterMonitoramentoTribunal } from '../../../infrastructure/providers/escavador/operations/ObterMonitoramentoTribunal.js';
-import { ObterMovimentacao } from '../../../infrastructure/providers/escavador/operations/ObterMovimentacao.js';
-import { ObterMovimentacoesProcesso } from '../../../infrastructure/providers/escavador/operations/ObterMovimentacoesProcesso.js';
-import { ObterOrigensMonitoramento } from '../../../infrastructure/providers/escavador/operations/ObterOrigensMonitoramento.js';
-import { ObterPessoa } from '../../../infrastructure/providers/escavador/operations/ObterPessoa.js';
-import { ObterPessoasInstituicao } from '../../../infrastructure/providers/escavador/operations/ObterPessoasInstituicao.js';
-import { ObterProcessosInstituicao } from '../../../infrastructure/providers/escavador/operations/ObterProcessosInstituicao.js';
-import { ObterProcessosPessoa } from '../../../infrastructure/providers/escavador/operations/ObterProcessosPessoa.js';
-import { ObterSaldo } from '../../../infrastructure/providers/escavador/operations/ObterSaldo.js';
-import { ObterTribunal } from '../../../infrastructure/providers/escavador/operations/ObterTribunal.js';
-import { ReenviarCallback } from '../../../infrastructure/providers/escavador/operations/ReenviarCallback.js';
-import { RemoverMonitoramento } from '../../../infrastructure/providers/escavador/operations/RemoverMonitoramento.js';
-import { RemoverMonitoramentoTribunal } from '../../../infrastructure/providers/escavador/operations/RemoverMonitoramentoTribunal.js';
-import { TestarCallbackMonitoramento } from '../../../infrastructure/providers/escavador/operations/TestarCallbackMonitoramento.js';
+import { IniciarBuscaLote } from '@infrastructure/providers/escavador/operations/IniciarBuscaLote.js';
+import { IniciarBuscaProcessosLote } from '@infrastructure/providers/escavador/operations/IniciarBuscaProcessosLote.js';
+import { IniciarBuscaProcessosOab } from '@infrastructure/providers/escavador/operations/IniciarBuscaProcessosOab.js';
+import { ListarCallbacks } from '@infrastructure/providers/escavador/operations/ListarCallbacks.js';
+import { ListarMonitoramentos } from '@infrastructure/providers/escavador/operations/ListarMonitoramentos.js';
+import { ListarMonitoramentosTribunal } from '@infrastructure/providers/escavador/operations/ListarMonitoramentosTribunal.js';
+import { ListarOrgaosAdministrativos } from '@infrastructure/providers/escavador/operations/ListarOrgaosAdministrativos.js';
+import { ListarOrigensDiariosOficiais } from '@infrastructure/providers/escavador/operations/ListarOrigensDiariosOficiais.js';
+import { ListarTribunais } from '@infrastructure/providers/escavador/operations/ListarTribunais.js';
+import { MarcarCallbacksRecebidos } from '@infrastructure/providers/escavador/operations/MarcarCallbacksRecebidos.js';
+import { ObterAparicoes } from '@infrastructure/providers/escavador/operations/ObterAparicoes.js';
+import { ObterDetalhesProcesso } from '@infrastructure/providers/escavador/operations/ObterDetalhesProcesso.js';
+import { ObterEnvolvidosProcesso } from '@infrastructure/providers/escavador/operations/ObterEnvolvidosProcesso.js';
+import { ObterInstituicao } from '@infrastructure/providers/escavador/operations/ObterInstituicao.js';
+import { ObterMonitoramento } from '@infrastructure/providers/escavador/operations/ObterMonitoramento.js';
+import { ObterMonitoramentoTribunal } from '@infrastructure/providers/escavador/operations/ObterMonitoramentoTribunal.js';
+import { ObterMovimentacao } from '@infrastructure/providers/escavador/operations/ObterMovimentacao.js';
+import { ObterMovimentacoesProcesso } from '@infrastructure/providers/escavador/operations/ObterMovimentacoesProcesso.js';
+import { ObterOrigensMonitoramento } from '@infrastructure/providers/escavador/operations/ObterOrigensMonitoramento.js';
+import { ObterPessoa } from '@infrastructure/providers/escavador/operations/ObterPessoa.js';
+import { ObterPessoasInstituicao } from '@infrastructure/providers/escavador/operations/ObterPessoasInstituicao.js';
+import { ObterProcessosInstituicao } from '@infrastructure/providers/escavador/operations/ObterProcessosInstituicao.js';
+import { ObterProcessosPessoa } from '@infrastructure/providers/escavador/operations/ObterProcessosPessoa.js';
+import { ObterSaldo } from '@infrastructure/providers/escavador/operations/ObterSaldo.js';
+import { ObterTribunal } from '@infrastructure/providers/escavador/operations/ObterTribunal.js';
+import { ReenviarCallback } from '@infrastructure/providers/escavador/operations/ReenviarCallback.js';
+import { RemoverMonitoramento } from '@infrastructure/providers/escavador/operations/RemoverMonitoramento.js';
+import { RemoverMonitoramentoTribunal } from '@infrastructure/providers/escavador/operations/RemoverMonitoramentoTribunal.js';
+import { TestarCallbackMonitoramento } from '@infrastructure/providers/escavador/operations/TestarCallbackMonitoramento.js';
 
-import { BuscarProcessosPorAdvogado } from '../../../infrastructure/providers/escavador/operations/v2/BuscarProcessosPorAdvogado.js';
-import { BuscarProcessosPorEnvolvido } from '../../../infrastructure/providers/escavador/operations/v2/BuscarProcessosPorEnvolvido.js';
-import { CriarAutenticacaoCertificado } from '../../../infrastructure/providers/escavador/operations/v2/CriarAutenticacaoCertificado.js';
-import { CriarCertificado } from '../../../infrastructure/providers/escavador/operations/v2/CriarCertificado.js';
-import { CriarMonitoramentoNovosProcessos } from '../../../infrastructure/providers/escavador/operations/v2/CriarMonitoramentoNovosProcessos.js';
-import { CriarMonitoramentoProcesso } from '../../../infrastructure/providers/escavador/operations/v2/CriarMonitoramentoProcesso.js';
+import { BuscarProcessosPorAdvogado } from '@infrastructure/providers/escavador/operations/v2/BuscarProcessosPorAdvogado.js';
+import { BuscarProcessosPorEnvolvido } from '@infrastructure/providers/escavador/operations/v2/BuscarProcessosPorEnvolvido.js';
+import { CriarAutenticacaoCertificado } from '@infrastructure/providers/escavador/operations/v2/CriarAutenticacaoCertificado.js';
+import { CriarCertificado } from '@infrastructure/providers/escavador/operations/v2/CriarCertificado.js';
+import { CriarMonitoramentoNovosProcessos } from '@infrastructure/providers/escavador/operations/v2/CriarMonitoramentoNovosProcessos.js';
+import { CriarMonitoramentoProcesso } from '@infrastructure/providers/escavador/operations/v2/CriarMonitoramentoProcesso.js';
 // ──── Operations V2 ────
-import { DownloadDocumento } from '../../../infrastructure/providers/escavador/operations/v2/DownloadDocumento.js';
-import { EditarMonitoramentoNovosProcessos } from '../../../infrastructure/providers/escavador/operations/v2/EditarMonitoramentoNovosProcessos.js';
-import { ListarCallbacksV2 } from '../../../infrastructure/providers/escavador/operations/v2/ListarCallbacksV2.js';
-import { ListarCertificados } from '../../../infrastructure/providers/escavador/operations/v2/ListarCertificados.js';
-import { ListarMonitoramentosNovosProcessos } from '../../../infrastructure/providers/escavador/operations/v2/ListarMonitoramentosNovosProcessos.js';
-import { ListarMonitoramentosProcesso } from '../../../infrastructure/providers/escavador/operations/v2/ListarMonitoramentosProcesso.js';
-import { ListarSistemasTribunais } from '../../../infrastructure/providers/escavador/operations/v2/ListarSistemasTribunais.js';
-import { ListarTribunaisV2 } from '../../../infrastructure/providers/escavador/operations/v2/ListarTribunaisV2.js';
-import { MarcarCallbacksRecebidosV2 } from '../../../infrastructure/providers/escavador/operations/v2/MarcarCallbacksRecebidosV2.js';
-import { ObterAutosProcesso } from '../../../infrastructure/providers/escavador/operations/v2/ObterAutosProcesso.js';
-import { ObterCertificado } from '../../../infrastructure/providers/escavador/operations/v2/ObterCertificado.js';
-import { ObterDocumentosProcesso } from '../../../infrastructure/providers/escavador/operations/v2/ObterDocumentosProcesso.js';
-import { ObterEnvolvidosProcessoV2 } from '../../../infrastructure/providers/escavador/operations/v2/ObterEnvolvidosProcessoV2.js';
-import { ObterMonitoramentoNovosProcessos } from '../../../infrastructure/providers/escavador/operations/v2/ObterMonitoramentoNovosProcessos.js';
-import { ObterMonitoramentoProcesso } from '../../../infrastructure/providers/escavador/operations/v2/ObterMonitoramentoProcesso.js';
-import { ObterMovimentacoesV2 } from '../../../infrastructure/providers/escavador/operations/v2/ObterMovimentacoesV2.js';
-import { ObterProcessoPorCnj } from '../../../infrastructure/providers/escavador/operations/v2/ObterProcessoPorCnj.js';
-import { ObterResultadosMonitoramentoNovosProcessos } from '../../../infrastructure/providers/escavador/operations/v2/ObterResultadosMonitoramentoNovosProcessos.js';
-import { ObterResumoProcesso } from '../../../infrastructure/providers/escavador/operations/v2/ObterResumoProcesso.js';
-import { ObterStatusAtualizacaoLote } from '../../../infrastructure/providers/escavador/operations/v2/ObterStatusAtualizacaoLote.js';
-import { ObterStatusAtualizacaoProcesso } from '../../../infrastructure/providers/escavador/operations/v2/ObterStatusAtualizacaoProcesso.js';
-import { ObterStatusResumoProcesso } from '../../../infrastructure/providers/escavador/operations/v2/ObterStatusResumoProcesso.js';
-import { ReenviarCallbackV2 } from '../../../infrastructure/providers/escavador/operations/v2/ReenviarCallbackV2.js';
-import { RemoverAutenticacaoCertificado } from '../../../infrastructure/providers/escavador/operations/v2/RemoverAutenticacaoCertificado.js';
-import { RemoverCertificado } from '../../../infrastructure/providers/escavador/operations/v2/RemoverCertificado.js';
-import { RemoverMonitoramentoNovosProcessos } from '../../../infrastructure/providers/escavador/operations/v2/RemoverMonitoramentoNovosProcessos.js';
-import { RemoverMonitoramentoProcesso } from '../../../infrastructure/providers/escavador/operations/v2/RemoverMonitoramentoProcesso.js';
-import { ResumoProcessosPorAdvogado } from '../../../infrastructure/providers/escavador/operations/v2/ResumoProcessosPorAdvogado.js';
-import { ResumoProcessosPorEnvolvido } from '../../../infrastructure/providers/escavador/operations/v2/ResumoProcessosPorEnvolvido.js';
-import { SolicitarAtualizacaoLote } from '../../../infrastructure/providers/escavador/operations/v2/SolicitarAtualizacaoLote.js';
-import { SolicitarAtualizacaoProcesso } from '../../../infrastructure/providers/escavador/operations/v2/SolicitarAtualizacaoProcesso.js';
-import { SolicitarResumoProcesso } from '../../../infrastructure/providers/escavador/operations/v2/SolicitarResumoProcesso.js';
+import { DownloadDocumento } from '@infrastructure/providers/escavador/operations/v2/DownloadDocumento.js';
+import { EditarMonitoramentoNovosProcessos } from '@infrastructure/providers/escavador/operations/v2/EditarMonitoramentoNovosProcessos.js';
+import { ListarCallbacksV2 } from '@infrastructure/providers/escavador/operations/v2/ListarCallbacksV2.js';
+import { ListarCertificados } from '@infrastructure/providers/escavador/operations/v2/ListarCertificados.js';
+import { ListarMonitoramentosNovosProcessos } from '@infrastructure/providers/escavador/operations/v2/ListarMonitoramentosNovosProcessos.js';
+import { ListarMonitoramentosProcesso } from '@infrastructure/providers/escavador/operations/v2/ListarMonitoramentosProcesso.js';
+import { ListarSistemasTribunais } from '@infrastructure/providers/escavador/operations/v2/ListarSistemasTribunais.js';
+import { ListarTribunaisV2 } from '@infrastructure/providers/escavador/operations/v2/ListarTribunaisV2.js';
+import { MarcarCallbacksRecebidosV2 } from '@infrastructure/providers/escavador/operations/v2/MarcarCallbacksRecebidosV2.js';
+import { ObterAutosProcesso } from '@infrastructure/providers/escavador/operations/v2/ObterAutosProcesso.js';
+import { ObterCertificado } from '@infrastructure/providers/escavador/operations/v2/ObterCertificado.js';
+import { ObterDocumentosProcesso } from '@infrastructure/providers/escavador/operations/v2/ObterDocumentosProcesso.js';
+import { ObterEnvolvidosProcessoV2 } from '@infrastructure/providers/escavador/operations/v2/ObterEnvolvidosProcessoV2.js';
+import { ObterMonitoramentoNovosProcessos } from '@infrastructure/providers/escavador/operations/v2/ObterMonitoramentoNovosProcessos.js';
+import { ObterMonitoramentoProcesso } from '@infrastructure/providers/escavador/operations/v2/ObterMonitoramentoProcesso.js';
+import { ObterMovimentacoesV2 } from '@infrastructure/providers/escavador/operations/v2/ObterMovimentacoesV2.js';
+import { ObterProcessoPorCnj } from '@infrastructure/providers/escavador/operations/v2/ObterProcessoPorCnj.js';
+import { ObterResultadosMonitoramentoNovosProcessos } from '@infrastructure/providers/escavador/operations/v2/ObterResultadosMonitoramentoNovosProcessos.js';
+import { ObterResumoProcesso } from '@infrastructure/providers/escavador/operations/v2/ObterResumoProcesso.js';
+import { ObterStatusAtualizacaoLote } from '@infrastructure/providers/escavador/operations/v2/ObterStatusAtualizacaoLote.js';
+import { ObterStatusAtualizacaoProcesso } from '@infrastructure/providers/escavador/operations/v2/ObterStatusAtualizacaoProcesso.js';
+import { ObterStatusResumoProcesso } from '@infrastructure/providers/escavador/operations/v2/ObterStatusResumoProcesso.js';
+import { ReenviarCallbackV2 } from '@infrastructure/providers/escavador/operations/v2/ReenviarCallbackV2.js';
+import { RemoverAutenticacaoCertificado } from '@infrastructure/providers/escavador/operations/v2/RemoverAutenticacaoCertificado.js';
+import { RemoverCertificado } from '@infrastructure/providers/escavador/operations/v2/RemoverCertificado.js';
+import { RemoverMonitoramentoNovosProcessos } from '@infrastructure/providers/escavador/operations/v2/RemoverMonitoramentoNovosProcessos.js';
+import { RemoverMonitoramentoProcesso } from '@infrastructure/providers/escavador/operations/v2/RemoverMonitoramentoProcesso.js';
+import { ResumoProcessosPorAdvogado } from '@infrastructure/providers/escavador/operations/v2/ResumoProcessosPorAdvogado.js';
+import { ResumoProcessosPorEnvolvido } from '@infrastructure/providers/escavador/operations/v2/ResumoProcessosPorEnvolvido.js';
+import { SolicitarAtualizacaoLote } from '@infrastructure/providers/escavador/operations/v2/SolicitarAtualizacaoLote.js';
+import { SolicitarAtualizacaoProcesso } from '@infrastructure/providers/escavador/operations/v2/SolicitarAtualizacaoProcesso.js';
+import { SolicitarResumoProcesso } from '@infrastructure/providers/escavador/operations/v2/SolicitarResumoProcesso.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONFIGURAÇÃO E INICIALIZAÇÃO

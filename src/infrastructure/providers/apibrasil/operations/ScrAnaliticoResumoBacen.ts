@@ -3,11 +3,11 @@
  * @module infrastructure/providers/apibrasil/operations/ScrAnaliticoResumoBacen
  */
 
-import { isLeft } from '../../../../shared/domain/Either.js';
-import type { Either } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
-import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
+import { isLeft } from '@shared/domain/Either.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import { ScrAnaliticoResumoBacenSchema } from '../dtos/ScrAnaliticoResumoBacenDto.js';
 import type { IScrAnaliticoResumoBacen } from '../ports/IScrAnaliticoResumoBacen.js';
 

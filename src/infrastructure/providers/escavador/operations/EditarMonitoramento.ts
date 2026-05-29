@@ -1,10 +1,10 @@
-import { isLeft } from '../../../../shared/domain/Either.js';
-import type { Either } from '../../../../shared/domain/Either.js';
-import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
+import { isLeft } from '@shared/domain/Either.js';
+import type { Either } from '@shared/domain/Either.js';
+import { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import type { MonitoramentoDto } from '../dtos/MonitoramentoDto.js';
 import { MonitoramentoDtoSchema } from '../dtos/MonitoramentoDto.js';
-import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IEditarMonitoramento, EditarMonitoramentoInput } from '../ports/IEditarMonitoramento.js';
 
 export class EditarMonitoramento implements IEditarMonitoramento {

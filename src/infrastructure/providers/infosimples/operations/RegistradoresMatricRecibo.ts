@@ -3,11 +3,11 @@
  * Endpoint: POST consultas/registradores/matric/recibo
  * @module infrastructure/providers/infosimples/operations/RegistradoresMatricRecibo
  */
-import { isLeft } from '../../../../shared/domain/Either.js';
-import type { Either } from '../../../../shared/domain/Either.js';
-import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
-import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
+import { isLeft } from '@shared/domain/Either.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IInfosimplesOperation } from '../ports/IInfosimplesOperation.js';
 import { RegistradoresMatricReciboResponseSchema, type RegistradoresMatricReciboItem } from '../dtos/RegistradoresMatricReciboDto.js';
 

@@ -6,8 +6,8 @@
  * com suporte a contexto de tenant, tracing distribuído e tratamento de erros tipado.
  */
 
-import type { Either } from '../../../shared/domain/Either.js';
-import type { SourceError } from '../../../shared/domain/errors/SourceError.js';
+import type { Either } from '@shared/domain/Either.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
 
 /**
  * Contexto de execução para uma fonte de dados.

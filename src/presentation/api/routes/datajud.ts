@@ -22,23 +22,23 @@
 import { Hono } from 'hono';
 import { handleOp } from '../handleOp.js';
 import { parseInput } from '../parseInput.js';
-import { DataJudHttpClient } from '../../../infrastructure/providers/datajud/DataJudHttpClient.js';
+import { DataJudHttpClient } from '@infrastructure/providers/datajud/DataJudHttpClient.js';
 import {
   DATAJUD_TRIBUNAIS,
   isValidTribunal,
-} from '../../../infrastructure/providers/datajud/DataJudTribunais.js';
+} from '@infrastructure/providers/datajud/DataJudTribunais.js';
 import {
   DataJudEnvolvidoRequestSchema,
   DataJudOrgaoRequestSchema,
   DataJudClasseRequestSchema,
   DataJudProcessoRequestSchema,
   DataJudSearchRequestSchema,
-} from '../../../infrastructure/providers/datajud/dtos/DataJudSearchRequestDto.js';
-import { BuscarGenericoDataJud } from '../../../infrastructure/providers/datajud/operations/BuscarGenericoDataJud.js';
-import { BuscarProcessoPorNumero } from '../../../infrastructure/providers/datajud/operations/BuscarProcessoPorNumero.js';
-import { BuscarPorClasse } from '../../../infrastructure/providers/datajud/operations/BuscarPorClasse.js';
-import { BuscarPorOrgaoJulgador } from '../../../infrastructure/providers/datajud/operations/BuscarPorOrgaoJulgador.js';
-import { BuscarPorEnvolvido } from '../../../infrastructure/providers/datajud/operations/BuscarPorEnvolvido.js';
+} from '@infrastructure/providers/datajud/dtos/DataJudSearchRequestDto.js';
+import { BuscarGenericoDataJud } from '@infrastructure/providers/datajud/operations/BuscarGenericoDataJud.js';
+import { BuscarProcessoPorNumero } from '@infrastructure/providers/datajud/operations/BuscarProcessoPorNumero.js';
+import { BuscarPorClasse } from '@infrastructure/providers/datajud/operations/BuscarPorClasse.js';
+import { BuscarPorOrgaoJulgador } from '@infrastructure/providers/datajud/operations/BuscarPorOrgaoJulgador.js';
+import { BuscarPorEnvolvido } from '@infrastructure/providers/datajud/operations/BuscarPorEnvolvido.js';
 
 const GW = 'datajud';
 const BASE_URL = 'https://api-publica.datajud.cnj.jus.br';
@@ -134,8 +134,8 @@ datajud.post('/classe', async (c) => {
   return handleOp(c, { gateway: GW, fonte: 'classe', tipo_param: tipoParam, param: paramValue }, () =>
     new BuscarPorClasse(buildHttp()).execute({
       sigla,
-      classeNome: parsed.data.classeNome,
-      classeCodigo: parsed.data.classeCodigo,
+      ...(parsed.data.classeNome !== undefined ? { classeNome: parsed.data.classeNome } : {}),
+      ...(parsed.data.classeCodigo !== undefined ? { classeCodigo: parsed.data.classeCodigo } : {}),
       size: parsed.data.size,
     }),
   );
@@ -190,8 +190,8 @@ datajud.post('/envolvido', async (c) => {
   return handleOp(c, { gateway: GW, fonte: 'envolvido', tipo_param: tipoParam, param: paramValue }, () =>
     new BuscarPorEnvolvido(buildHttp()).execute({
       sigla,
-      nome: parsed.data.nome,
-      cpfCnpj: parsed.data.cpfCnpj,
+      ...(parsed.data.nome !== undefined ? { nome: parsed.data.nome } : {}),
+      ...(parsed.data.cpfCnpj !== undefined ? { cpfCnpj: parsed.data.cpfCnpj } : {}),
       size: parsed.data.size,
     }),
   );
