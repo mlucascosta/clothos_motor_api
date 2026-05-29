@@ -3,6 +3,7 @@
  * Endpoint: POST consultas/ieptb/protestos/detalhes-sp
  * @module infrastructure/providers/infosimples/operations/IeptbProtestosDetalhes
  */
+import { isLeft } from '../../../../shared/domain/Either.js';
 import type { Either } from '../../../../shared/domain/Either.js';
 import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
@@ -27,7 +28,7 @@ export class IeptbProtestosDetalhes implements IInfosimplesOperation<IeptbProtes
       method: 'POST',
       params: cleanParams,
     });
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
     return parseOrSchemaError(IeptbProtestosDetalhesSpResponseSchema, result.value, 'infosimples');
   }
 }

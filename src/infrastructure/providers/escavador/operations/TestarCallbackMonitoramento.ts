@@ -1,10 +1,7 @@
-import { type Either, right } from '../../../../shared/domain/Either.js';
+import { isLeft, type Either, right } from '../../../../shared/domain/Either.js';
 import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
-
-export interface ITestarCallbackMonitoramento {
-  execute(input: { id: number }): Promise<Either<SourceError, void>>;
-}
+import type { ITestarCallbackMonitoramento } from '../ports/ITestarCallbackMonitoramento.js';
 
 export class TestarCallbackMonitoramento implements ITestarCallbackMonitoramento {
   constructor(private readonly http: IHttpClient) {}
@@ -14,7 +11,7 @@ export class TestarCallbackMonitoramento implements ITestarCallbackMonitoramento
       `/api/v1/monitoramentos/${input.id}/testar-callback`,
       { method: 'POST' },
     );
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
     return right(undefined);
   }
 }

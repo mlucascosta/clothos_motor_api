@@ -20,7 +20,8 @@
  */
 
 import { Hono } from 'hono';
-import { handleOp } from '../../../shared/infrastructure/handleOp.js';
+import { handleOp } from '../handleOp.js';
+import { parseInput } from '../parseInput.js';
 import { DataJudHttpClient } from '../../../infrastructure/providers/datajud/DataJudHttpClient.js';
 import {
   DATAJUD_TRIBUNAIS,
@@ -79,9 +80,9 @@ datajud.post('/buscar', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = DataJudSearchRequestSchema.safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+  const parsed = parseInput(DataJudSearchRequestSchema, body);
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   return handleOp(c, { gateway: GW, fonte: 'buscar', tipo_param: 'tribunal_dsl', param: sigla }, () =>
     new BuscarGenericoDataJud(buildHttp()).execute({ sigla, body: parsed.data }),
@@ -99,9 +100,9 @@ datajud.post('/processo', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = DataJudProcessoRequestSchema.safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+  const parsed = parseInput(DataJudProcessoRequestSchema, body);
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   return handleOp(c, { gateway: GW, fonte: 'processo', tipo_param: 'numeroProcesso', param: parsed.data.numeroProcesso }, () =>
     new BuscarProcessoPorNumero(buildHttp()).execute({
@@ -123,9 +124,9 @@ datajud.post('/classe', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = DataJudClasseRequestSchema.safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+  const parsed = parseInput(DataJudClasseRequestSchema, body);
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const paramValue = String(parsed.data.classeCodigo ?? parsed.data.classeNome ?? '');
   const tipoParam = parsed.data.classeCodigo !== undefined ? 'classeCodigo' : 'classeNome';
@@ -151,9 +152,9 @@ datajud.post('/orgao-julgador', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = DataJudOrgaoRequestSchema.safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+  const parsed = parseInput(DataJudOrgaoRequestSchema, body);
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   return handleOp(c, { gateway: GW, fonte: 'orgao-julgador', tipo_param: 'orgaoJulgador', param: parsed.data.orgaoJulgador }, () =>
     new BuscarPorOrgaoJulgador(buildHttp()).execute({
@@ -175,9 +176,9 @@ datajud.post('/envolvido', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = DataJudEnvolvidoRequestSchema.safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+  const parsed = parseInput(DataJudEnvolvidoRequestSchema, body);
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   if (!parsed.data.nome && !parsed.data.cpfCnpj) {
     return c.json({ error: 'Informe nome ou cpfCnpj' }, 422);

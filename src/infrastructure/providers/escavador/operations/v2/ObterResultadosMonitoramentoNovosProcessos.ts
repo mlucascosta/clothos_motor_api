@@ -1,3 +1,4 @@
+import { isLeft } from '../../../../../shared/domain/Either.js';
 import type { Either } from '../../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../../shared/infrastructure/IHttpClient.js';
@@ -6,12 +7,7 @@ import {
   ResultadosMonitoramentoNovosProcessosResponseSchema,
 } from '../../dtos/v2/MonitoramentoV2Dto.js';
 import { parseOrSchemaError } from '../../../../../shared/domain/parseOrSchemaError.js';
-
-export interface IObterResultadosMonitoramentoNovosProcessos {
-  execute(input: { id: number; pagina?: number }): Promise<
-    Either<SourceError, ResultadosMonitoramentoNovosProcessosResponse>
-  >;
-}
+import type { IObterResultadosMonitoramentoNovosProcessos } from '../../ports/IObterResultadosMonitoramentoNovosProcessos.js';
 
 export class ObterResultadosMonitoramentoNovosProcessos
   implements IObterResultadosMonitoramentoNovosProcessos
@@ -28,7 +24,7 @@ export class ObterResultadosMonitoramentoNovosProcessos
       `/api/v2/monitoramentos/novos-processos/${input.id}/resultados`,
       { params },
     );
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
     return parseOrSchemaError(ResultadosMonitoramentoNovosProcessosResponseSchema, result.value, 'escavador-v2');
   }
 }

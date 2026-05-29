@@ -4,6 +4,7 @@
  * @module infrastructure/providers/directdata/operations/ConsultarDirectData
  */
 
+import { isLeft } from '../../../../shared/domain/Either.js';
 import type { Either } from '../../../../shared/domain/Either.js';
 import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
@@ -73,7 +74,7 @@ export class ConsultarDirectData implements IConsultarDirectData {
       params: cleanParams,
     });
 
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
 
     return parseOrSchemaError(DirectDataResponseSchema, result.value, 'directdata');
   }

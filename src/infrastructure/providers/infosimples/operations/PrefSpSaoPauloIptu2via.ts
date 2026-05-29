@@ -3,6 +3,7 @@
  * Endpoint: POST consultas/pref/sp/sao-paulo/iptu2via
  * @module infrastructure/providers/infosimples/operations/PrefSpSaoPauloIptu2via
  */
+import { isLeft } from '../../../../shared/domain/Either.js';
 import type { Either } from '../../../../shared/domain/Either.js';
 import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
@@ -21,7 +22,7 @@ export class PrefSpSaoPauloIptu2via implements IInfosimplesOperation<PrefSpSaoPa
       if (v !== undefined && v !== '') cleanParams[k] = v;
     }
     const result = await this.http.request<unknown>(this.path, { method: 'POST', params: cleanParams });
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
     return parseOrSchemaError(PrefSpSaoPauloIptu2viaResponseSchema, result.value, 'infosimples');
   }
 }

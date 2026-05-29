@@ -1,3 +1,4 @@
+import { isLeft } from '../../../../../shared/domain/Either.js';
 import type { Either } from '../../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../../shared/infrastructure/IHttpClient.js';
@@ -6,10 +7,7 @@ import {
   ListarCallbacksV2ResponseSchema,
 } from '../../dtos/v2/CallbackV2Dto.js';
 import { parseOrSchemaError } from '../../../../../shared/domain/parseOrSchemaError.js';
-
-export interface IListarCallbacksV2 {
-  execute(input: { pagina?: number }): Promise<Either<SourceError, ListarCallbacksV2Response>>;
-}
+import type { IListarCallbacksV2 } from '../../ports/IListarCallbacksV2.js';
 
 export class ListarCallbacksV2 implements IListarCallbacksV2 {
   constructor(private readonly http: IHttpClient) {}
@@ -21,7 +19,7 @@ export class ListarCallbacksV2 implements IListarCallbacksV2 {
     if (input.pagina !== undefined) params['page'] = input.pagina;
 
     const result = await this.http.request<unknown>('/api/v2/callbacks', { params });
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
     return parseOrSchemaError(ListarCallbacksV2ResponseSchema, result.value, 'escavador-v2');
   }
 }

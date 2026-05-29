@@ -1,3 +1,4 @@
+import { isLeft } from '../../../../shared/domain/Either.js';
 import type { Either } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
@@ -23,7 +24,7 @@ export class ObterPessoasInstituicao implements IObterPessoasInstituicao {
       },
     });
 
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
 
     return parseOrSchemaError(InstituicaoPessoasResponseSchema, result.value, 'escavador');
   }

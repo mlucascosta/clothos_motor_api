@@ -6,11 +6,21 @@
  */
 
 import type { Context } from 'hono';
+import type { StatusCode } from 'hono/utils/http-status';
 import type { Either } from '../domain/Either.js';
 import { isLeft } from '../domain/Either.js';
-import type { SourceError } from '../domain/errors/SourceError.js';
+import type { SourceError, SourceErrorKind } from '../domain/errors/SourceError.js';
 import type { IRawResultStore } from '../../infrastructure/persistence/IRawResultStore.js';
-import { rawStore as defaultStore } from '../../infrastructure/persistence/index.js';
+
+const KIND_TO_STATUS: Record<SourceErrorKind, StatusCode> = {
+  NOT_FOUND: 404,
+  AUTH_FAILED: 401,
+  RATE_LIMITED: 429,
+  TIMEOUT: 504,
+  CIRCUIT_OPEN: 503,
+  SCHEMA_MISMATCH: 502,
+  UPSTREAM_ERROR: 500,
+};
 
 /**
  * Handler para operações que retornam um corpo (200, 201, 202, etc.)
@@ -22,7 +32,7 @@ export async function handleOp<T>(
   c: Context,
   opts: { gateway: string; fonte: string; tipo_param: string | null; param: string | null; statusCode?: number },
   execute: () => Promise<Either<SourceError, T>>,
-  store: IRawResultStore = defaultStore,
+  store: IRawResultStore,
 ): Promise<Response> {
   const result = await execute();
   const base = {
@@ -40,7 +50,8 @@ export async function handleOp<T>(
       status: 'error',
       error_kind: result.value.kind,
     });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500) as Response;
+    const errStatus = KIND_TO_STATUS[result.value.kind] ?? 500;
+    return c.json({ error: result.value.message, kind: result.value.kind }, errStatus) as Response;
   }
 
   store.save({ ...base, result: result.value, status: 'success' });
@@ -58,7 +69,7 @@ export async function handleOpVoid(
   c: Context,
   opts: { gateway: string; fonte: string; tipo_param: string | null; param: string | null },
   execute: () => Promise<Either<SourceError, void | unknown>>,
-  store: IRawResultStore = defaultStore,
+  store: IRawResultStore,
 ): Promise<Response> {
   const result = await execute();
   const base = {
@@ -76,7 +87,8 @@ export async function handleOpVoid(
       status: 'error',
       error_kind: result.value.kind,
     });
-    return c.json({ error: result.value.message, kind: result.value.kind }, 500) as Response;
+    const errStatus = KIND_TO_STATUS[result.value.kind] ?? 500;
+    return c.json({ error: result.value.message, kind: result.value.kind }, errStatus) as Response;
   }
 
   store.save({ ...base, result: null, status: 'success' });

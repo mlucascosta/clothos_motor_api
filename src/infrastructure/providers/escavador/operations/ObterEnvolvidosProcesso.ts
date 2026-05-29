@@ -1,3 +1,4 @@
+import { isLeft } from '../../../../shared/domain/Either.js';
 import type { Either } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
@@ -21,7 +22,7 @@ export class ObterEnvolvidosProcesso implements IObterEnvolvidosProcesso {
       `/api/v1/processos/${input.id}/envolvidos`,
     );
 
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
 
     return parseOrSchemaError(ProcessoEnvolvidosResponseSchema, result.value, 'escavador');
   }

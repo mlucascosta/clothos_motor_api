@@ -1,10 +1,7 @@
-import { type Either, right } from '../../../../../shared/domain/Either.js';
+import { isLeft, type Either, right } from '../../../../../shared/domain/Either.js';
 import type { SourceError } from '../../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../../shared/infrastructure/IHttpClient.js';
-
-export interface IRemoverMonitoramentoNovosProcessos {
-  execute(input: { id: number }): Promise<Either<SourceError, void>>;
-}
+import type { IRemoverMonitoramentoNovosProcessos } from '../../ports/IRemoverMonitoramentoNovosProcessos.js';
 
 export class RemoverMonitoramentoNovosProcessos implements IRemoverMonitoramentoNovosProcessos {
   constructor(private readonly http: IHttpClient) {}
@@ -14,7 +11,7 @@ export class RemoverMonitoramentoNovosProcessos implements IRemoverMonitoramento
       `/api/v2/monitoramentos/novos-processos/${input.id}`,
       { method: 'DELETE' },
     );
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
     return right(undefined);
   }
 }

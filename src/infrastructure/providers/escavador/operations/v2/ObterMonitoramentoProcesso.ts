@@ -1,3 +1,4 @@
+import { isLeft } from '../../../../../shared/domain/Either.js';
 import type { Either } from '../../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../../shared/infrastructure/IHttpClient.js';
@@ -6,17 +7,14 @@ import {
   MonitoramentoProcessoDtoSchema,
 } from '../../dtos/v2/MonitoramentoV2Dto.js';
 import { parseOrSchemaError } from '../../../../../shared/domain/parseOrSchemaError.js';
-
-export interface IObterMonitoramentoProcesso {
-  execute(input: { id: number }): Promise<Either<SourceError, MonitoramentoProcessoDto>>;
-}
+import type { IObterMonitoramentoProcesso } from '../../ports/IObterMonitoramentoProcesso.js';
 
 export class ObterMonitoramentoProcesso implements IObterMonitoramentoProcesso {
   constructor(private readonly http: IHttpClient) {}
 
   async execute(input: { id: number }): Promise<Either<SourceError, MonitoramentoProcessoDto>> {
     const result = await this.http.request<unknown>(`/api/v2/monitoramentos/processos/${input.id}`);
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
     return parseOrSchemaError(MonitoramentoProcessoDtoSchema, result.value, 'escavador-v2');
   }
 }

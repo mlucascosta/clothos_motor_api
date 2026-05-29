@@ -1,21 +1,11 @@
+import { isLeft } from '../../../../shared/domain/Either.js';
 import type { Either } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
 import type { MonitoramentoDto } from '../dtos/MonitoramentoDto.js';
 import { MonitoramentoDtoSchema } from '../dtos/MonitoramentoDto.js';
 import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
-
-export interface CriarMonitoramentoInput {
-  nome: string;
-  tipo: string;
-  identificador: string;
-  callback_url?: string;
-  tribunais?: number[];
-}
-
-export interface ICriarMonitoramento {
-  execute(input: CriarMonitoramentoInput): Promise<Either<SourceError, MonitoramentoDto>>;
-}
+import type { ICriarMonitoramento, CriarMonitoramentoInput } from '../ports/ICriarMonitoramento.js';
 
 export class CriarMonitoramento implements ICriarMonitoramento {
   constructor(private readonly http: IHttpClient) {}
@@ -31,7 +21,7 @@ export class CriarMonitoramento implements ICriarMonitoramento {
         tribunais: input.tribunais,
       },
     });
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
     return parseOrSchemaError(MonitoramentoDtoSchema, result.value, 'escavador');
   }
 }

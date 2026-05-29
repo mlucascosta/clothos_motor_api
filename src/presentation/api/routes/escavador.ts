@@ -198,7 +198,8 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { z } from 'zod';
-import { handleOp, handleOpVoid } from '../../../shared/infrastructure/handleOp.js';
+import { handleOp, handleOpVoid } from '../handleOp.js';
+import { parseInput } from '../parseInput.js';
 import { isLeft } from '../../../shared/domain/Either.js';
 import { rawStore } from '../../../infrastructure/persistence/index.js';
 import { EscavadorHttpClient } from '../../../infrastructure/providers/escavador/EscavadorHttpClient.js';
@@ -371,14 +372,16 @@ escavador.post('/v1/processos/tribunal/cpf-cnpj', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = z
+  const parsed = parseInput(
+    z
     .object({
       cpf_cnpj: z.string().min(11).max(18),
       tribunais: z.array(z.string()).optional(),
-    })
-    .safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+    }),
+    body,
+  );
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   return handleOp(c, { gateway: 'escavador-v1', fonte: 'processos/tribunal/cpf-cnpj', tipo_param: 'cpf_cnpj', param: parsed.data.cpf_cnpj, statusCode: 202 }, () =>
     new IniciarBuscaLote(buildHttp()).execute({
@@ -404,14 +407,16 @@ escavador.post('/v1/processos/tribunal/envolvido', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = z
+  const parsed = parseInput(
+    z
     .object({
       nome: z.string().min(1),
       tribunais: z.array(z.string()).optional(),
-    })
-    .safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+    }),
+    body,
+  );
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   return handleOp(c, { gateway: 'escavador-v1', fonte: 'processos/tribunal/envolvido', tipo_param: 'nome', param: parsed.data.nome, statusCode: 202 }, () =>
     new IniciarBuscaLote(buildHttp()).execute({
@@ -437,15 +442,17 @@ escavador.post('/v1/processos/tribunal/oab', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = z
+  const parsed = parseInput(
+    z
     .object({
       numero_oab: z.string().min(1),
       estado_oab: z.string().length(2),
       tribunais: z.array(z.string()).optional(),
-    })
-    .safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+    }),
+    body,
+  );
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new IniciarBuscaProcessosOab(buildHttp());
   const input: Parameters<typeof op.execute>[0] = {
@@ -473,9 +480,9 @@ escavador.post('/v1/processos/administrativo/nup', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = z.object({ nup: z.string().min(1) }).safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+  const parsed = parseInput(z.object({ nup: z.string().min(1) }), body);
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   return handleOp(c, { gateway: 'escavador-v1', fonte: 'processos/administrativo/nup', tipo_param: 'nup', param: parsed.data.nup, statusCode: 202 }, () =>
     new IniciarBuscaProcessoNup(buildHttp()).execute({ nup: parsed.data.nup }),
@@ -497,13 +504,15 @@ escavador.post('/v1/processos/pesquisar', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = z
+  const parsed = parseInput(
+    z
     .object({
       numero_cnj: z.string().min(1),
-    })
-    .safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+    }),
+    body,
+  );
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   return handleOp(c, { gateway: 'escavador-v1', fonte: 'processos/pesquisar', tipo_param: 'numero_cnj', param: parsed.data.numero_cnj, statusCode: 202 }, () =>
     new IniciarBuscaProcesso(buildHttp()).execute({ numero_cnj: parsed.data.numero_cnj }),
@@ -514,7 +523,8 @@ escavador.post('/v1/processos/tribunal/lote', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = z
+  const parsed = parseInput(
+    z
     .object({
       tipo: z.enum(['busca_por_nome', 'busca_por_documento', 'busca_por_oab']),
       tribunais: z.array(z.string()).min(1),
@@ -522,10 +532,11 @@ escavador.post('/v1/processos/tribunal/lote', async (c) => {
       numero_documento: z.string().optional(),
       numero_oab: z.string().optional(),
       estado_oab: z.string().optional(),
-    })
-    .safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+    }),
+    body,
+  );
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new IniciarBuscaProcessosLote(buildHttp());
   const input: Parameters<typeof op.execute>[0] = {
@@ -894,9 +905,9 @@ escavador.post('/v1/monitoramentos', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = CriarMonitoramentoSchema.safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+  const parsed = parseInput(CriarMonitoramentoSchema, body);
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new CriarMonitoramento(buildHttp());
   const input: Parameters<typeof op.execute>[0] = {
@@ -928,9 +939,9 @@ escavador.post('/v1/monitoramentos/tribunal', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = CriarMonitoramentoTribunalSchema.safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+  const parsed = parseInput(CriarMonitoramentoTribunalSchema, body);
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new CriarMonitoramentoTribunal(buildHttp());
   const input: Parameters<typeof op.execute>[0] = {
@@ -960,9 +971,9 @@ escavador.put('/v1/monitoramentos/tribunal/:id', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = EditarMonitoramentoTribunalSchema.safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+  const parsed = parseInput(EditarMonitoramentoTribunalSchema, body);
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new EditarMonitoramentoTribunal(buildHttp());
   const input: Parameters<typeof op.execute>[0] = { id };
@@ -1001,9 +1012,9 @@ escavador.put('/v1/monitoramentos/:id', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = EditarMonitoramentoSchema.safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+  const parsed = parseInput(EditarMonitoramentoSchema, body);
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new EditarMonitoramento(buildHttp());
   const input: Parameters<typeof op.execute>[0] = { id };
@@ -1071,13 +1082,13 @@ escavador.get('/v1/callbacks', async (c) => {
   );
 });
 
-escavador.post('/v1/callbacks/marcar-recebidos', async (c) => {
+escavador.post('/v1/callbacks/recebidos', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = z.object({ ids: z.array(z.number().int()).min(1) }).safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+  const parsed = parseInput(z.object({ ids: z.array(z.number().int()).min(1) }), body);
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   return handleOpVoid(c, { gateway: 'escavador-v1', fonte: 'callbacks/recebidos', tipo_param: null, param: null }, () =>
     new MarcarCallbacksRecebidos(buildHttp()).execute({ ids: parsed.data.ids }),
@@ -1453,12 +1464,15 @@ escavador.post('/v2/processos/atualizacao', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = z.object({
+  const parsed = parseInput(
+    z.object({
     processos: z.array(z.object({ numero_cnj: z.string().min(1) })).min(1),
     enviar_callback: z.boolean().optional(),
-  }).safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+  }),
+    body,
+  );
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/atualizacao/lote', tipo_param: null, param: null, statusCode: 202 }, () =>
     new SolicitarAtualizacaoLote(buildHttp()).execute({
@@ -1712,15 +1726,17 @@ escavador.post('/v2/monitoramentos/novos-processos', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = z
+  const parsed = parseInput(
+    z
     .object({
       variacao_busca: z.string().min(1),
       tribunais: z.array(z.number().int()).optional(),
       callback_url: z.string().url().optional(),
-    })
-    .safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+    }),
+    body,
+  );
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new CriarMonitoramentoNovosProcessos(buildHttp());
   const input: Parameters<typeof op.execute>[0] = { variacao_busca: parsed.data.variacao_busca };
@@ -1796,16 +1812,18 @@ escavador.patch('/v2/monitoramentos/novos-processos/:id', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = z
+  const parsed = parseInput(
+    z
     .object({
       variacao_busca: z.string().optional(),
       tribunais: z.array(z.number().int()).optional(),
       callback_url: z.string().url().optional(),
       ativo: z.boolean().optional(),
-    })
-    .safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+    }),
+    body,
+  );
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new EditarMonitoramentoNovosProcessos(buildHttp());
   const input: Parameters<typeof op.execute>[0] = { id };
@@ -1903,14 +1921,16 @@ escavador.post('/v2/monitoramentos/processos', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = z
+  const parsed = parseInput(
+    z
     .object({
       processo_id: z.number().int(),
       callback_url: z.string().url().optional(),
-    })
-    .safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+    }),
+    body,
+  );
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new CriarMonitoramentoProcesso(buildHttp());
   const input: Parameters<typeof op.execute>[0] = { processo_id: parsed.data.processo_id };
@@ -2015,9 +2035,9 @@ escavador.post('/v2/callbacks/recebidos', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = z.object({ ids: z.array(z.number().int()).min(1).max(20) }).safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+  const parsed = parseInput(z.object({ ids: z.array(z.number().int()).min(1).max(20) }), body);
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   return handleOpVoid(
     c,
@@ -2107,15 +2127,17 @@ escavador.post('/v2/certificados', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = z
+  const parsed = parseInput(
+    z
     .object({
       nome: z.string().min(1),
       arquivo_base64: z.string().min(1),
       senha: z.string().min(1),
-    })
-    .safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+    }),
+    body,
+  );
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/certificados/criar', tipo_param: null, param: null, statusCode: 201 }, () =>
     new CriarCertificado(buildHttp()).execute(parsed.data),
@@ -2204,14 +2226,16 @@ escavador.post('/v2/certificados/:id/autenticacoes', async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
-  const parsed = z
+  const parsed = parseInput(
+    z
     .object({
       tipo: z.string().min(1),
       valor: z.string().optional(),
-    })
-    .safeParse(body);
-  if (!parsed.success)
-    return c.json({ error: 'Payload inválido', details: parsed.error.issues }, 422);
+    }),
+    body,
+  );
+  if (!parsed.ok)
+    return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new CriarAutenticacaoCertificado(buildHttp());
   const input: Parameters<typeof op.execute>[0] = { id, tipo: parsed.data.tipo };

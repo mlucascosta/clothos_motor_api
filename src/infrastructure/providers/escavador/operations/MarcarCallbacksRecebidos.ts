@@ -1,10 +1,7 @@
-import { type Either, right } from '../../../../shared/domain/Either.js';
+import { isLeft, type Either, right } from '../../../../shared/domain/Either.js';
 import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
-
-export interface IMarcarCallbacksRecebidos {
-  execute(input: { ids: number[] }): Promise<Either<SourceError, void>>;
-}
+import type { IMarcarCallbacksRecebidos } from '../ports/IMarcarCallbacksRecebidos.js';
 
 export class MarcarCallbacksRecebidos implements IMarcarCallbacksRecebidos {
   constructor(private readonly http: IHttpClient) {}
@@ -14,7 +11,7 @@ export class MarcarCallbacksRecebidos implements IMarcarCallbacksRecebidos {
       method: 'POST',
       body: { ids: input.ids },
     });
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
     return right(undefined);
   }
 }

@@ -6,7 +6,7 @@ import type { MonitoramentoTribunalDto } from '../dtos/MonitoramentoDto.js';
 export interface CriarMonitoramentoTribunalInput {
   tipo: string;
   identificador: string;
-  tribunal: string;
+  tribunal: number;
   callback_url?: string;
 }
 

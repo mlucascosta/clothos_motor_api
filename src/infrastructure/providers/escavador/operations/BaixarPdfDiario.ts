@@ -1,9 +1,6 @@
 import { type Either, left, right } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
-
-export interface IBaixarPdfDiario {
-  execute(input: { id: number }): Promise<Either<SourceError, Buffer>>;
-}
+import type { IBaixarPdfDiario } from '../ports/IBaixarPdfDiario.js';
 
 export class BaixarPdfDiario implements IBaixarPdfDiario {
   constructor(

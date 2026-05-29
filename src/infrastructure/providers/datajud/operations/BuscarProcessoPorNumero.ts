@@ -4,7 +4,7 @@
  * @module infrastructure/providers/datajud/operations/BuscarProcessoPorNumero
  */
 
-import { type Either, left, right } from '../../../../shared/domain/Either.js';
+import { isLeft, type Either, left, right } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
 import { getDataJudPath } from '../DataJudTribunais.js';
@@ -71,7 +71,7 @@ export class BuscarProcessoPorNumero implements IBuscarProcessoPorNumero {
       body,
     });
 
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
 
     return parseOrSchemaError(DataJudSearchResponseSchema, result.value, 'datajud');
   }

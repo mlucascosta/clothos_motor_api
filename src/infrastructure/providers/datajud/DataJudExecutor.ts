@@ -4,7 +4,7 @@
  * @module infrastructure/providers/datajud/DataJudExecutor
  */
 
-import { left, right, type Either } from '../../../shared/domain/Either.js';
+import { isLeft, left, right, type Either } from '../../../shared/domain/Either.js';
 import { SourceError } from '../../../shared/domain/errors/SourceError.js';
 import type { ISourceExecutor, SourceContext, SourceResult } from '../../../application/queries/ports/ISourceExecutor.js';
 import { extrairSiglaDoCNJ } from './CNJHelper.js';
@@ -47,7 +47,7 @@ export class DataJudExecutor implements ISourceExecutor {
       numeroProcesso: context.identifier,
     });
 
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
 
     return right({
       source: this.sourceName,

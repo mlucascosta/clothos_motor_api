@@ -1,3 +1,4 @@
+import { isLeft } from '../../../../../shared/domain/Either.js';
 import type { Either } from '../../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../../shared/infrastructure/IHttpClient.js';
@@ -6,16 +7,7 @@ import {
   MonitoramentoNovosProcessosDtoSchema,
 } from '../../dtos/v2/MonitoramentoV2Dto.js';
 import { parseOrSchemaError } from '../../../../../shared/domain/parseOrSchemaError.js';
-
-export interface IEditarMonitoramentoNovosProcessos {
-  execute(input: {
-    id: number;
-    variacao_busca?: string;
-    tribunais?: number[];
-    callback_url?: string;
-    ativo?: boolean;
-  }): Promise<Either<SourceError, MonitoramentoNovosProcessosDto>>;
-}
+import type { IEditarMonitoramentoNovosProcessos } from '../../ports/IEditarMonitoramentoNovosProcessos.js';
 
 export class EditarMonitoramentoNovosProcessos implements IEditarMonitoramentoNovosProcessos {
   constructor(private readonly http: IHttpClient) {}
@@ -37,7 +29,7 @@ export class EditarMonitoramentoNovosProcessos implements IEditarMonitoramentoNo
       `/api/v2/monitoramentos/novos-processos/${input.id}`,
       { method: 'PATCH', body },
     );
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
     return parseOrSchemaError(MonitoramentoNovosProcessosDtoSchema, result.value, 'escavador-v2');
   }
 }

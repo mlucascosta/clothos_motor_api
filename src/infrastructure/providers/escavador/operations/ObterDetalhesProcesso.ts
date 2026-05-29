@@ -1,3 +1,4 @@
+import { isLeft } from '../../../../shared/domain/Either.js';
 import type { Either } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
@@ -14,7 +15,7 @@ export class ObterDetalhesProcesso implements IObterDetalhesProcesso {
   async execute(input: ObterDetalhesProcessoInput): Promise<Either<SourceError, ProcessoDto>> {
     const result = await this.http.request<unknown>(`/api/v1/processos/${input.numeroCnj}`);
 
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
 
     return parseOrSchemaError(ProcessoDtoSchema, result.value, 'escavador');
   }

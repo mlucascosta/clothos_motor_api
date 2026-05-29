@@ -1,3 +1,4 @@
+import { isLeft } from '../../../../shared/domain/Either.js';
 import type { Either } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
@@ -6,14 +7,7 @@ import {
   IniciarBuscaLoteResponseSchema,
 } from '../dtos/BuscaAssincronaDto.js';
 import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
-
-export type IniciarBuscaLoteInput =
-  | { tipo: 'busca_por_documento'; cpfCnpj: string; tribunais?: string[] }
-  | { tipo: 'busca_por_nome'; nome: string; tribunais?: string[] };
-
-export interface IIniciarBuscaLote {
-  execute(input: IniciarBuscaLoteInput): Promise<Either<SourceError, IniciarBuscaLoteResponse>>;
-}
+import type { IIniciarBuscaLote, IniciarBuscaLoteInput } from '../ports/IIniciarBuscaLote.js';
 
 export class IniciarBuscaLote implements IIniciarBuscaLote {
   constructor(private readonly http: IHttpClient) {}
@@ -32,7 +26,7 @@ export class IniciarBuscaLote implements IIniciarBuscaLote {
       body,
     });
 
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
 
     return parseOrSchemaError(IniciarBuscaLoteResponseSchema, result.value, 'escavador');
   }

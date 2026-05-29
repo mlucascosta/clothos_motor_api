@@ -59,8 +59,8 @@ export const CriarMonitoramentoInputSchema = z.object({
   tipo: z.string(),
   /** CPF, CNPJ, número de processo, etc. */
   identificador: z.string(),
-  /** Array de tribunais a monitorar (opcional, afeta monitoramento de processos) */
-  tribunais: z.array(z.string()).optional(),
+  /** Array de IDs de tribunais a monitorar (opcional, afeta monitoramento de processos) */
+  tribunais: z.array(z.number().int()).optional(),
 });
 
 /**

@@ -33,8 +33,9 @@
  */
 
 import { Hono } from 'hono';
-import { handleOp } from '../../../shared/infrastructure/handleOp.js';
+import { handleOp } from '../handleOp.js';
 import { DirectDataHttpClient } from '../../../infrastructure/providers/directdata/DirectDataHttpClient.js';
+import type { IDirectDataOperation } from '../../../infrastructure/providers/directdata/ports/IDirectDataOperation.js';
 import { resolveOperation } from '../../../infrastructure/providers/directdata/operations/registry.js';
 import { directDataRequiredParams } from '../../../infrastructure/providers/directdata/operations/validation-map.js';
 
@@ -73,7 +74,12 @@ directdata.get('/:endpoint{.+}', async (c) => {
   }
 
   // ─── Resolve operation via factory (DDD + Dependency Inversion) ───
-  const operation = resolveOperation(registryKey, buildHttp());
+  let operation: IDirectDataOperation<unknown>;
+  try {
+    operation = resolveOperation(registryKey, buildHttp());
+  } catch {
+    return c.json({ error: `Operação desconhecida: ${endpoint}` }, 400);
+  }
 
   // ─── Identifica tipo_param / param para auditoria ───
   const priorityKeys = [
@@ -94,6 +100,13 @@ directdata.get('/:endpoint{.+}', async (c) => {
       tipoParam = key.toLowerCase();
       paramValue = query[key];
       break;
+    }
+  }
+
+  if ((tipoParam === 'cpf' || tipoParam === 'cnpj' || tipoParam === 'cpf_cnpj') && paramValue) {
+    const digits = paramValue.replace(/\D/g, '');
+    if (digits.length !== 11 && digits.length !== 14) {
+      return c.json({ error: `Formato inválido para ${tipoParam.toUpperCase()}: deve ter 11 (CPF) ou 14 (CNPJ) dígitos` }, 422);
     }
   }
 

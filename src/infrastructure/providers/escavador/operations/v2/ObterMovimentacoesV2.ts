@@ -1,3 +1,4 @@
+import { isLeft } from '../../../../../shared/domain/Either.js';
 import type { Either } from '../../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../../shared/infrastructure/IHttpClient.js';
@@ -6,12 +7,7 @@ import {
   MovimentacoesV2ResponseSchema,
 } from '../../dtos/v2/ProcessoV2Dto.js';
 import { parseOrSchemaError } from '../../../../../shared/domain/parseOrSchemaError.js';
-
-export interface IObterMovimentacoesV2 {
-  execute(input: { numero_cnj: string; pagina?: number }): Promise<
-    Either<SourceError, MovimentacoesV2Response>
-  >;
-}
+import type { IObterMovimentacoesV2 } from '../../ports/IObterMovimentacoesV2.js';
 
 export class ObterMovimentacoesV2 implements IObterMovimentacoesV2 {
   constructor(private readonly http: IHttpClient) {}
@@ -26,7 +22,7 @@ export class ObterMovimentacoesV2 implements IObterMovimentacoesV2 {
       `/api/v2/processos/numero_cnj/${encodeURIComponent(input.numero_cnj)}/movimentacoes`,
       { params },
     );
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
     return parseOrSchemaError(MovimentacoesV2ResponseSchema, result.value, 'escavador-v2');
   }
 }

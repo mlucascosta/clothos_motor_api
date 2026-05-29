@@ -3,6 +3,7 @@
  * @module infrastructure/providers/escavador/operations/ObterPessoa
  */
 
+import { isLeft } from '../../../../shared/domain/Either.js';
 import type { Either } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
@@ -28,7 +29,7 @@ export class ObterPessoa implements IObterPessoa {
   async execute(input: ObterPessoaInput): Promise<Either<SourceError, PessoaDto>> {
     const result = await this.http.request<unknown>(`/api/v1/pessoas/${input.id}`);
 
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
 
     return parseOrSchemaError(PessoaDtoSchema, result.value, 'escavador');
   }

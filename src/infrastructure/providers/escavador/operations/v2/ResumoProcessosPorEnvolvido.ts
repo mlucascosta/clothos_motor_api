@@ -1,17 +1,13 @@
 import { z } from 'zod';
+import { isLeft } from '../../../../../shared/domain/Either.js';
 import type { Either } from '../../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../../shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '../../../../../shared/domain/parseOrSchemaError.js';
+import type { IResumoProcessosPorEnvolvido } from '../../ports/IResumoProcessosPorEnvolvido.js';
 
 const ResumoEnvolvidoSchema = z.record(z.unknown());
-type ResumoEnvolvido = z.infer<typeof ResumoEnvolvidoSchema>;
-
-export interface IResumoProcessosPorEnvolvido {
-  execute(input: { nome?: string; cpf_cnpj?: string }): Promise<
-    Either<SourceError, ResumoEnvolvido>
-  >;
-}
+export type ResumoEnvolvido = z.infer<typeof ResumoEnvolvidoSchema>;
 
 export class ResumoProcessosPorEnvolvido implements IResumoProcessosPorEnvolvido {
   constructor(private readonly http: IHttpClient) {}
@@ -24,7 +20,7 @@ export class ResumoProcessosPorEnvolvido implements IResumoProcessosPorEnvolvido
     if (input.cpf_cnpj !== undefined) params['cpf_cnpj'] = input.cpf_cnpj;
 
     const result = await this.http.request<unknown>('/api/v2/envolvido/resumo', { params });
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
     return parseOrSchemaError(ResumoEnvolvidoSchema, result.value, 'escavador-v2');
   }
 }

@@ -4,24 +4,14 @@
  * @module infrastructure/providers/escavador/operations/ObterSaldo
  */
 
+import { isLeft } from '../../../../shared/domain/Either.js';
 import type { Either } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
 import type { SaldoDto } from '../dtos/SaldoDto.js';
 import { SaldoDtoSchema } from '../dtos/SaldoDto.js';
 import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
-
-/**
- * Interface para operação de obtenção de saldo.
- * @interface IObterSaldo
- */
-export interface IObterSaldo {
-  /**
-   * Executa consulta de saldo de créditos disponíveis.
-   * @returns {Promise<Either<SourceError, SaldoDto>>} Saldo e limite ou erro
-   */
-  execute(): Promise<Either<SourceError, SaldoDto>>;
-}
+import type { IObterSaldo } from '../ports/IObterSaldo.js';
 
 /**
  * Operação de obtenção de saldo de créditos (GET /api/v1/quantidade-creditos).
@@ -39,7 +29,7 @@ export class ObterSaldo implements IObterSaldo {
    */
   async execute(): Promise<Either<SourceError, SaldoDto>> {
     const result = await this.http.request<unknown>('/api/v1/quantidade-creditos');
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
     return parseOrSchemaError(SaldoDtoSchema, result.value, 'escavador');
   }
 }

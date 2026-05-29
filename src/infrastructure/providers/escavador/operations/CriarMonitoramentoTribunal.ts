@@ -1,22 +1,11 @@
+import { isLeft } from '../../../../shared/domain/Either.js';
 import type { Either } from '../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
 import type { MonitoramentoTribunalDto } from '../dtos/MonitoramentoDto.js';
 import { MonitoramentoTribunalDtoSchema } from '../dtos/MonitoramentoDto.js';
 import { parseOrSchemaError } from '../../../../shared/domain/parseOrSchemaError.js';
-
-export interface CriarMonitoramentoTribunalInput {
-  tipo: string;
-  identificador: string;
-  tribunal: number;
-  callback_url?: string;
-}
-
-export interface ICriarMonitoramentoTribunal {
-  execute(
-    input: CriarMonitoramentoTribunalInput,
-  ): Promise<Either<SourceError, MonitoramentoTribunalDto>>;
-}
+import type { ICriarMonitoramentoTribunal, CriarMonitoramentoTribunalInput } from '../ports/ICriarMonitoramentoTribunal.js';
 
 export class CriarMonitoramentoTribunal implements ICriarMonitoramentoTribunal {
   constructor(private readonly http: IHttpClient) {}
@@ -33,7 +22,7 @@ export class CriarMonitoramentoTribunal implements ICriarMonitoramentoTribunal {
         callback_url: input.callback_url,
       },
     });
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
     return parseOrSchemaError(MonitoramentoTribunalDtoSchema, result.value, 'escavador');
   }
 }

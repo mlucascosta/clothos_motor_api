@@ -1,3 +1,4 @@
+import { isLeft } from '../../../../../shared/domain/Either.js';
 import type { Either } from '../../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../../shared/infrastructure/IHttpClient.js';
@@ -6,12 +7,7 @@ import {
   BuscaProcessosPorEnvolvidoResponseSchema,
 } from '../../dtos/v2/ProcessoV2Dto.js';
 import { parseOrSchemaError } from '../../../../../shared/domain/parseOrSchemaError.js';
-
-export interface IBuscarProcessosPorEnvolvido {
-  execute(input: { nome?: string; cpf_cnpj?: string; cursor?: string; li?: string }): Promise<
-    Either<SourceError, BuscaProcessosPorEnvolvidoResponse>
-  >;
-}
+import type { IBuscarProcessosPorEnvolvido } from '../../ports/IBuscarProcessosPorEnvolvido.js';
 
 export class BuscarProcessosPorEnvolvido implements IBuscarProcessosPorEnvolvido {
   constructor(private readonly http: IHttpClient) {}
@@ -26,7 +22,7 @@ export class BuscarProcessosPorEnvolvido implements IBuscarProcessosPorEnvolvido
     if (input.li !== undefined) params['li'] = input.li;
 
     const result = await this.http.request<unknown>('/api/v2/envolvido/processos', { params });
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
     return parseOrSchemaError(BuscaProcessosPorEnvolvidoResponseSchema, result.value, 'escavador-v2');
   }
 }

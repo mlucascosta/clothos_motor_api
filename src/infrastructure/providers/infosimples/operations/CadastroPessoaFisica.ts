@@ -5,6 +5,7 @@
  * @module infrastructure/providers/infosimples/operations/CadastroPessoaFisica
  */
 
+import { isLeft } from '../../../../shared/domain/Either.js';
 import type { Either } from '../../../../shared/domain/Either.js';
 import type { SourceError } from '../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../shared/infrastructure/IHttpClient.js';
@@ -96,7 +97,7 @@ export class CadastroPessoaFisica
       params: cleanParams,
     });
 
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
 
     return parseOrSchemaError(ResponseSchema, result.value, 'infosimples');
   }

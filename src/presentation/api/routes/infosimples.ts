@@ -9,7 +9,7 @@
  */
 
 import { Hono } from 'hono';
-import { handleOp } from '../../../shared/infrastructure/handleOp.js';
+import { handleOp } from '../handleOp.js';
 import { InfosimplesHttpClient } from '../../../infrastructure/providers/infosimples/InfosimplesHttpClient.js';
 import { resolveOperation } from '../../../infrastructure/providers/infosimples/operations/registry.js';
 import type { OneOfGroup, ValidationRule } from '../../../infrastructure/providers/infosimples/operations/validation-map.js';

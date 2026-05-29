@@ -1,14 +1,10 @@
+import { isLeft } from '../../../../../shared/domain/Either.js';
 import type { Either } from '../../../../../shared/domain/Either.js';
 import { SourceError } from '../../../../../shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '../../../../../shared/infrastructure/IHttpClient.js';
 import { type AutosV2Response, AutosV2ResponseSchema } from '../../dtos/v2/ProcessoV2Dto.js';
 import { parseOrSchemaError } from '../../../../../shared/domain/parseOrSchemaError.js';
-
-export interface IObterAutosProcesso {
-  execute(input: { numero_cnj: string; pagina?: number }): Promise<
-    Either<SourceError, AutosV2Response>
-  >;
-}
+import type { IObterAutosProcesso } from '../../ports/IObterAutosProcesso.js';
 
 export class ObterAutosProcesso implements IObterAutosProcesso {
   constructor(private readonly http: IHttpClient) {}
@@ -23,7 +19,7 @@ export class ObterAutosProcesso implements IObterAutosProcesso {
       `/api/v2/processos/${encodeURIComponent(input.numero_cnj)}/autos`,
       { params },
     );
-    if (result._tag === 'Left') return result;
+    if (isLeft(result)) return result;
     return parseOrSchemaError(AutosV2ResponseSchema, result.value, 'escavador-v2');
   }
 }
