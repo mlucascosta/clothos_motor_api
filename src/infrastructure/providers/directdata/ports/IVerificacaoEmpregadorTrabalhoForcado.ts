@@ -15,8 +15,13 @@ import type { VerificacaoEmpregadorTrabalhoForcadoRetornoDto } from '../dtos/Ver
  */
 export interface IVerificacaoEmpregadorTrabalhoForcado {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: VerificacaoEmpregadorTrabalhoForcadoRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: VerificacaoEmpregadorTrabalhoForcadoRetornoDto | null;
+      }
+    >
+  >;
 }

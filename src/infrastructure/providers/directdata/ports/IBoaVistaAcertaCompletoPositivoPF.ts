@@ -5,8 +5,8 @@
 
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 import type { BoaVistaAcertaCompletoPositivoPFRetornoDto } from '../dtos/BoaVistaAcertaCompletoPositivoPFDto.js';
+import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 
 /**
  * Interface para consulta de BoaVistaAcertaCompletoPositivoPF.
@@ -15,8 +15,13 @@ import type { BoaVistaAcertaCompletoPositivoPFRetornoDto } from '../dtos/BoaVist
  */
 export interface IBoaVistaAcertaCompletoPositivoPF {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: BoaVistaAcertaCompletoPositivoPFRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: BoaVistaAcertaCompletoPositivoPFRetornoDto | null;
+      }
+    >
+  >;
 }

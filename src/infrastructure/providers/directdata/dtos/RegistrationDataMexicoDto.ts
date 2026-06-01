@@ -16,7 +16,7 @@ export const RegistrationDataMexicoRetornoSchema = z.object({
   name: z.string().nullable().optional(),
   phones: z.array(z.record(z.unknown())).nullable().optional(),
   rfc: z.string().nullable().optional(),
-  salaryRange: z.string().nullable().optional()
+  salaryRange: z.string().nullable().optional(),
 });
 
 export type RegistrationDataMexicoRetornoDto = z.infer<typeof RegistrationDataMexicoRetornoSchema>;

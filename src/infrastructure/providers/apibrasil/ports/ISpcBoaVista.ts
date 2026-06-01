@@ -11,7 +11,5 @@ export interface ISpcBoaVista {
   readonly path: string;
   readonly creditValue: number;
   readonly type: string;
-  execute(
-    params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, SpcBoaVistaDto>>;
+  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, SpcBoaVistaDto>>;
 }

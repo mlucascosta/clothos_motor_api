@@ -108,7 +108,9 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
         }),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/0000001-00.0000.0.00.0000/atualizacao');
+      const res = await app.request(
+        '/api/escavador/v2/processos/0000001-00.0000.0.00.0000/atualizacao',
+      );
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -116,6 +118,12 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
     });
 
     it('❌ erro: retorna 500 com ID inválido', async () => {
+      // Rota usa numero_cnj (string) sem validação de formato — o upstream
+      // responde com erro. Mock determinístico evita chamada HTTP real.
+      fetchSpy.mockResolvedValue(
+        new Response(JSON.stringify({ error: 'Invalid CNJ' }), { status: 500 }),
+      );
+
       const res = await app.request('/api/escavador/v2/processos/invalid/atualizacao');
 
       expect(res.status).toBeGreaterThanOrEqual(400);
@@ -126,7 +134,9 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
         new Response(JSON.stringify({ error: 'Not found' }), { status: 500 }),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/9999999-99.9999.9.99.9999/atualizacao');
+      const res = await app.request(
+        '/api/escavador/v2/processos/9999999-99.9999.9.99.9999/atualizacao',
+      );
 
       expect([500, 404]).toContain(res.status);
     });
@@ -141,9 +151,12 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
         }),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/0000001-00.0000.0.00.0000/atualizacao', {
-        method: 'POST',
-      });
+      const res = await app.request(
+        '/api/escavador/v2/processos/0000001-00.0000.0.00.0000/atualizacao',
+        {
+          method: 'POST',
+        },
+      );
 
       expect(res.status).toBe(202);
       const body = (await res.json()) as Record<string, unknown>;
@@ -151,6 +164,12 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
     });
 
     it('❌ erro: retorna 500 com ID inválido', async () => {
+      // Rota usa numero_cnj (string) sem validação de formato — o upstream
+      // responde com erro. Mock determinístico evita chamada HTTP real.
+      fetchSpy.mockResolvedValue(
+        new Response(JSON.stringify({ error: 'Invalid CNJ' }), { status: 500 }),
+      );
+
       const res = await app.request('/api/escavador/v2/processos/invalid/atualizacao', {
         method: 'POST',
       });
@@ -163,9 +182,12 @@ describe('Escavador V2 — Atualização, Resumo, Download (E2E)', () => {
         new Response(JSON.stringify({ error: 'Not found' }), { status: 500 }),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/9999999-99.9999.9.99.9999/atualizacao', {
-        method: 'POST',
-      });
+      const res = await app.request(
+        '/api/escavador/v2/processos/9999999-99.9999.9.99.9999/atualizacao',
+        {
+          method: 'POST',
+        },
+      );
 
       expect([500, 404]).toContain(res.status);
     });

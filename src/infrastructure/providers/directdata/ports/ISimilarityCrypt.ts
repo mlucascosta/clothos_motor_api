@@ -15,8 +15,13 @@ import type { SimilarityCryptRetornoDto } from '../dtos/SimilarityCryptDto.js';
  */
 export interface ISimilarityCrypt {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: SimilarityCryptRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: SimilarityCryptRetornoDto | null;
+      }
+    >
+  >;
 }

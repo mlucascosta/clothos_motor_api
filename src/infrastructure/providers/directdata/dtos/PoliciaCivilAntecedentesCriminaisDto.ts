@@ -22,7 +22,9 @@ export const PoliciaCivilAntecedentesCriminaisRetornoSchema = z.object({
   possuiAntecedentesCriminais: z.boolean().nullable().optional(),
   rg: z.string().nullable().optional(),
   status: z.string().nullable().optional(),
-  uf: z.string().nullable().optional()
+  uf: z.string().nullable().optional(),
 });
 
-export type PoliciaCivilAntecedentesCriminaisRetornoDto = z.infer<typeof PoliciaCivilAntecedentesCriminaisRetornoSchema>;
+export type PoliciaCivilAntecedentesCriminaisRetornoDto = z.infer<
+  typeof PoliciaCivilAntecedentesCriminaisRetornoSchema
+>;

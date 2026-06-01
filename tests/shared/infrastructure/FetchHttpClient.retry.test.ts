@@ -4,8 +4,8 @@
  * @module tests/shared/infrastructure/FetchHttpClient.retry
  */
 
-import { FetchHttpClient } from '../../../src/shared/infrastructure/FetchHttpClient';
 import { isLeft, isRight } from '../../../src/shared/domain/Either';
+import { FetchHttpClient } from '../../../src/shared/infrastructure/FetchHttpClient';
 
 function makeClient(overrides?: { maxRetries?: number; retryBaseDelayMs?: number }) {
   return new FetchHttpClient({
@@ -24,9 +24,9 @@ describe('FetchHttpClient — retry/backoff', () => {
   });
 
   it('não faz retry em 401 AUTH_FAILED (erro não-transitório)', async () => {
-    fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response('Unauthorized', { status: 401 }),
-    );
+    fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(new Response('Unauthorized', { status: 401 }));
 
     const result = await makeClient().request('/endpoint');
 
@@ -36,9 +36,9 @@ describe('FetchHttpClient — retry/backoff', () => {
   });
 
   it('não faz retry em 404 NOT_FOUND', async () => {
-    fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response('Not Found', { status: 404 }),
-    );
+    fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(new Response('Not Found', { status: 404 }));
 
     const result = await makeClient().request('/endpoint');
 
@@ -48,9 +48,9 @@ describe('FetchHttpClient — retry/backoff', () => {
   });
 
   it('não faz retry em 429 RATE_LIMITED', async () => {
-    fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response('Too Many Requests', { status: 429 }),
-    );
+    fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(new Response('Too Many Requests', { status: 429 }));
 
     const result = await makeClient().request('/endpoint');
 
@@ -101,9 +101,9 @@ describe('FetchHttpClient — retry/backoff', () => {
   });
 
   it('retorna último erro após esgotar maxRetries', async () => {
-    fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response('Internal Error', { status: 503 }),
-    );
+    fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(new Response('Internal Error', { status: 503 }));
 
     const result = await makeClient({ maxRetries: 3 }).request('/endpoint');
 
@@ -113,9 +113,9 @@ describe('FetchHttpClient — retry/backoff', () => {
   });
 
   it('maxRetries=1 (padrão) não faz retry em UPSTREAM_ERROR', async () => {
-    fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response('Error', { status: 500 }),
-    );
+    fetchSpy = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(new Response('Error', { status: 500 }));
 
     await makeClient({ maxRetries: 1 }).request('/endpoint');
 

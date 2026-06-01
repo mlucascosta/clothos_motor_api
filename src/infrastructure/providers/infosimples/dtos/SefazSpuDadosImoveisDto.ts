@@ -6,20 +6,22 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const SefazSpuDadosImoveisItemSchema = z.object({
-  rip: z.string().optional(),
-  denominacao: z.string().optional(),
-  endereco: z.string().optional(),
-  municipio: z.string().optional(),
-  uf: z.string().optional(),
-  area_total: z.string().optional(),
-  area_construida: z.string().optional(),
-  uso: z.string().optional(),
-  regime: z.string().optional(),
-  valor_avaliacao: z.number().optional(),
-  data_avaliacao: z.string().optional(),
-  situacao: z.string().optional(),
-}).passthrough();
+export const SefazSpuDadosImoveisItemSchema = z
+  .object({
+    rip: z.string().optional(),
+    denominacao: z.string().optional(),
+    endereco: z.string().optional(),
+    municipio: z.string().optional(),
+    uf: z.string().optional(),
+    area_total: z.string().optional(),
+    area_construida: z.string().optional(),
+    uso: z.string().optional(),
+    regime: z.string().optional(),
+    valor_avaliacao: z.number().optional(),
+    data_avaliacao: z.string().optional(),
+    situacao: z.string().optional(),
+  })
+  .passthrough();
 
 export const SefazSpuDadosImoveisResponseSchema = z.object({
   code: z.number(),

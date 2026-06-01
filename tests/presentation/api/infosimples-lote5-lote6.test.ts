@@ -44,66 +44,126 @@ jest.mock('../../../src/infrastructure/providers/infosimples/operations/validati
 // então require() aqui funciona corretamente.
 jest.mock('../../../src/infrastructure/providers/infosimples/operations/registry', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { CaixaRegularidade } = require('../../../src/infrastructure/providers/infosimples/operations/CaixaRegularidade');
+  const {
+    CaixaRegularidade,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/CaixaRegularidade');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { FgtsGuia } = require('../../../src/infrastructure/providers/infosimples/operations/FgtsGuia');
+  const {
+    FgtsGuia,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/FgtsGuia');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { FgtsGuiaRapida } = require('../../../src/infrastructure/providers/infosimples/operations/FgtsGuiaRapida');
+  const {
+    FgtsGuiaRapida,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/FgtsGuiaRapida');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { DataprevFap } = require('../../../src/infrastructure/providers/infosimples/operations/DataprevFap');
+  const {
+    DataprevFap,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/DataprevFap');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { DataprevQualificacao } = require('../../../src/infrastructure/providers/infosimples/operations/DataprevQualificacao');
+  const {
+    DataprevQualificacao,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/DataprevQualificacao');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { CnisPreInscricao } = require('../../../src/infrastructure/providers/infosimples/operations/CnisPreInscricao');
+  const {
+    CnisPreInscricao,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/CnisPreInscricao');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { FazendaSped } = require('../../../src/infrastructure/providers/infosimples/operations/FazendaSped');
+  const {
+    FazendaSped,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/FazendaSped');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { SitCaepi } = require('../../../src/infrastructure/providers/infosimples/operations/SitCaepi');
+  const {
+    SitCaepi,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/SitCaepi');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { SitTrabalhoEscravo } = require('../../../src/infrastructure/providers/infosimples/operations/SitTrabalhoEscravo');
+  const {
+    SitTrabalhoEscravo,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/SitTrabalhoEscravo');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { CarDemonstrativo } = require('../../../src/infrastructure/providers/infosimples/operations/CarDemonstrativo');
+  const {
+    CarDemonstrativo,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/CarDemonstrativo');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { CarDemonstrativoPdf } = require('../../../src/infrastructure/providers/infosimples/operations/CarDemonstrativoPdf');
+  const {
+    CarDemonstrativoPdf,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/CarDemonstrativoPdf');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { CarDownloadShapefile } = require('../../../src/infrastructure/providers/infosimples/operations/CarDownloadShapefile');
+  const {
+    CarDownloadShapefile,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/CarDownloadShapefile');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { CarImovel } = require('../../../src/infrastructure/providers/infosimples/operations/CarImovel');
+  const {
+    CarImovel,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/CarImovel');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { IncraCoordenadas } = require('../../../src/infrastructure/providers/infosimples/operations/IncraCoordenadas');
+  const {
+    IncraCoordenadas,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/IncraCoordenadas');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { IncraSigefDetalhesParcela } = require('../../../src/infrastructure/providers/infosimples/operations/IncraSigefDetalhesParcela');
+  const {
+    IncraSigefDetalhesParcela,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/IncraSigefDetalhesParcela');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { IncraSigefParcelas } = require('../../../src/infrastructure/providers/infosimples/operations/IncraSigefParcelas');
+  const {
+    IncraSigefParcelas,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/IncraSigefParcelas');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { IncraSigefRequerimentos } = require('../../../src/infrastructure/providers/infosimples/operations/IncraSigefRequerimentos');
+  const {
+    IncraSigefRequerimentos,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/IncraSigefRequerimentos');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { SncrCcir } = require('../../../src/infrastructure/providers/infosimples/operations/SncrCcir');
+  const {
+    SncrCcir,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/SncrCcir');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { SncrImoveis } = require('../../../src/infrastructure/providers/infosimples/operations/SncrImoveis');
+  const {
+    SncrImoveis,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/SncrImoveis');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { OnrMapaRegistroImoveis } = require('../../../src/infrastructure/providers/infosimples/operations/OnrMapaRegistroImoveis');
+  const {
+    OnrMapaRegistroImoveis,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/OnrMapaRegistroImoveis');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { IbamaAutuacoes } = require('../../../src/infrastructure/providers/infosimples/operations/IbamaAutuacoes');
+  const {
+    IbamaAutuacoes,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/IbamaAutuacoes');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { IbamaCertidaoDebitos } = require('../../../src/infrastructure/providers/infosimples/operations/IbamaCertidaoDebitos');
+  const {
+    IbamaCertidaoDebitos,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/IbamaCertidaoDebitos');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { IbamaCertidaoEmbargos } = require('../../../src/infrastructure/providers/infosimples/operations/IbamaCertidaoEmbargos');
+  const {
+    IbamaCertidaoEmbargos,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/IbamaCertidaoEmbargos');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { IbamaCertificadoRegularidade } = require('../../../src/infrastructure/providers/infosimples/operations/IbamaCertificadoRegularidade');
+  const {
+    IbamaCertificadoRegularidade,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/IbamaCertificadoRegularidade');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { DiarioOficialSpValorVenal } = require('../../../src/infrastructure/providers/infosimples/operations/DiarioOficialSpValorVenal');
+  const {
+    DiarioOficialSpValorVenal,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/DiarioOficialSpValorVenal');
   // Original operations
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { CadastroPessoaFisica } = require('../../../src/infrastructure/providers/infosimples/operations/CadastroPessoaFisica');
+  const {
+    CadastroPessoaFisica,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/CadastroPessoaFisica');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { CadastroPessoaJuridica } = require('../../../src/infrastructure/providers/infosimples/operations/CadastroPessoaJuridica');
+  const {
+    CadastroPessoaJuridica,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/CadastroPessoaJuridica');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { CenprotSpProtestos } = require('../../../src/infrastructure/providers/infosimples/operations/CenprotSpProtestos');
+  const {
+    CenprotSpProtestos,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/CenprotSpProtestos');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { IeptbProtestos } = require('../../../src/infrastructure/providers/infosimples/operations/IeptbProtestos');
+  const {
+    IeptbProtestos,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/IeptbProtestos');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { IeptbProtestosDetalhes } = require('../../../src/infrastructure/providers/infosimples/operations/IeptbProtestosDetalhes');
+  const {
+    IeptbProtestosDetalhes,
+  } = require('../../../src/infrastructure/providers/infosimples/operations/IeptbProtestosDetalhes');
 
   const reg: Record<string, (http: unknown) => unknown> = {
     'consultas/receita-federal/cpf': (h) => new CadastroPessoaFisica(h),
@@ -210,7 +270,14 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com dados de regularidade', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ cnpj: '33200056000149', razao_social: 'Empresa Teste', situacao: 'Regular' }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                { cnpj: '33200056000149', razao_social: 'Empresa Teste', situacao: 'Regular' },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -219,11 +286,22 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
-      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/caixa/regularidade', status: 'success' }));
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/caixa/regularidade',
+          status: 'success',
+        }),
+      );
     });
 
     it('sucesso sem resultado — code 603, data null', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(`${PATH}?cnpj=00000000000000`, { method: 'POST' });
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -236,7 +314,9 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(`${PATH}?cnpj=33200056000149`, { method: 'POST' });
       expect(res.status).toBe(500);
-      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ gateway: 'infosimples', status: 'error' }));
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ gateway: 'infosimples', status: 'error' }),
+      );
     });
   });
 
@@ -247,18 +327,30 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com guia FGTS', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ cnpj: '33200056000149', competencia: '2024-01', valor: 1500.0 }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ cnpj: '33200056000149', competencia: '2024-01', valor: 1500.0 }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
       const res = await app.request(`${PATH}?cnpj=33200056000149`, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect((await res.json() as Record<string, unknown>).data_count).toBe(1);
-      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ gateway: 'infosimples', status: 'success' }));
+      expect(((await res.json()) as Record<string, unknown>).data_count).toBe(1);
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ gateway: 'infosimples', status: 'success' }),
+      );
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -279,7 +371,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com guia rápida FGTS', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ cnpj: '33200056000149', competencia: '2024-02', situacao: 'Pago' }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ cnpj: '33200056000149', competencia: '2024-02', situacao: 'Pago' }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -289,7 +386,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -310,25 +412,43 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com FAP', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ cnpj_estabelecimento: '33200056000149', fap: 1.2, resultado: 'Acima da média' }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                { cnpj_estabelecimento: '33200056000149', fap: 1.2, resultado: 'Acima da média' },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
-      const res = await app.request(`${PATH}?cnpj_estabelecimento=33200056000149`, { method: 'POST' });
+      const res = await app.request(`${PATH}?cnpj_estabelecimento=33200056000149`, {
+        method: 'POST',
+      });
       expect(res.status).toBe(200);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
-      const res = await app.request(`${PATH}?cnpj_estabelecimento=00000000000000`, { method: 'POST' });
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(`${PATH}?cnpj_estabelecimento=00000000000000`, {
+        method: 'POST',
+      });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
     });
 
     it('falha — upstream throw → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
-      const res = await app.request(`${PATH}?cnpj_estabelecimento=33200056000149`, { method: 'POST' });
+      const res = await app.request(`${PATH}?cnpj_estabelecimento=33200056000149`, {
+        method: 'POST',
+      });
       expect(res.status).toBe(500);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
     });
@@ -347,25 +467,44 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com qualificação', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ nis: '12345678901', cpf: '11144477735', resultado: 'Qualificado' }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ nis: '12345678901', cpf: '11144477735', resultado: 'Qualificado' }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
-      const res = await app.request(`${PATH}?nis=12345678901&name=João&birthdate=1990-01-01&cpf=11144477735`, { method: 'POST' });
+      const res = await app.request(
+        `${PATH}?nis=12345678901&name=João&birthdate=1990-01-01&cpf=11144477735`,
+        { method: 'POST' },
+      );
       expect(res.status).toBe(200);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
-      const res = await app.request(`${PATH}?nis=99999999999&name=Inexistente&birthdate=2000-01-01&cpf=99999999999`, { method: 'POST' });
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(
+        `${PATH}?nis=99999999999&name=Inexistente&birthdate=2000-01-01&cpf=99999999999`,
+        { method: 'POST' },
+      );
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
     });
 
     it('falha — upstream throw → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
-      const res = await app.request(`${PATH}?nis=12345678901&name=João&birthdate=1990-01-01&cpf=11144477735`, { method: 'POST' });
+      const res = await app.request(
+        `${PATH}?nis=12345678901&name=João&birthdate=1990-01-01&cpf=11144477735`,
+        { method: 'POST' },
+      );
       expect(res.status).toBe(500);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
     });
@@ -384,25 +523,44 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com pré-inscrição CNIS', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ cpf: '11144477735', nis: '12345678901', situacao: 'Ativo' }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ cpf: '11144477735', nis: '12345678901', situacao: 'Ativo' }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
-      const res = await app.request(`${PATH}?cpf=11144477735&nome=João+Silva&data_nascimento=1990-01-01`, { method: 'POST' });
+      const res = await app.request(
+        `${PATH}?cpf=11144477735&nome=João+Silva&data_nascimento=1990-01-01`,
+        { method: 'POST' },
+      );
       expect(res.status).toBe(200);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
-      const res = await app.request(`${PATH}?cpf=99999999999&nome=Inexistente&data_nascimento=2000-01-01`, { method: 'POST' });
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(
+        `${PATH}?cpf=99999999999&nome=Inexistente&data_nascimento=2000-01-01`,
+        { method: 'POST' },
+      );
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
     });
 
     it('falha — upstream throw → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
-      const res = await app.request(`${PATH}?cpf=11144477735&nome=João&data_nascimento=1990-01-01`, { method: 'POST' });
+      const res = await app.request(
+        `${PATH}?cpf=11144477735&nome=João&data_nascimento=1990-01-01`,
+        { method: 'POST' },
+      );
       expect(res.status).toBe(500);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
     });
@@ -421,7 +579,9 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com SPED', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ cnpj: '33200056000149', situacao: 'Ativo' }] })),
+          JSON.stringify(
+            envelope({ data_count: 1, data: [{ cnpj: '33200056000149', situacao: 'Ativo' }] }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -431,7 +591,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -452,7 +617,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com CAEPI', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ ca: '12345', equipamento: 'Capacete', situacao: 'Válido' }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ ca: '12345', equipamento: 'Capacete', situacao: 'Válido' }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -462,7 +632,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(`${PATH}?ca=99999`, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -489,7 +664,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com lista trabalho escravo', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ cpf: '11144477735', ano: '2023', trabalhadores_resgatados: 5 }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ cpf: '11144477735', ano: '2023', trabalhadores_resgatados: 5 }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -499,7 +679,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -524,7 +709,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com demonstrativo CAR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ car: 'SP-3550308-A1B2C3D4', status: 'Ativo', area_total: 100.5 }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ car: 'SP-3550308-A1B2C3D4', status: 'Ativo', area_total: 100.5 }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -534,7 +724,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(`${PATH}?car=INVALIDO`, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -561,7 +756,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com URL do PDF', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ car: 'SP-3550308-A1B2C3D4', url_pdf: 'https://example.com/file.pdf' }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ car: 'SP-3550308-A1B2C3D4', url_pdf: 'https://example.com/file.pdf' }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -571,7 +771,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(`${PATH}?car=INVALIDO`, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -598,7 +803,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com URL do shapefile', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ car: 'SP-3550308-A1B2C3D4', url_shapefile: 'https://example.com/file.zip' }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ car: 'SP-3550308-A1B2C3D4', url_shapefile: 'https://example.com/file.zip' }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -608,7 +818,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(`${PATH}?car=INVALIDO`, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -635,7 +850,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com imóvel CAR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ car: 'SP-3550308-A1B2C3D4', tipo_imovel: 'Rural', area_total: 200.0 }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ car: 'SP-3550308-A1B2C3D4', tipo_imovel: 'Rural', area_total: 200.0 }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -645,7 +865,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(`${PATH}?car=INVALIDO`, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -672,17 +897,29 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com coordenadas INCRA', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ numero_certificacao: 'SP-1234567890', area: 50.0 }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ numero_certificacao: 'SP-1234567890', area: 50.0 }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
-      const res = await app.request(`${PATH}?numero_certificacao=SP-1234567890`, { method: 'POST' });
+      const res = await app.request(`${PATH}?numero_certificacao=SP-1234567890`, {
+        method: 'POST',
+      });
       expect(res.status).toBe(200);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(`${PATH}?numero_certificacao=INVALIDO`, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -690,7 +927,9 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
 
     it('falha — upstream throw → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
-      const res = await app.request(`${PATH}?numero_certificacao=SP-1234567890`, { method: 'POST' });
+      const res = await app.request(`${PATH}?numero_certificacao=SP-1234567890`, {
+        method: 'POST',
+      });
       expect(res.status).toBe(500);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
     });
@@ -709,7 +948,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com detalhes da parcela', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ codigo_parcela: 'ABC123', area: 75.5, situacao: 'Certificada' }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ codigo_parcela: 'ABC123', area: 75.5, situacao: 'Certificada' }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -719,7 +963,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(`${PATH}?codigo_parcela=INVALIDO`, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -746,7 +995,15 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com parcelas SIGEF', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 2, data: [{ codigo_parcela: 'P001', area: 30.0 }, { codigo_parcela: 'P002', area: 45.0 }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 2,
+              data: [
+                { codigo_parcela: 'P001', area: 30.0 },
+                { codigo_parcela: 'P002', area: 45.0 },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -756,7 +1013,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -777,7 +1039,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com requerimentos SIGEF', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ numero_requerimento: 'REQ001', tipo: 'Certificação', situacao: 'Aprovado' }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ numero_requerimento: 'REQ001', tipo: 'Certificação', situacao: 'Aprovado' }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -787,7 +1054,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -808,25 +1080,46 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com CCIR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ codigo_imovel: '12345', denominacao: 'Fazenda Boa Vista', area_total: 500.0 }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                { codigo_imovel: '12345', denominacao: 'Fazenda Boa Vista', area_total: 500.0 },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
-      const res = await app.request(`${PATH}?codigo_imovel=12345&uf_sede=SP&municipio_sede=SaoPaulo`, { method: 'POST' });
+      const res = await app.request(
+        `${PATH}?codigo_imovel=12345&uf_sede=SP&municipio_sede=SaoPaulo`,
+        { method: 'POST' },
+      );
       expect(res.status).toBe(200);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
-      const res = await app.request(`${PATH}?codigo_imovel=99999&uf_sede=SP&municipio_sede=Inexistente`, { method: 'POST' });
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(
+        `${PATH}?codigo_imovel=99999&uf_sede=SP&municipio_sede=Inexistente`,
+        { method: 'POST' },
+      );
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
     });
 
     it('falha — upstream throw → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
-      const res = await app.request(`${PATH}?codigo_imovel=12345&uf_sede=SP&municipio_sede=SaoPaulo`, { method: 'POST' });
+      const res = await app.request(
+        `${PATH}?codigo_imovel=12345&uf_sede=SP&municipio_sede=SaoPaulo`,
+        { method: 'POST' },
+      );
       expect(res.status).toBe(500);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
     });
@@ -845,7 +1138,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com imóveis SNCR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ codigo_imovel: '12345', municipio: 'São Paulo', uf: 'SP' }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ codigo_imovel: '12345', municipio: 'São Paulo', uf: 'SP' }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -855,7 +1153,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(`${PATH}?uf=ZZ&municipio=Inexistente`, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -882,7 +1185,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com mapa de registro de imóveis', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ camada: 'SP', municipio: 'São Paulo', cartorio: '1º RI SP' }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ camada: 'SP', municipio: 'São Paulo', cartorio: '1º RI SP' }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -892,7 +1200,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(`${PATH}?camada=ZZ`, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -919,7 +1232,14 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com autuações IBAMA', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ numero_auto: 'AUTO001', tipo_infracao: 'Desmatamento', valor_multa: 50000.0 }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                { numero_auto: 'AUTO001', tipo_infracao: 'Desmatamento', valor_multa: 50000.0 },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -929,7 +1249,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(`${PATH}?ano=1800`, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -956,7 +1281,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com certidão de débitos IBAMA', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ cpf_cnpj: '11144477735', situacao: 'Negativa', data_emissao: '2024-01-01' }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ cpf_cnpj: '11144477735', situacao: 'Negativa', data_emissao: '2024-01-01' }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -966,7 +1296,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -987,7 +1322,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com certidão de embargos IBAMA', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ cpf_cnpj: '11144477735', situacao: 'Negativa', data_emissao: '2024-01-01' }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ cpf_cnpj: '11144477735', situacao: 'Negativa', data_emissao: '2024-01-01' }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -997,7 +1337,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -1018,7 +1363,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com certificado de regularidade IBAMA', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ cpf_cnpj: '11144477735', situacao: 'Regular', data_validade: '2025-01-01' }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ cpf_cnpj: '11144477735', situacao: 'Regular', data_validade: '2025-01-01' }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -1028,7 +1378,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
@@ -1049,25 +1404,41 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     it('sucesso — retorna 200 com valor venal', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ data_count: 1, data: [{ codigo_ipva: 'ABC1234', ano_fabricacao: '2020', valor_venal: 85000.0 }] })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [{ codigo_ipva: 'ABC1234', ano_fabricacao: '2020', valor_venal: 85000.0 }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
-      const res = await app.request(`${PATH}?codigo_ipva=ABC1234&ano_fabricacao=2020`, { method: 'POST' });
+      const res = await app.request(`${PATH}?codigo_ipva=ABC1234&ano_fabricacao=2020`, {
+        method: 'POST',
+      });
       expect(res.status).toBe(200);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
     it('sucesso sem resultado — code 603', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(noResult), { status: 200, headers: { 'Content-Type': 'application/json' } }));
-      const res = await app.request(`${PATH}?codigo_ipva=XXX0000&ano_fabricacao=1900`, { method: 'POST' });
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(noResult), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(`${PATH}?codigo_ipva=XXX0000&ano_fabricacao=1900`, {
+        method: 'POST',
+      });
       expect(res.status).toBe(200);
       expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
     });
 
     it('falha — upstream throw → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
-      const res = await app.request(`${PATH}?codigo_ipva=ABC1234&ano_fabricacao=2020`, { method: 'POST' });
+      const res = await app.request(`${PATH}?codigo_ipva=ABC1234&ano_fabricacao=2020`, {
+        method: 'POST',
+      });
       expect(res.status).toBe(500);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
     });

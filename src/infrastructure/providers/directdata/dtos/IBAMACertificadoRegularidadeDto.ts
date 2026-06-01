@@ -24,7 +24,9 @@ export const IBAMACertificadoRegularidadeRetornoSchema = z.object({
   numero: z.number().int().nullable().optional(),
   numeroRegistro: z.string().nullable().optional(),
   observacao: z.string().nullable().optional(),
-  uf: z.string().nullable().optional()
+  uf: z.string().nullable().optional(),
 });
 
-export type IBAMACertificadoRegularidadeRetornoDto = z.infer<typeof IBAMACertificadoRegularidadeRetornoSchema>;
+export type IBAMACertificadoRegularidadeRetornoDto = z.infer<
+  typeof IBAMACertificadoRegularidadeRetornoSchema
+>;

@@ -10,7 +10,7 @@ export const ConsultaVeicularFrotasRetornoSchema = z.object({
   nomeProprietario: z.string().nullable().optional(),
   observacoes: z.string().nullable().optional(),
   quantidadeVeiculos: z.number().int().optional(),
-  veiculos: z.array(z.record(z.unknown())).nullable().optional()
+  veiculos: z.array(z.record(z.unknown())).nullable().optional(),
 });
 
 export type ConsultaVeicularFrotasRetornoDto = z.infer<typeof ConsultaVeicularFrotasRetornoSchema>;

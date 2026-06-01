@@ -49,14 +49,18 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     it('sucesso — retorna 200 com dados de antecedentes MG', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              nome: 'João Silva',
-              situacao: 'Com antecedentes',
-              antecedentes: [{ numero_processo: '0001234-12.2020.8.13.0024', crime: 'Furto' }],
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  nome: 'João Silva',
+                  situacao: 'Com antecedentes',
+                  antecedentes: [{ numero_processo: '0001234-12.2020.8.13.0024', crime: 'Furto' }],
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -68,7 +72,11 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/antecedentes-criminais/mg', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/antecedentes-criminais/mg',
+          status: 'success',
+        }),
       );
     });
 
@@ -106,26 +114,36 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     it('sucesso — retorna 200 com certidão emitida', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              nome: 'Maria Souza',
-              certidao_codigo: 'CERT-2024-001',
-              resultado: 'Negativa',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  nome: 'Maria Souza',
+                  certidao_codigo: 'CERT-2024-001',
+                  resultado: 'Negativa',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
 
-      const res = await app.request(`${PATH}?nome=Maria+Souza&birthdate=1990-05-15`, { method: 'POST' });
+      const res = await app.request(`${PATH}?nome=Maria+Souza&birthdate=1990-05-15`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/antecedentes-criminais/pf/emit', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/antecedentes-criminais/pf/emit',
+          status: 'success',
+        }),
       );
     });
 
@@ -137,7 +155,9 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
         ),
       );
 
-      const res = await app.request(`${PATH}?nome=Pessoa+Inexistente&birthdate=1800-01-01`, { method: 'POST' });
+      const res = await app.request(`${PATH}?nome=Pessoa+Inexistente&birthdate=1800-01-01`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -175,26 +195,36 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     it('sucesso — retorna 200 com validação da certidão', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              certidao_codigo: 'CERT-2024-001',
-              valida: true,
-              resultado: 'Negativa',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  certidao_codigo: 'CERT-2024-001',
+                  valida: true,
+                  resultado: 'Negativa',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
 
-      const res = await app.request(`${PATH}?certidao_codigo=CERT-2024-001&birthdate=1990-05-15`, { method: 'POST' });
+      const res = await app.request(`${PATH}?certidao_codigo=CERT-2024-001&birthdate=1990-05-15`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/antecedentes-criminais/pf/val', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/antecedentes-criminais/pf/val',
+          status: 'success',
+        }),
       );
     });
 
@@ -206,7 +236,9 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
         ),
       );
 
-      const res = await app.request(`${PATH}?certidao_codigo=INVALIDO&birthdate=2000-01-01`, { method: 'POST' });
+      const res = await app.request(`${PATH}?certidao_codigo=INVALIDO&birthdate=2000-01-01`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -217,7 +249,9 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     it('falha — upstream error → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
-      const res = await app.request(`${PATH}?certidao_codigo=CERT-001&birthdate=1990-01-01`, { method: 'POST' });
+      const res = await app.request(`${PATH}?certidao_codigo=CERT-001&birthdate=1990-01-01`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(500);
       expect(saveSpy).toHaveBeenCalledWith(
@@ -238,25 +272,35 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     it('sucesso — retorna 200 com dados de antecedentes SP', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              nome: 'Carlos Lima',
-              genero: 'M',
-              situacao: 'Sem antecedentes',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  nome: 'Carlos Lima',
+                  genero: 'M',
+                  situacao: 'Sem antecedentes',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
 
-      const res = await app.request(`${PATH}?nome=Carlos+Lima&birthdate=1985-03-20&genero=M`, { method: 'POST' });
+      const res = await app.request(`${PATH}?nome=Carlos+Lima&birthdate=1985-03-20&genero=M`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.code).toBe(0);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/antecedentes-criminais/sp', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/antecedentes-criminais/sp',
+          status: 'success',
+        }),
       );
     });
 
@@ -268,7 +312,9 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
         ),
       );
 
-      const res = await app.request(`${PATH}?nome=Ninguem&birthdate=2100-01-01&genero=F`, { method: 'POST' });
+      const res = await app.request(`${PATH}?nome=Ninguem&birthdate=2100-01-01&genero=F`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -279,7 +325,9 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     it('falha — upstream error → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
-      const res = await app.request(`${PATH}?nome=Teste&birthdate=1990-01-01&genero=M`, { method: 'POST' });
+      const res = await app.request(`${PATH}?nome=Teste&birthdate=1990-01-01&genero=M`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(500);
       expect(saveSpy).toHaveBeenCalledWith(
@@ -304,15 +352,19 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     it('sucesso — retorna 200 com ocorrências de cheques sem fundo', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              nome: 'João Silva',
-              banco: 'Banco do Brasil',
-              agencia: '0001',
-              quantidade_ocorrencias: 3,
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  nome: 'João Silva',
+                  banco: 'Banco do Brasil',
+                  agencia: '0001',
+                  quantidade_ocorrencias: 3,
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -324,7 +376,11 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/bcb/cheques-sem-fundo', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/bcb/cheques-sem-fundo',
+          status: 'success',
+        }),
       );
     });
 
@@ -362,14 +418,18 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     it('sucesso — retorna 200 com valores a receber por CPF', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              cpf: '11144477735',
-              valor_total: 2500.00,
-              quantidade_contas: 2,
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  cpf: '11144477735',
+                  valor_total: 2500.0,
+                  quantidade_contas: 2,
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -381,7 +441,11 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/bcb/valores-receber', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/bcb/valores-receber',
+          status: 'success',
+        }),
       );
     });
 
@@ -431,15 +495,19 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     it('sucesso — retorna 200 com dados do participante B3', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              cnpj: '33200056000149',
-              razao_social: 'Empresa XYZ S.A.',
-              tipo_participante: 'Corretora',
-              situacao: 'Ativo',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  cnpj: '33200056000149',
+                  razao_social: 'Empresa XYZ S.A.',
+                  tipo_participante: 'Corretora',
+                  situacao: 'Ativo',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -451,7 +519,11 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/b3/participantes', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/b3/participantes',
+          status: 'success',
+        }),
       );
     });
 
@@ -499,14 +571,18 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     it('sucesso — retorna 200 com processos CADE', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              numero_processo: '08700.001234/2020-55',
-              assunto: 'Ato de concentração',
-              situacao: 'Em análise',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  numero_processo: '08700.001234/2020-55',
+                  assunto: 'Ato de concentração',
+                  situacao: 'Em análise',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -518,7 +594,11 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/cade/processos', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/cade/processos',
+          status: 'success',
+        }),
       );
     });
 
@@ -560,14 +640,18 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     it('sucesso — retorna 200 com dados do participante CVM', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              nome: 'Fundo XYZ',
-              tipo_participante: 'Fundo de Investimento',
-              situacao: 'Ativo',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  nome: 'Fundo XYZ',
+                  tipo_participante: 'Fundo de Investimento',
+                  situacao: 'Ativo',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -578,7 +662,11 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.code).toBe(0);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/cvm/participante', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/cvm/participante',
+          status: 'success',
+        }),
       );
     });
 
@@ -616,14 +704,18 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     it('sucesso — retorna 200 com processos administrativos CVM', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              numero_processo: 'PAS CVM 15/2019',
-              assunto: 'Insider trading',
-              situacao: 'Julgado',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  numero_processo: 'PAS CVM 15/2019',
+                  assunto: 'Insider trading',
+                  situacao: 'Julgado',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -634,7 +726,11 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.code).toBe(0);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/cvm/processo-administrativo', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/cvm/processo-administrativo',
+          status: 'success',
+        }),
       );
     });
 
@@ -672,14 +768,18 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     it('sucesso — retorna 200 com sancionados CVM', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              nome: 'Pedro Alves',
-              penalidade: 'Multa',
-              valor_multa: 500000.00,
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  nome: 'Pedro Alves',
+                  penalidade: 'Multa',
+                  valor_multa: 500000.0,
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -690,7 +790,11 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.code).toBe(0);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/cvm/sancionadores', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/cvm/sancionadores',
+          status: 'success',
+        }),
       );
     });
 
@@ -732,16 +836,20 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     it('sucesso — retorna 200 com dados Amazônia Protege', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              cpf: '11144477735',
-              nome: 'Fazendeiro Silva',
-              situacao: 'Embargado',
-              municipio: 'Altamira',
-              estado: 'PA',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  cpf: '11144477735',
+                  nome: 'Fazendeiro Silva',
+                  situacao: 'Embargado',
+                  municipio: 'Altamira',
+                  estado: 'PA',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -753,7 +861,11 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/mpf/amazonia-protege', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/mpf/amazonia-protege',
+          status: 'success',
+        }),
       );
     });
 
@@ -799,15 +911,19 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     it('sucesso — retorna 200 com certidão negativa MPF', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              cpf: '11144477735',
-              negativa: true,
-              numero_certidao: 'CN-MPF-2024-12345',
-              data_emissao: '2024-01-15',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  cpf: '11144477735',
+                  negativa: true,
+                  numero_certidao: 'CN-MPF-2024-12345',
+                  data_emissao: '2024-01-15',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -819,7 +935,11 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/mpf/certidao-negativa', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/mpf/certidao-negativa',
+          status: 'success',
+        }),
       );
     });
 
@@ -863,14 +983,18 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     it('sucesso — retorna 200 com registros Lava Jato', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              nome: 'Empreiteira ABC',
-              fase: 'Fase 42',
-              descricao: 'Delação premiada',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  nome: 'Empreiteira ABC',
+                  fase: 'Fase 42',
+                  descricao: 'Delação premiada',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -882,7 +1006,11 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/mpf/lava-jato', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/mpf/lava-jato',
+          status: 'success',
+        }),
       );
     });
 
@@ -926,13 +1054,15 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     it('sucesso — retorna 200 com processos MPF', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 2,
-            data: [
-              { numero_processo: '5001234-12.2022.4.03.6100', assunto: 'Crime ambiental' },
-              { numero_processo: '5009876-45.2021.4.03.6100', assunto: 'Lavagem de dinheiro' },
-            ],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 2,
+              data: [
+                { numero_processo: '5001234-12.2022.4.03.6100', assunto: 'Crime ambiental' },
+                { numero_processo: '5009876-45.2021.4.03.6100', assunto: 'Lavagem de dinheiro' },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -944,7 +1074,11 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(2);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/mpf/processos', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/mpf/processos',
+          status: 'success',
+        }),
       );
     });
 
@@ -992,15 +1126,19 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     it('sucesso — retorna 200 com inquéritos civis MP-SP', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              nome: 'Empresa Ambiental Ltda',
-              numero_inquerito: 'IC-00123/2021',
-              assunto: 'Poluição hídrica',
-              situacao: 'Em andamento',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  nome: 'Empresa Ambiental Ltda',
+                  numero_inquerito: 'IC-00123/2021',
+                  assunto: 'Poluição hídrica',
+                  situacao: 'Em andamento',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -1012,7 +1150,11 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/mp/sp/inquerito-civil', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/mp/sp/inquerito-civil',
+          status: 'success',
+        }),
       );
     });
 

@@ -43,7 +43,9 @@ export const BoaVistaRiscoPositivoPJRetornoSchema = z.object({
   situacao: z.string().nullable().optional(),
   situacaoSintegra: z.string().nullable().optional(),
   telefones: z.array(z.record(z.unknown())).nullable().optional(),
-  tipoSociedade: z.string().nullable().optional()
+  tipoSociedade: z.string().nullable().optional(),
 });
 
-export type BoaVistaRiscoPositivoPJRetornoDto = z.infer<typeof BoaVistaRiscoPositivoPJRetornoSchema>;
+export type BoaVistaRiscoPositivoPJRetornoDto = z.infer<
+  typeof BoaVistaRiscoPositivoPJRetornoSchema
+>;

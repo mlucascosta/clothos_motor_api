@@ -1,9 +1,9 @@
 import {
-  DataJudSearchRequestSchema,
-  DataJudProcessoRequestSchema,
   DataJudClasseRequestSchema,
-  DataJudOrgaoRequestSchema,
   DataJudEnvolvidoRequestSchema,
+  DataJudOrgaoRequestSchema,
+  DataJudProcessoRequestSchema,
+  DataJudSearchRequestSchema,
 } from '../../../../src/infrastructure/providers/datajud/dtos/DataJudSearchRequestDto';
 
 describe('DataJud DTOs', () => {

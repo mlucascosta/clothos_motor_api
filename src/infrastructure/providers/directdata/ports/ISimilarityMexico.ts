@@ -15,8 +15,13 @@ import type { SimilarityMexicoRetornoDto } from '../dtos/SimilarityMexicoDto.js'
  */
 export interface ISimilarityMexico {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: SimilarityMexicoRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: SimilarityMexicoRetornoDto | null;
+      }
+    >
+  >;
 }

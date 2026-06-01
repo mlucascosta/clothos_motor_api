@@ -6,13 +6,15 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { CertidaoConjuntaDeDebitosPessoaJuridicaSchema } from '../dtos/CertidaoConjuntaDeDebitosPessoaJuridicaDto.js';
 import type { CertidaoConjuntaDeDebitosPessoaJuridicaDto } from '../dtos/CertidaoConjuntaDeDebitosPessoaJuridicaDto.js';
 import type { ICertidaoConjuntaDeDebitosPessoaJuridica } from '../ports/ICertidaoConjuntaDeDebitosPessoaJuridica.js';
 
-export class CertidaoConjuntaDeDebitosPessoaJuridica implements ICertidaoConjuntaDeDebitosPessoaJuridica {
+export class CertidaoConjuntaDeDebitosPessoaJuridica
+  implements ICertidaoConjuntaDeDebitosPessoaJuridica
+{
   readonly path = '/certidao-conjunta-de-debitos-pj';
   readonly creditValue = 0.72;
   readonly type = 'cnpj';
@@ -36,6 +38,10 @@ export class CertidaoConjuntaDeDebitosPessoaJuridica implements ICertidaoConjunt
 
     if (isLeft(result)) return result;
 
-    return parseOrSchemaError(CertidaoConjuntaDeDebitosPessoaJuridicaSchema, result.value, 'apibrasil');
+    return parseOrSchemaError(
+      CertidaoConjuntaDeDebitosPessoaJuridicaSchema,
+      result.value,
+      'apibrasil',
+    );
   }
 }

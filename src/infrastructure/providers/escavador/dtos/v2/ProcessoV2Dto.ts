@@ -29,24 +29,28 @@ export const EnvolvidoV2DtoSchema = z.object({
  *
  * @type {ZodSchema}
  */
-export const MovimentacaoV2DtoSchema = z.object({
-  id: z.number().int().optional(),
-  data: z.string().nullish(),
-  descricao: z.string().nullish(),
-  tipo: z.string().nullish(),
-}).passthrough();
+export const MovimentacaoV2DtoSchema = z
+  .object({
+    id: z.number().int().optional(),
+    data: z.string().nullish(),
+    descricao: z.string().nullish(),
+    tipo: z.string().nullish(),
+  })
+  .passthrough();
 
 /**
  * Schema de documento anexado ao processo.
  *
  * @type {ZodSchema}
  */
-export const DocumentoV2DtoSchema = z.object({
-  id: z.number().int().optional(),
-  nome: z.string().nullish(),
-  tipo: z.string().nullish(),
-  url: z.string().nullish(),
-}).passthrough();
+export const DocumentoV2DtoSchema = z
+  .object({
+    id: z.number().int().optional(),
+    nome: z.string().nullish(),
+    tipo: z.string().nullish(),
+    url: z.string().nullish(),
+  })
+  .passthrough();
 
 /**
  * Schema de auto anexado ao processo.

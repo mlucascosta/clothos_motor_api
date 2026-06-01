@@ -14,7 +14,7 @@ export const PRFInfracoesRetornoSchema = z.object({
   possuiInfracao: z.boolean().nullable().optional(),
   renavam: z.string().nullable().optional(),
   tipoConsultado: z.string().nullable().optional(),
-  ufPlaca: z.string().nullable().optional()
+  ufPlaca: z.string().nullable().optional(),
 });
 
 export type PRFInfracoesRetornoDto = z.infer<typeof PRFInfracoesRetornoSchema>;

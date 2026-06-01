@@ -6,17 +6,19 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const BcbChequesSemFundoItemSchema = z.object({
-  cpf: z.string().optional(),
-  cnpj: z.string().optional(),
-  nome: z.string().optional(),
-  banco: z.string().optional(),
-  agencia: z.string().optional(),
-  conta: z.string().optional(),
-  quantidade_ocorrencias: z.number().optional(),
-  data_inclusao: z.string().optional(),
-  motivo: z.string().optional(),
-}).passthrough();
+export const BcbChequesSemFundoItemSchema = z
+  .object({
+    cpf: z.string().optional(),
+    cnpj: z.string().optional(),
+    nome: z.string().optional(),
+    banco: z.string().optional(),
+    agencia: z.string().optional(),
+    conta: z.string().optional(),
+    quantidade_ocorrencias: z.number().optional(),
+    data_inclusao: z.string().optional(),
+    motivo: z.string().optional(),
+  })
+  .passthrough();
 
 export const BcbChequesSemFundoResponseSchema = z.object({
   code: z.number(),

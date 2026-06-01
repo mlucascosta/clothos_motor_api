@@ -13,7 +13,7 @@ export const PEPParentescosRetornoSchema = z.object({
   orgao: z.string().nullable().optional(),
   parentescos: z.array(z.record(z.unknown())).nullable().optional(),
   pep: z.boolean().nullable().optional(),
-  status: z.string().nullable().optional()
+  status: z.string().nullable().optional(),
 });
 
 export type PEPParentescosRetornoDto = z.infer<typeof PEPParentescosRetornoSchema>;

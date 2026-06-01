@@ -13,7 +13,9 @@ export const TCUCertidaoNegativaProcessoRetornoSchema = z.object({
   nomeEntidade: z.string().nullable().optional(),
   possuiProcesso: z.boolean().nullable().optional(),
   processos: z.array(z.record(z.unknown())).nullable().optional(),
-  status: z.string().nullable().optional()
+  status: z.string().nullable().optional(),
 });
 
-export type TCUCertidaoNegativaProcessoRetornoDto = z.infer<typeof TCUCertidaoNegativaProcessoRetornoSchema>;
+export type TCUCertidaoNegativaProcessoRetornoDto = z.infer<
+  typeof TCUCertidaoNegativaProcessoRetornoSchema
+>;

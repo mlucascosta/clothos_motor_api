@@ -6,17 +6,19 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const IeptbProtestosDetalhesSpItemSchema = z.object({
-  numero_protocolo: z.string().optional(),
-  data_protesto: z.string().optional(),
-  valor: z.number().optional(),
-  apresentante: z.string().optional(),
-  cedente: z.string().optional(),
-  especie: z.string().optional(),
-  situacao: z.string().optional(),
-  cartorio: z.string().optional(),
-  cnpj_cartorio: z.string().optional(),
-}).passthrough();
+export const IeptbProtestosDetalhesSpItemSchema = z
+  .object({
+    numero_protocolo: z.string().optional(),
+    data_protesto: z.string().optional(),
+    valor: z.number().optional(),
+    apresentante: z.string().optional(),
+    cedente: z.string().optional(),
+    especie: z.string().optional(),
+    situacao: z.string().optional(),
+    cartorio: z.string().optional(),
+    cnpj_cartorio: z.string().optional(),
+  })
+  .passthrough();
 
 export const IeptbProtestosDetalhesSpResponseSchema = z.object({
   code: z.number(),

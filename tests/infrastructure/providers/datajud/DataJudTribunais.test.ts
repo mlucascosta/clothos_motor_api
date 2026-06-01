@@ -25,9 +25,15 @@ describe('DataJudTribunais', () => {
   });
 
   it('DATAJUD_TRIBUNAIS_MAP mapeia sigla para endpoint', () => {
-    expect(DATAJUD_TRIBUNAIS_MAP['tjsp']).toBe('https://api-publica.datajud.cnj.jus.br/api_publica_tjsp/_search');
-    expect(DATAJUD_TRIBUNAIS_MAP['tst']).toBe('https://api-publica.datajud.cnj.jus.br/api_publica_tst/_search');
-    expect(DATAJUD_TRIBUNAIS_MAP['trf1']).toBe('https://api-publica.datajud.cnj.jus.br/api_publica_trf1/_search');
+    expect(DATAJUD_TRIBUNAIS_MAP.tjsp).toBe(
+      'https://api-publica.datajud.cnj.jus.br/api_publica_tjsp/_search',
+    );
+    expect(DATAJUD_TRIBUNAIS_MAP.tst).toBe(
+      'https://api-publica.datajud.cnj.jus.br/api_publica_tst/_search',
+    );
+    expect(DATAJUD_TRIBUNAIS_MAP.trf1).toBe(
+      'https://api-publica.datajud.cnj.jus.br/api_publica_trf1/_search',
+    );
   });
 
   describe('getDataJudEndpoint', () => {

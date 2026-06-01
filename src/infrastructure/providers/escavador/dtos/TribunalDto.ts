@@ -12,14 +12,16 @@ import { z } from 'zod';
  * Retornado por ListarTribunais e ObterTribunal.
  * @type {ZodSchema}
  */
-export const TribunalDtoSchema = z.object({
-  id: z.number().int().positive().optional(),
-  nome: z.string(),
-  sigla: z.string().optional(),
-  tipo: z.string().optional(),
-  estado: z.string().optional(),
-  ativo: z.boolean().optional(),
-}).passthrough();
+export const TribunalDtoSchema = z
+  .object({
+    id: z.number().int().positive().optional(),
+    nome: z.string(),
+    sigla: z.string().optional(),
+    tipo: z.string().optional(),
+    estado: z.string().optional(),
+    ativo: z.boolean().optional(),
+  })
+  .passthrough();
 
 /**
  * Schema de resposta de listagem de tribunais.
@@ -29,12 +31,14 @@ export const TribunalDtoSchema = z.object({
 export const ListarTribunaisResponseSchema = z.object({
   /** Array de tribunais */
   items: z.array(TribunalDtoSchema),
-  paginator: z.object({
-    total: z.number().int().nullish(),
-    total_pages: z.number().int().nullish(),
-    current_page: z.number().int().nullish(),
-    per_page: z.number().int().nullish(),
-  }).nullish(),
+  paginator: z
+    .object({
+      total: z.number().int().nullish(),
+      total_pages: z.number().int().nullish(),
+      current_page: z.number().int().nullish(),
+      per_page: z.number().int().nullish(),
+    })
+    .nullish(),
   links: z.object({ next: z.string().nullish(), prev: z.string().nullish() }).nullish(),
   total: z.number().int().nullish(),
 });
@@ -44,12 +48,14 @@ export const ListarTribunaisResponseSchema = z.object({
  * Representa órgão público, ministério, secretaria, etc.
  * @type {ZodSchema}
  */
-export const OrgaoAdministrativoSchema = z.object({
-  id: z.number().int().positive().optional(),
-  nome: z.string(),
-  sigla: z.string().optional(),
-  tipo: z.string().optional(),
-}).passthrough();
+export const OrgaoAdministrativoSchema = z
+  .object({
+    id: z.number().int().positive().optional(),
+    nome: z.string(),
+    sigla: z.string().optional(),
+    tipo: z.string().optional(),
+  })
+  .passthrough();
 
 /**
  * Schema de resposta de listagem de órgãos administrativos.
@@ -59,12 +65,14 @@ export const OrgaoAdministrativoSchema = z.object({
 export const ListarOrgaosResponseSchema = z.object({
   /** Array de órgãos administrativos */
   items: z.array(OrgaoAdministrativoSchema),
-  paginator: z.object({
-    total: z.number().int().nullish(),
-    total_pages: z.number().int().nullish(),
-    current_page: z.number().int().nullish(),
-    per_page: z.number().int().nullish(),
-  }).nullish(),
+  paginator: z
+    .object({
+      total: z.number().int().nullish(),
+      total_pages: z.number().int().nullish(),
+      current_page: z.number().int().nullish(),
+      per_page: z.number().int().nullish(),
+    })
+    .nullish(),
   links: z.object({ next: z.string().nullish(), prev: z.string().nullish() }).nullish(),
   total: z.number().int().nullish(),
 });

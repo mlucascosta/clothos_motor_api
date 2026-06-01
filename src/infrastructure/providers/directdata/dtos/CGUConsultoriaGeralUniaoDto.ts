@@ -14,7 +14,9 @@ export const CGUConsultoriaGeralUniaoRetornoSchema = z.object({
   nome: z.string().nullable().optional(),
   restricoesCGU: z.array(z.record(z.unknown())).nullable().optional(),
   status: z.string().nullable().optional(),
-  tipoConsultado: z.string().nullable().optional()
+  tipoConsultado: z.string().nullable().optional(),
 });
 
-export type CGUConsultoriaGeralUniaoRetornoDto = z.infer<typeof CGUConsultoriaGeralUniaoRetornoSchema>;
+export type CGUConsultoriaGeralUniaoRetornoDto = z.infer<
+  typeof CGUConsultoriaGeralUniaoRetornoSchema
+>;

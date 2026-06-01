@@ -126,7 +126,7 @@ export class FetchHttpClient implements IHttpClient {
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       if (attempt > 0) {
-        await sleep(baseDelay * Math.pow(2, attempt - 1));
+        await sleep(baseDelay * 2 ** (attempt - 1));
       }
 
       last = await this.attemptRequest<T>(path, options);
@@ -162,7 +162,7 @@ export class FetchHttpClient implements IHttpClient {
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       if (attempt > 0) {
-        await sleep(baseDelay * Math.pow(2, attempt - 1));
+        await sleep(baseDelay * 2 ** (attempt - 1));
       }
 
       last = await this.attemptRequestRaw(path, options);
@@ -226,12 +226,13 @@ export class FetchHttpClient implements IHttpClient {
       if (err instanceof DOMException && err.name === 'TimeoutError') {
         return left(new SourceError('TIMEOUT', source));
       }
-      const safeMsg = err instanceof Error
-        ? err.message.replace(
-            /([?&])(TOKEN|token|apikey|api_key|key|secret|password|passwd)=[^&\s]*/gi,
-            '$1$2=[REDACTED]',
-          )
-        : 'network error';
+      const safeMsg =
+        err instanceof Error
+          ? err.message.replace(
+              /([?&])(TOKEN|token|apikey|api_key|key|secret|password|passwd)=[^&\s]*/gi,
+              '$1$2=[REDACTED]',
+            )
+          : 'network error';
       return left(new SourceError('UPSTREAM_ERROR', source, safeMsg));
     }
   }
@@ -283,12 +284,13 @@ export class FetchHttpClient implements IHttpClient {
       if (err instanceof DOMException && err.name === 'TimeoutError') {
         return left(new SourceError('TIMEOUT', source));
       }
-      const safeMsg = err instanceof Error
-        ? err.message.replace(
-            /([?&])(TOKEN|token|apikey|api_key|key|secret|password|passwd)=[^&\s]*/gi,
-            '$1$2=[REDACTED]',
-          )
-        : 'network error';
+      const safeMsg =
+        err instanceof Error
+          ? err.message.replace(
+              /([?&])(TOKEN|token|apikey|api_key|key|secret|password|passwd)=[^&\s]*/gi,
+              '$1$2=[REDACTED]',
+            )
+          : 'network error';
       return left(new SourceError('UPSTREAM_ERROR', source, safeMsg));
     }
   }

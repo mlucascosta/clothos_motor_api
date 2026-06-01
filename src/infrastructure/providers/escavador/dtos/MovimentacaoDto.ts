@@ -12,13 +12,15 @@ import { z } from 'zod';
  *
  * @type {ZodSchema}
  */
-export const MovimentacaoDtoSchema = z.object({
-  id: z.number().int().optional(),
-  data: z.string().nullish(),
-  tipo: z.string().nullish(),
-  descricao: z.string().nullish(),
-  documento_url: z.string().nullish(),
-}).passthrough();
+export const MovimentacaoDtoSchema = z
+  .object({
+    id: z.number().int().optional(),
+    data: z.string().nullish(),
+    tipo: z.string().nullish(),
+    descricao: z.string().nullish(),
+    documento_url: z.string().nullish(),
+  })
+  .passthrough();
 
 /**
  * Schema de resposta com listagem de movimentações.
@@ -29,12 +31,14 @@ export const MovimentacaoDtoSchema = z.object({
 export const MovimentacoesResponseSchema = z.object({
   /** Array de movimentações do processo */
   items: z.array(MovimentacaoDtoSchema),
-  paginator: z.object({
-    total: z.number().int().nullish(),
-    total_pages: z.number().int().nullish(),
-    current_page: z.number().int().nullish(),
-    per_page: z.number().int().nullish(),
-  }).nullish(),
+  paginator: z
+    .object({
+      total: z.number().int().nullish(),
+      total_pages: z.number().int().nullish(),
+      current_page: z.number().int().nullish(),
+      per_page: z.number().int().nullish(),
+    })
+    .nullish(),
   links: z.object({ next: z.string().nullish(), prev: z.string().nullish() }).nullish(),
   total: z.number().int().nullish(),
 });

@@ -10,7 +10,7 @@ export const SeguroDefesoRetornoSchema = z.object({
   cpf: z.string().nullable().optional(),
   nis: z.string().nullable().optional(),
   nome: z.string().nullable().optional(),
-  rgp: z.string().nullable().optional()
+  rgp: z.string().nullable().optional(),
 });
 
 export type SeguroDefesoRetornoDto = z.infer<typeof SeguroDefesoRetornoSchema>;

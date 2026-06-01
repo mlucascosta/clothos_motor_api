@@ -10,7 +10,7 @@ export const CNJMandadosPrisaoRetornoSchema = z.object({
   dataConsulta: z.string().nullable().optional(),
   mandadosPrisao: z.array(z.record(z.unknown())).nullable().optional(),
   possuiMandado: z.boolean().nullable().optional(),
-  status: z.string().nullable().optional()
+  status: z.string().nullable().optional(),
 });
 
 export type CNJMandadosPrisaoRetornoDto = z.infer<typeof CNJMandadosPrisaoRetornoSchema>;

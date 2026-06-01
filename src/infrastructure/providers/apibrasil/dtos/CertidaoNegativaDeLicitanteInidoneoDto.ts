@@ -7,4 +7,6 @@ import { z } from 'zod';
 
 export const CertidaoNegativaDeLicitanteInidoneoSchema = z.unknown();
 
-export type CertidaoNegativaDeLicitanteInidoneoDto = z.infer<typeof CertidaoNegativaDeLicitanteInidoneoSchema>;
+export type CertidaoNegativaDeLicitanteInidoneoDto = z.infer<
+  typeof CertidaoNegativaDeLicitanteInidoneoSchema
+>;

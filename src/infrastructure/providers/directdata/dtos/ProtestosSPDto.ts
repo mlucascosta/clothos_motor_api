@@ -12,7 +12,7 @@ export const ProtestosSPRetornoSchema = z.object({
   observacoes: z.string().nullable().optional(),
   protestos: z.array(z.record(z.unknown())).nullable().optional(),
   totalNumProtestos: z.number().int().nullable().optional(),
-  valorTotalProtestos: z.string().nullable().optional()
+  valorTotalProtestos: z.string().nullable().optional(),
 });
 
 export type ProtestosSPRetornoDto = z.infer<typeof ProtestosSPRetornoSchema>;

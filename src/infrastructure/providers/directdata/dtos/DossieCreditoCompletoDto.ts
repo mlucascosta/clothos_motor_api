@@ -9,7 +9,7 @@ export const DossieCreditoCompletoRetornoSchema = z.object({
   documentoConsultado: z.string().nullable().optional(),
   entidadeFisica: z.record(z.unknown()),
   entidadeJuridica: z.record(z.unknown()),
-  observacao: z.string().nullable().optional()
+  observacao: z.string().nullable().optional(),
 });
 
 export type DossieCreditoCompletoRetornoDto = z.infer<typeof DossieCreditoCompletoRetornoSchema>;

@@ -5,11 +5,11 @@
  * @module infrastructure/persistence/MongoRawResultStore
  */
 
+import { hashCpfIfNeeded } from '@shared/domain/privacy/hashCpf.js';
+import { logger } from '@shared/infrastructure/logger.js';
 import { type Collection, MongoClient } from 'mongodb';
 import type { IRawResultStore } from './IRawResultStore.js';
 import type { RawResultDoc } from './RawResultDoc.js';
-import { hashCpfIfNeeded } from '@shared/domain/privacy/hashCpf.js';
-import { logger } from '@shared/infrastructure/logger.js';
 
 /**
  * Store de resultados brutos em MongoDB.

@@ -6,11 +6,13 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const CarDownloadShapefileItemSchema = z.object({
-  car: z.string().optional(),
-  url_shapefile: z.string().optional(),
-  url_expiracao: z.string().optional(),
-}).passthrough();
+export const CarDownloadShapefileItemSchema = z
+  .object({
+    car: z.string().optional(),
+    url_shapefile: z.string().optional(),
+    url_expiracao: z.string().optional(),
+  })
+  .passthrough();
 
 export const CarDownloadShapefileResponseSchema = z.object({
   code: z.number(),

@@ -9,13 +9,13 @@
  * @module shared/infrastructure/handleOp
  */
 
-import type { Context } from 'hono';
-import type { ContentfulStatusCode, StatusCode } from 'hono/utils/http-status';
+import type { IQueryRefStore } from '@infrastructure/persistence/IQueryRefStore.js';
+import type { IRawResultStore } from '@infrastructure/persistence/IRawResultStore.js';
 import type { Either } from '@shared/domain/Either.js';
 import { isLeft } from '@shared/domain/Either.js';
 import type { SourceError, SourceErrorKind } from '@shared/domain/errors/SourceError.js';
-import type { IRawResultStore } from '@infrastructure/persistence/IRawResultStore.js';
-import type { IQueryRefStore } from '@infrastructure/persistence/IQueryRefStore.js';
+import type { Context } from 'hono';
+import type { ContentfulStatusCode, StatusCode } from 'hono/utils/http-status';
 
 const KIND_TO_STATUS: Record<SourceErrorKind, StatusCode> = {
   NOT_FOUND: 404,
@@ -40,7 +40,13 @@ const KIND_TO_STATUS: Record<SourceErrorKind, StatusCode> = {
  */
 export async function handleOp<T>(
   c: Context,
-  opts: { gateway: string; fonte: string; tipo_param: string | null; param: string | null; statusCode?: number },
+  opts: {
+    gateway: string;
+    fonte: string;
+    tipo_param: string | null;
+    param: string | null;
+    statusCode?: number;
+  },
   execute: () => Promise<Either<SourceError, T>>,
   store: IRawResultStore,
   queryRefStore?: IQueryRefStore,
@@ -67,7 +73,13 @@ export async function handleOp<T>(
       error_kind: result.value.kind,
     });
     if (tenantId && queryRefStore) {
-      queryRefStore.save({ correlationId, tenantId, gateway: opts.gateway, fonte: opts.fonte, createdAt: now });
+      queryRefStore.save({
+        correlationId,
+        tenantId,
+        gateway: opts.gateway,
+        fonte: opts.fonte,
+        createdAt: now,
+      });
     }
     const errStatus = (KIND_TO_STATUS[result.value.kind] ?? 500) as ContentfulStatusCode;
     return c.json({ error: result.value.message, kind: result.value.kind }, errStatus) as Response;
@@ -75,9 +87,15 @@ export async function handleOp<T>(
 
   store.save({ ...base, result: result.value, status: 'success' });
   if (tenantId && queryRefStore) {
-    queryRefStore.save({ correlationId, tenantId, gateway: opts.gateway, fonte: opts.fonte, createdAt: now });
+    queryRefStore.save({
+      correlationId,
+      tenantId,
+      gateway: opts.gateway,
+      fonte: opts.fonte,
+      createdAt: now,
+    });
   }
-  const statusCode = (opts.statusCode ?? 200) as import('hono/utils/http-status').ContentfulStatusCode;
+  const statusCode = (opts.statusCode ?? 200) as ContentfulStatusCode;
   return c.json(result.value, statusCode) as Response;
 }
 
@@ -117,7 +135,13 @@ export async function handleOpVoid(
       error_kind: result.value.kind,
     });
     if (tenantId && queryRefStore) {
-      queryRefStore.save({ correlationId, tenantId, gateway: opts.gateway, fonte: opts.fonte, createdAt: now });
+      queryRefStore.save({
+        correlationId,
+        tenantId,
+        gateway: opts.gateway,
+        fonte: opts.fonte,
+        createdAt: now,
+      });
     }
     const errStatus = (KIND_TO_STATUS[result.value.kind] ?? 500) as ContentfulStatusCode;
     return c.json({ error: result.value.message, kind: result.value.kind }, errStatus) as Response;
@@ -125,7 +149,13 @@ export async function handleOpVoid(
 
   store.save({ ...base, result: null, status: 'success' });
   if (tenantId && queryRefStore) {
-    queryRefStore.save({ correlationId, tenantId, gateway: opts.gateway, fonte: opts.fonte, createdAt: now });
+    queryRefStore.save({
+      correlationId,
+      tenantId,
+      gateway: opts.gateway,
+      fonte: opts.fonte,
+      createdAt: now,
+    });
   }
   return c.body(null, 204);
 }

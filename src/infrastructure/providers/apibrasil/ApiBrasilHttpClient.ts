@@ -46,7 +46,7 @@ export class ApiBrasilHttpClient implements IHttpClient {
   constructor(
     apiKey: string,
     deviceToken: string,
-    baseUrl: string = 'https://gateway.apibrasil.io/api/v2',
+    baseUrl = 'https://gateway.apibrasil.io/api/v2',
   ) {
     this.http = new FetchHttpClient({
       baseUrl,
@@ -88,7 +88,10 @@ export class ApiBrasilHttpClient implements IHttpClient {
    * @param {HttpRequestOptions} [options] - Opções adicionais — `method` é ignorado
    * @returns {Promise<Either<SourceError, ArrayBuffer>>} ArrayBuffer ou erro de source
    */
-  requestRaw(path: string, options?: HttpRequestOptions): Promise<Either<SourceError, ArrayBuffer>> {
+  requestRaw(
+    path: string,
+    options?: HttpRequestOptions,
+  ): Promise<Either<SourceError, ArrayBuffer>> {
     const mergedOptions: HttpRequestOptions = {
       ...options,
       method: 'POST',

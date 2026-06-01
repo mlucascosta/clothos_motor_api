@@ -6,16 +6,18 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const B3ParticipantesItemSchema = z.object({
-  cnpj: z.string().optional(),
-  razao_social: z.string().optional(),
-  nome_fantasia: z.string().optional(),
-  tipo_participante: z.string().optional(),
-  categoria: z.string().optional(),
-  situacao: z.string().optional(),
-  data_autorizacao: z.string().optional(),
-  mercados: z.array(z.string()).optional(),
-}).passthrough();
+export const B3ParticipantesItemSchema = z
+  .object({
+    cnpj: z.string().optional(),
+    razao_social: z.string().optional(),
+    nome_fantasia: z.string().optional(),
+    tipo_participante: z.string().optional(),
+    categoria: z.string().optional(),
+    situacao: z.string().optional(),
+    data_autorizacao: z.string().optional(),
+    mercados: z.array(z.string()).optional(),
+  })
+  .passthrough();
 
 export const B3ParticipantesResponseSchema = z.object({
   code: z.number(),

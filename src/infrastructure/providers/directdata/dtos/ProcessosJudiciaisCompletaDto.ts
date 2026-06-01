@@ -9,7 +9,9 @@ export const ProcessosJudiciaisCompletaRetornoSchema = z.object({
   documentoConsultado: z.string().nullable().optional(),
   observacoes: z.string().nullable().optional(),
   processos: z.array(z.record(z.unknown())).nullable().optional(),
-  totalProcessos: z.number().int().nullable().optional()
+  totalProcessos: z.number().int().nullable().optional(),
 });
 
-export type ProcessosJudiciaisCompletaRetornoDto = z.infer<typeof ProcessosJudiciaisCompletaRetornoSchema>;
+export type ProcessosJudiciaisCompletaRetornoDto = z.infer<
+  typeof ProcessosJudiciaisCompletaRetornoSchema
+>;

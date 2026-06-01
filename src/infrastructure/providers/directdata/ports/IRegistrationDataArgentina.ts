@@ -15,8 +15,13 @@ import type { RegistrationDataArgentinaRetornoDto } from '../dtos/RegistrationDa
  */
 export interface IRegistrationDataArgentina {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: RegistrationDataArgentinaRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: RegistrationDataArgentinaRetornoDto | null;
+      }
+    >
+  >;
 }

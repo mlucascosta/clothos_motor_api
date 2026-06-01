@@ -29,7 +29,7 @@ export const CadastroPessoaJuridicaRetornoSchema = z.object({
   socios: z.array(z.record(z.unknown())).nullable().optional(),
   telefones: z.array(z.record(z.unknown())).nullable().optional(),
   tipoEmpresa: z.string().nullable().optional(),
-  ultimaAtualizacaoPJ: z.string().nullable().optional()
+  ultimaAtualizacaoPJ: z.string().nullable().optional(),
 });
 
 export type CadastroPessoaJuridicaRetornoDto = z.infer<typeof CadastroPessoaJuridicaRetornoSchema>;

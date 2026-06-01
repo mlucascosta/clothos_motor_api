@@ -48,19 +48,23 @@ describe('POST /api/infosimples — Protestos', () => {
     it('sucesso — retorna 200 com protestos por CPF', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              cpf: '11144477735',
-              nome: 'João Silva',
-              quantidade_protestos: 2,
-              valor_total: 1500.00,
-              protestos: [
-                { cartorio: '1º Tabelião SP', data_protesto: '2023-01-15', valor: 800 },
-                { cartorio: '3º Tabelião SP', data_protesto: '2024-03-10', valor: 700 },
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  cpf: '11144477735',
+                  nome: 'João Silva',
+                  quantidade_protestos: 2,
+                  valor_total: 1500.0,
+                  protestos: [
+                    { cartorio: '1º Tabelião SP', data_protesto: '2023-01-15', valor: 800 },
+                    { cartorio: '3º Tabelião SP', data_protesto: '2024-03-10', valor: 700 },
+                  ],
+                },
               ],
-            }],
-          })),
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -136,14 +140,18 @@ describe('POST /api/infosimples — Protestos', () => {
     it('sucesso — retorna 200 com obter_detalhes para consulta subsequente', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              cpf: '11144477735',
-              quantidade_protestos: 1,
-              obter_detalhes: 'token-detalhe-abc123',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  cpf: '11144477735',
+                  quantidade_protestos: 1,
+                  obter_detalhes: 'token-detalhe-abc123',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -185,9 +193,7 @@ describe('POST /api/infosimples — Protestos', () => {
       const res = await app.request(`${PATH}?cnpj=33200056000149`, { method: 'POST' });
 
       expect(res.status).toBe(500);
-      expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ status: 'error' }),
-      );
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
     });
 
     it('retorna 400 quando cpf e cnpj ausentes (oneOf)', async () => {
@@ -206,26 +212,29 @@ describe('POST /api/infosimples — Protestos', () => {
     it('sucesso — retorna 200 com detalhes do protesto', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              numero_protocolo: 'PROT-001',
-              data_protesto: '2023-01-15',
-              valor: 800.00,
-              apresentante: 'Banco XYZ',
-              cedente: 'Empresa ABC',
-              especie: 'DM',
-              situacao: 'Protestado',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  numero_protocolo: 'PROT-001',
+                  data_protesto: '2023-01-15',
+                  valor: 800.0,
+                  apresentante: 'Banco XYZ',
+                  cedente: 'Empresa ABC',
+                  especie: 'DM',
+                  situacao: 'Protestado',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
 
-      const res = await app.request(
-        `${PATH}?obter_detalhes=token-detalhe-abc123`,
-        { method: 'POST' },
-      );
+      const res = await app.request(`${PATH}?obter_detalhes=token-detalhe-abc123`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -248,10 +257,7 @@ describe('POST /api/infosimples — Protestos', () => {
         ),
       );
 
-      const res = await app.request(
-        `${PATH}?obter_detalhes=token-inexistente`,
-        { method: 'POST' },
-      );
+      const res = await app.request(`${PATH}?obter_detalhes=token-inexistente`, { method: 'POST' });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -261,15 +267,10 @@ describe('POST /api/infosimples — Protestos', () => {
     it('falha — upstream error → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
-      const res = await app.request(
-        `${PATH}?obter_detalhes=token-abc`,
-        { method: 'POST' },
-      );
+      const res = await app.request(`${PATH}?obter_detalhes=token-abc`, { method: 'POST' });
 
       expect(res.status).toBe(500);
-      expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ status: 'error' }),
-      );
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
     });
 
     it('retorna 400 quando obter_detalhes está ausente', async () => {

@@ -6,15 +6,17 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const RegistradoresInfoContaItemSchema = z.object({
-  nome: z.string().optional(),
-  cpf_cnpj: z.string().optional(),
-  email: z.string().optional(),
-  saldo: z.number().optional(),
-  situacao: z.string().optional(),
-  data_cadastro: z.string().optional(),
-  ultimo_acesso: z.string().optional(),
-}).passthrough();
+export const RegistradoresInfoContaItemSchema = z
+  .object({
+    nome: z.string().optional(),
+    cpf_cnpj: z.string().optional(),
+    email: z.string().optional(),
+    saldo: z.number().optional(),
+    situacao: z.string().optional(),
+    data_cadastro: z.string().optional(),
+    ultimo_acesso: z.string().optional(),
+  })
+  .passthrough();
 
 export const RegistradoresInfoContaResponseSchema = z.object({
   code: z.number(),

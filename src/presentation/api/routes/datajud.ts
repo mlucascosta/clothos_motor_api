@@ -19,26 +19,26 @@
  * APIKey via env var `DATAJUD_APIKEY`. Header injetado automaticamente.
  */
 
-import { Hono } from 'hono';
-import { handleOp } from '../handleOp.js';
-import { parseInput } from '../parseInput.js';
 import { DataJudHttpClient } from '@infrastructure/providers/datajud/DataJudHttpClient.js';
 import {
   DATAJUD_TRIBUNAIS,
   isValidTribunal,
 } from '@infrastructure/providers/datajud/DataJudTribunais.js';
 import {
+  DataJudClasseRequestSchema,
   DataJudEnvolvidoRequestSchema,
   DataJudOrgaoRequestSchema,
-  DataJudClasseRequestSchema,
   DataJudProcessoRequestSchema,
   DataJudSearchRequestSchema,
 } from '@infrastructure/providers/datajud/dtos/DataJudSearchRequestDto.js';
 import { BuscarGenericoDataJud } from '@infrastructure/providers/datajud/operations/BuscarGenericoDataJud.js';
-import { BuscarProcessoPorNumero } from '@infrastructure/providers/datajud/operations/BuscarProcessoPorNumero.js';
 import { BuscarPorClasse } from '@infrastructure/providers/datajud/operations/BuscarPorClasse.js';
-import { BuscarPorOrgaoJulgador } from '@infrastructure/providers/datajud/operations/BuscarPorOrgaoJulgador.js';
 import { BuscarPorEnvolvido } from '@infrastructure/providers/datajud/operations/BuscarPorEnvolvido.js';
+import { BuscarPorOrgaoJulgador } from '@infrastructure/providers/datajud/operations/BuscarPorOrgaoJulgador.js';
+import { BuscarProcessoPorNumero } from '@infrastructure/providers/datajud/operations/BuscarProcessoPorNumero.js';
+import { Hono } from 'hono';
+import { handleOp } from '../handleOp.js';
+import { parseInput } from '../parseInput.js';
 
 const GW = 'datajud';
 const BASE_URL = 'https://api-publica.datajud.cnj.jus.br';
@@ -81,11 +81,12 @@ datajud.post('/buscar', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(DataJudSearchRequestSchema, body);
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
-  return handleOp(c, { gateway: GW, fonte: 'buscar', tipo_param: 'tribunal_dsl', param: sigla }, () =>
-    new BuscarGenericoDataJud(buildHttp()).execute({ sigla, body: parsed.data }),
+  return handleOp(
+    c,
+    { gateway: GW, fonte: 'buscar', tipo_param: 'tribunal_dsl', param: sigla },
+    () => new BuscarGenericoDataJud(buildHttp()).execute({ sigla, body: parsed.data }),
   );
 });
 
@@ -101,15 +102,22 @@ datajud.post('/processo', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(DataJudProcessoRequestSchema, body);
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
-  return handleOp(c, { gateway: GW, fonte: 'processo', tipo_param: 'numeroProcesso', param: parsed.data.numeroProcesso }, () =>
-    new BuscarProcessoPorNumero(buildHttp()).execute({
-      sigla,
-      numeroProcesso: parsed.data.numeroProcesso,
-      size: parsed.data.size,
-    }),
+  return handleOp(
+    c,
+    {
+      gateway: GW,
+      fonte: 'processo',
+      tipo_param: 'numeroProcesso',
+      param: parsed.data.numeroProcesso,
+    },
+    () =>
+      new BuscarProcessoPorNumero(buildHttp()).execute({
+        sigla,
+        numeroProcesso: parsed.data.numeroProcesso,
+        size: parsed.data.size,
+      }),
   );
 });
 
@@ -125,19 +133,23 @@ datajud.post('/classe', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(DataJudClasseRequestSchema, body);
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const paramValue = String(parsed.data.classeCodigo ?? parsed.data.classeNome ?? '');
   const tipoParam = parsed.data.classeCodigo !== undefined ? 'classeCodigo' : 'classeNome';
 
-  return handleOp(c, { gateway: GW, fonte: 'classe', tipo_param: tipoParam, param: paramValue }, () =>
-    new BuscarPorClasse(buildHttp()).execute({
-      sigla,
-      ...(parsed.data.classeNome !== undefined ? { classeNome: parsed.data.classeNome } : {}),
-      ...(parsed.data.classeCodigo !== undefined ? { classeCodigo: parsed.data.classeCodigo } : {}),
-      size: parsed.data.size,
-    }),
+  return handleOp(
+    c,
+    { gateway: GW, fonte: 'classe', tipo_param: tipoParam, param: paramValue },
+    () =>
+      new BuscarPorClasse(buildHttp()).execute({
+        sigla,
+        ...(parsed.data.classeNome !== undefined ? { classeNome: parsed.data.classeNome } : {}),
+        ...(parsed.data.classeCodigo !== undefined
+          ? { classeCodigo: parsed.data.classeCodigo }
+          : {}),
+        size: parsed.data.size,
+      }),
   );
 });
 
@@ -153,15 +165,22 @@ datajud.post('/orgao-julgador', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(DataJudOrgaoRequestSchema, body);
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
-  return handleOp(c, { gateway: GW, fonte: 'orgao-julgador', tipo_param: 'orgaoJulgador', param: parsed.data.orgaoJulgador }, () =>
-    new BuscarPorOrgaoJulgador(buildHttp()).execute({
-      sigla,
-      orgaoJulgador: parsed.data.orgaoJulgador,
-      size: parsed.data.size,
-    }),
+  return handleOp(
+    c,
+    {
+      gateway: GW,
+      fonte: 'orgao-julgador',
+      tipo_param: 'orgaoJulgador',
+      param: parsed.data.orgaoJulgador,
+    },
+    () =>
+      new BuscarPorOrgaoJulgador(buildHttp()).execute({
+        sigla,
+        orgaoJulgador: parsed.data.orgaoJulgador,
+        size: parsed.data.size,
+      }),
   );
 });
 
@@ -177,8 +196,7 @@ datajud.post('/envolvido', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(DataJudEnvolvidoRequestSchema, body);
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   if (!parsed.data.nome && !parsed.data.cpfCnpj) {
     return c.json({ error: 'Informe nome ou cpfCnpj' }, 422);
@@ -187,13 +205,16 @@ datajud.post('/envolvido', async (c) => {
   const tipoParam = parsed.data.cpfCnpj ? 'cpf_cnpj' : 'nome';
   const paramValue = parsed.data.nome ?? parsed.data.cpfCnpj ?? '';
 
-  return handleOp(c, { gateway: GW, fonte: 'envolvido', tipo_param: tipoParam, param: paramValue }, () =>
-    new BuscarPorEnvolvido(buildHttp()).execute({
-      sigla,
-      ...(parsed.data.nome !== undefined ? { nome: parsed.data.nome } : {}),
-      ...(parsed.data.cpfCnpj !== undefined ? { cpfCnpj: parsed.data.cpfCnpj } : {}),
-      size: parsed.data.size,
-    }),
+  return handleOp(
+    c,
+    { gateway: GW, fonte: 'envolvido', tipo_param: tipoParam, param: paramValue },
+    () =>
+      new BuscarPorEnvolvido(buildHttp()).execute({
+        sigla,
+        ...(parsed.data.nome !== undefined ? { nome: parsed.data.nome } : {}),
+        ...(parsed.data.cpfCnpj !== undefined ? { cpfCnpj: parsed.data.cpfCnpj } : {}),
+        size: parsed.data.size,
+      }),
   );
 });
 

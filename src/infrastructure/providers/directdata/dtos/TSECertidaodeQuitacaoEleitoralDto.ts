@@ -18,7 +18,9 @@ export const TSECertidaodeQuitacaoEleitoralRetornoSchema = z.object({
   secao: z.string().nullable().optional(),
   status: z.string().nullable().optional(),
   uf: z.string().nullable().optional(),
-  zona: z.string().nullable().optional()
+  zona: z.string().nullable().optional(),
 });
 
-export type TSECertidaodeQuitacaoEleitoralRetornoDto = z.infer<typeof TSECertidaodeQuitacaoEleitoralRetornoSchema>;
+export type TSECertidaodeQuitacaoEleitoralRetornoDto = z.infer<
+  typeof TSECertidaodeQuitacaoEleitoralRetornoSchema
+>;

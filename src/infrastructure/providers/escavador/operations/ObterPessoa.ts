@@ -5,11 +5,11 @@
 
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
-import { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { type PessoaDto, PessoaDtoSchema } from '../dtos/PessoaDto.js';
 import type { IObterPessoa, ObterPessoaInput } from '../ports/IObterPessoa.js';
-import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 
 /**
  * Operação de obtenção de dados de pessoa (GET /api/v1/pessoas/{id}).

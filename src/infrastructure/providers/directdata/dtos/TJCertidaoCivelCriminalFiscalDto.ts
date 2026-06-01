@@ -16,7 +16,9 @@ export const TJCertidaoCivelCriminalFiscalRetornoSchema = z.object({
   possuiOcorrencia: z.string().nullable().optional(),
   status: z.string().nullable().optional(),
   tipoCertidao: z.string().nullable().optional(),
-  uf: z.string().nullable().optional()
+  uf: z.string().nullable().optional(),
 });
 
-export type TJCertidaoCivelCriminalFiscalRetornoDto = z.infer<typeof TJCertidaoCivelCriminalFiscalRetornoSchema>;
+export type TJCertidaoCivelCriminalFiscalRetornoDto = z.infer<
+  typeof TJCertidaoCivelCriminalFiscalRetornoSchema
+>;

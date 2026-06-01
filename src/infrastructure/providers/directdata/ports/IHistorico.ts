@@ -15,8 +15,13 @@ import type { HistoricoRetornoDto } from '../dtos/HistoricoDto.js';
  */
 export interface IHistorico {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: HistoricoRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: HistoricoRetornoDto | null;
+      }
+    >
+  >;
 }

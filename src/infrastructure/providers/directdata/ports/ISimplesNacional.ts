@@ -15,8 +15,13 @@ import type { SimplesNacionalRetornoDto } from '../dtos/SimplesNacionalDto.js';
  */
 export interface ISimplesNacional {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: SimplesNacionalRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: SimplesNacionalRetornoDto | null;
+      }
+    >
+  >;
 }

@@ -6,14 +6,16 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const IbamaCertidaoDebitosItemSchema = z.object({
-  cpf_cnpj: z.string().optional(),
-  nome: z.string().optional(),
-  situacao: z.string().optional(),
-  data_emissao: z.string().optional(),
-  data_validade: z.string().optional(),
-  numero_certidao: z.string().optional(),
-}).passthrough();
+export const IbamaCertidaoDebitosItemSchema = z
+  .object({
+    cpf_cnpj: z.string().optional(),
+    nome: z.string().optional(),
+    situacao: z.string().optional(),
+    data_emissao: z.string().optional(),
+    data_validade: z.string().optional(),
+    numero_certidao: z.string().optional(),
+  })
+  .passthrough();
 
 export const IbamaCertidaoDebitosResponseSchema = z.object({
   code: z.number(),

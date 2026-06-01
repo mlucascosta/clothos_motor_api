@@ -14,7 +14,9 @@ export const NotaFiscalEletronicaCompletaRetornoSchema = z.object({
   informacoesComplementares: z.string().nullable().optional(),
   itens: z.array(z.record(z.unknown())).nullable().optional(),
   totais: z.record(z.unknown()),
-  transporte: z.record(z.unknown())
+  transporte: z.record(z.unknown()),
 });
 
-export type NotaFiscalEletronicaCompletaRetornoDto = z.infer<typeof NotaFiscalEletronicaCompletaRetornoSchema>;
+export type NotaFiscalEletronicaCompletaRetornoDto = z.infer<
+  typeof NotaFiscalEletronicaCompletaRetornoSchema
+>;

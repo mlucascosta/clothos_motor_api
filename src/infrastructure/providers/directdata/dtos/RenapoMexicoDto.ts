@@ -14,7 +14,7 @@ export const RenapoMexicoRetornoSchema = z.object({
   name: z.string().nullable().optional(),
   nationality: z.string().nullable().optional(),
   placeOfBirth: z.string().nullable().optional(),
-  state: z.string().nullable().optional()
+  state: z.string().nullable().optional(),
 });
 
 export type RenapoMexicoRetornoDto = z.infer<typeof RenapoMexicoRetornoSchema>;

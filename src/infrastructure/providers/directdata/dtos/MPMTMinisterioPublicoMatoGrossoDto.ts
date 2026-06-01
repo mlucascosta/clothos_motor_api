@@ -13,7 +13,9 @@ export const MPMTMinisterioPublicoMatoGrossoRetornoSchema = z.object({
   numeroCertidao: z.string().nullable().optional(),
   possuiProcedimentoExtrajudicial: z.boolean().nullable().optional(),
   procedimentosInvestigatoriosExtrajudiciais: z.array(z.record(z.unknown())).nullable().optional(),
-  status: z.string().nullable().optional()
+  status: z.string().nullable().optional(),
 });
 
-export type MPMTMinisterioPublicoMatoGrossoRetornoDto = z.infer<typeof MPMTMinisterioPublicoMatoGrossoRetornoSchema>;
+export type MPMTMinisterioPublicoMatoGrossoRetornoDto = z.infer<
+  typeof MPMTMinisterioPublicoMatoGrossoRetornoSchema
+>;

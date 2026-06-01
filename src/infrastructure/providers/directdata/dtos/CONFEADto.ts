@@ -15,7 +15,7 @@ export const CONFEARetornoSchema = z.object({
   registroNacional: z.string().nullable().optional(),
   situacao: z.string().nullable().optional(),
   titulosGraduacao: z.array(z.record(z.unknown())).nullable().optional(),
-  vistos: z.array(z.record(z.unknown())).nullable().optional()
+  vistos: z.array(z.record(z.unknown())).nullable().optional(),
 });
 
 export type CONFEARetornoDto = z.infer<typeof CONFEARetornoSchema>;

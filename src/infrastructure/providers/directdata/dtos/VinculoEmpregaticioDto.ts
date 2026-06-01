@@ -10,7 +10,7 @@ export const VinculoEmpregaticioRetornoSchema = z.object({
   dataConsulta: z.string().nullable().optional(),
   funcionarios: z.array(z.record(z.unknown())).nullable().optional(),
   quantidadeFuncionarios: z.number().int().nullable().optional(),
-  razaoSocial: z.string().nullable().optional()
+  razaoSocial: z.string().nullable().optional(),
 });
 
 export type VinculoEmpregaticioRetornoDto = z.infer<typeof VinculoEmpregaticioRetornoSchema>;

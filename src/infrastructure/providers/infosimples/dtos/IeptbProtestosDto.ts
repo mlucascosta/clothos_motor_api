@@ -6,21 +6,29 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const IeptbProtestosItemSchema = z.object({
-  cpf: z.string().optional(),
-  cnpj: z.string().optional(),
-  nome: z.string().optional(),
-  quantidade_protestos: z.number().optional(),
-  valor_total: z.number().optional(),
-  obter_detalhes: z.string().optional().describe('Token para consulta de detalhes'),
-  protestos: z.array(z.object({
-    cartorio: z.string().optional(),
-    uf: z.string().optional(),
-    municipio: z.string().optional(),
-    data_protesto: z.string().optional(),
-    valor: z.number().optional(),
-  }).passthrough()).optional(),
-}).passthrough();
+export const IeptbProtestosItemSchema = z
+  .object({
+    cpf: z.string().optional(),
+    cnpj: z.string().optional(),
+    nome: z.string().optional(),
+    quantidade_protestos: z.number().optional(),
+    valor_total: z.number().optional(),
+    obter_detalhes: z.string().optional().describe('Token para consulta de detalhes'),
+    protestos: z
+      .array(
+        z
+          .object({
+            cartorio: z.string().optional(),
+            uf: z.string().optional(),
+            municipio: z.string().optional(),
+            data_protesto: z.string().optional(),
+            valor: z.number().optional(),
+          })
+          .passthrough(),
+      )
+      .optional(),
+  })
+  .passthrough();
 
 export const IeptbProtestosResponseSchema = z.object({
   code: z.number(),

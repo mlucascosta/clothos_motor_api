@@ -12,7 +12,9 @@ export const CadastroNacionalImprobidadeAdministrativaRetornoSchema = z.object({
   documento: z.string().nullable().optional(),
   nomeEntidade: z.string().nullable().optional(),
   possuiCondenacao: z.boolean().nullable().optional(),
-  status: z.string().nullable().optional()
+  status: z.string().nullable().optional(),
 });
 
-export type CadastroNacionalImprobidadeAdministrativaRetornoDto = z.infer<typeof CadastroNacionalImprobidadeAdministrativaRetornoSchema>;
+export type CadastroNacionalImprobidadeAdministrativaRetornoDto = z.infer<
+  typeof CadastroNacionalImprobidadeAdministrativaRetornoSchema
+>;

@@ -13,7 +13,7 @@ export const SimilarityArgentinaRetornoSchema = z.object({
   name: z.record(z.unknown()),
   phone: z.array(z.record(z.unknown())).nullable().optional(),
   postCode: z.record(z.unknown()),
-  state: z.record(z.unknown())
+  state: z.record(z.unknown()),
 });
 
 export type SimilarityArgentinaRetornoDto = z.infer<typeof SimilarityArgentinaRetornoSchema>;

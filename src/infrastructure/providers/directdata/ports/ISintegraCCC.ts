@@ -15,8 +15,13 @@ import type { SintegraCCCRetornoDto } from '../dtos/SintegraCCCDto.js';
  */
 export interface ISintegraCCC {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: SintegraCCCRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: SintegraCCCRetornoDto | null;
+      }
+    >
+  >;
 }

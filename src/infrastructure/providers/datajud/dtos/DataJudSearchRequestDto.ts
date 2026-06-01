@@ -49,16 +49,18 @@ export type DataJudProcessoRequestDto = z.infer<typeof DataJudProcessoRequestSch
  *
  * @type {ZodSchema}
  */
-export const DataJudClasseRequestSchema = z.object({
-  /** Nome da classe processual */
-  classeNome: z.string().min(1).optional(),
-  /** Código numérico da classe (TPU) */
-  classeCodigo: z.number().int().optional(),
-  /** Tamanho da página */
-  size: z.number().int().optional().default(20),
-}).refine((data) => data.classeNome !== undefined || data.classeCodigo !== undefined, {
-  message: 'Informe classeNome ou classeCodigo',
-});
+export const DataJudClasseRequestSchema = z
+  .object({
+    /** Nome da classe processual */
+    classeNome: z.string().min(1).optional(),
+    /** Código numérico da classe (TPU) */
+    classeCodigo: z.number().int().optional(),
+    /** Tamanho da página */
+    size: z.number().int().optional().default(20),
+  })
+  .refine((data) => data.classeNome !== undefined || data.classeCodigo !== undefined, {
+    message: 'Informe classeNome ou classeCodigo',
+  });
 
 export type DataJudClasseRequestDto = z.infer<typeof DataJudClasseRequestSchema>;
 

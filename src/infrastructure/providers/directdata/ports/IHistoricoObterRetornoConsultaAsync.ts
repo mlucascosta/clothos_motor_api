@@ -15,8 +15,13 @@ import type { HistoricoObterRetornoConsultaAsyncRetornoDto } from '../dtos/Histo
  */
 export interface IHistoricoObterRetornoConsultaAsync {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: HistoricoObterRetornoConsultaAsyncRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: HistoricoObterRetornoConsultaAsyncRetornoDto | null;
+      }
+    >
+  >;
 }

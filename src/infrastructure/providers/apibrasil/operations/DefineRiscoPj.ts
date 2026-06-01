@@ -6,8 +6,8 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { DefineRiscoPjSchema } from '../dtos/DefineRiscoPjDto.js';
 import type { DefineRiscoPjDto } from '../dtos/DefineRiscoPjDto.js';
 import type { IDefineRiscoPj } from '../ports/IDefineRiscoPj.js';

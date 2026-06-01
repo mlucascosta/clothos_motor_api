@@ -15,7 +15,9 @@ export const CertidaoConjuntaDebitosPessoaFisicaRetornoSchema = z.object({
   possuiDividas: z.boolean().nullable().optional(),
   status: z.string().nullable().optional(),
   titulo: z.string().nullable().optional(),
-  validaAte: z.string().nullable().optional()
+  validaAte: z.string().nullable().optional(),
 });
 
-export type CertidaoConjuntaDebitosPessoaFisicaRetornoDto = z.infer<typeof CertidaoConjuntaDebitosPessoaFisicaRetornoSchema>;
+export type CertidaoConjuntaDebitosPessoaFisicaRetornoDto = z.infer<
+  typeof CertidaoConjuntaDebitosPessoaFisicaRetornoSchema
+>;

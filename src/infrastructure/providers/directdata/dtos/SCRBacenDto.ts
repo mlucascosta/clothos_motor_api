@@ -20,7 +20,7 @@ export const SCRBacenRetornoSchema = z.object({
   relacionamentos: z.string().nullable().optional(),
   score: z.string().nullable().optional(),
   situacao: z.string().nullable().optional(),
-  volume: z.string().nullable().optional()
+  volume: z.string().nullable().optional(),
 });
 
 export type SCRBacenRetornoDto = z.infer<typeof SCRBacenRetornoSchema>;

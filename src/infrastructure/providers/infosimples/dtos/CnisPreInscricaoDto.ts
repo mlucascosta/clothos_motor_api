@@ -6,14 +6,16 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const CnisPreInscricaoItemSchema = z.object({
-  cpf: z.string().optional(),
-  nome: z.string().optional(),
-  data_nascimento: z.string().optional(),
-  nis: z.string().optional(),
-  situacao: z.string().optional(),
-  data_consulta: z.string().optional(),
-}).passthrough();
+export const CnisPreInscricaoItemSchema = z
+  .object({
+    cpf: z.string().optional(),
+    nome: z.string().optional(),
+    data_nascimento: z.string().optional(),
+    nis: z.string().optional(),
+    situacao: z.string().optional(),
+    data_consulta: z.string().optional(),
+  })
+  .passthrough();
 
 export const CnisPreInscricaoResponseSchema = z.object({
   code: z.number(),

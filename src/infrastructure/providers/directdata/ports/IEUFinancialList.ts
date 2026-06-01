@@ -15,8 +15,13 @@ import type { EUFinancialListRetornoDto } from '../dtos/EUFinancialListDto.js';
  */
 export interface IEUFinancialList {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: EUFinancialListRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: EUFinancialListRetornoDto | null;
+      }
+    >
+  >;
 }

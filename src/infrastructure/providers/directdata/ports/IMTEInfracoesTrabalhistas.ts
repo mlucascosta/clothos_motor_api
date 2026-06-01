@@ -15,8 +15,13 @@ import type { MTEInfracoesTrabalhistasRetornoDto } from '../dtos/MTEInfracoesTra
  */
 export interface IMTEInfracoesTrabalhistas {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: MTEInfracoesTrabalhistasRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: MTEInfracoesTrabalhistasRetornoDto | null;
+      }
+    >
+  >;
 }

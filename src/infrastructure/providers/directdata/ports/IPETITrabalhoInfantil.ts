@@ -15,8 +15,13 @@ import type { PETITrabalhoInfantilRetornoDto } from '../dtos/PETITrabalhoInfanti
  */
 export interface IPETITrabalhoInfantil {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: PETITrabalhoInfantilRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: PETITrabalhoInfantilRetornoDto | null;
+      }
+    >
+  >;
 }

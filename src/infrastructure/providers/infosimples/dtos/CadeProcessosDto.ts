@@ -6,18 +6,26 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const CadeProcessosItemSchema = z.object({
-  numero_processo: z.string().optional(),
-  tipo: z.string().optional(),
-  assunto: z.string().optional(),
-  situacao: z.string().optional(),
-  data_autuacao: z.string().optional(),
-  partes: z.array(z.object({
-    nome: z.string().optional(),
-    qualificacao: z.string().optional(),
-  }).passthrough()).optional(),
-  relator: z.string().optional(),
-}).passthrough();
+export const CadeProcessosItemSchema = z
+  .object({
+    numero_processo: z.string().optional(),
+    tipo: z.string().optional(),
+    assunto: z.string().optional(),
+    situacao: z.string().optional(),
+    data_autuacao: z.string().optional(),
+    partes: z
+      .array(
+        z
+          .object({
+            nome: z.string().optional(),
+            qualificacao: z.string().optional(),
+          })
+          .passthrough(),
+      )
+      .optional(),
+    relator: z.string().optional(),
+  })
+  .passthrough();
 
 export const CadeProcessosResponseSchema = z.object({
   code: z.number(),

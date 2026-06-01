@@ -15,8 +15,13 @@ import type { UnitedNationsSecurityListRetornoDto } from '../dtos/UnitedNationsS
  */
 export interface IUnitedNationsSecurityList {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: UnitedNationsSecurityListRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: UnitedNationsSecurityListRetornoDto | null;
+      }
+    >
+  >;
 }

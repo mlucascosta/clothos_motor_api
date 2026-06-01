@@ -6,11 +6,13 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const CarDemonstrativoPdfItemSchema = z.object({
-  car: z.string().optional(),
-  url_pdf: z.string().optional(),
-  url_expiracao: z.string().optional(),
-}).passthrough();
+export const CarDemonstrativoPdfItemSchema = z
+  .object({
+    car: z.string().optional(),
+    url_pdf: z.string().optional(),
+    url_expiracao: z.string().optional(),
+  })
+  .passthrough();
 
 export const CarDemonstrativoPdfResponseSchema = z.object({
   code: z.number(),

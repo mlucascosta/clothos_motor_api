@@ -1,9 +1,9 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
-import { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { type CallbackV2Dto, CallbackV2DtoSchema } from '../../dtos/v2/CallbackV2Dto.js';
-import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IReenviarCallbackV2 } from '../../ports/IReenviarCallbackV2.js';
 
 export class ReenviarCallbackV2 implements IReenviarCallbackV2 {

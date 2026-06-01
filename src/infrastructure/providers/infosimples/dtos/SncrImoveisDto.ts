@@ -6,17 +6,19 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const SncrImoveisItemSchema = z.object({
-  codigo_imovel: z.string().optional(),
-  denominacao: z.string().optional(),
-  municipio: z.string().optional(),
-  uf: z.string().optional(),
-  area_total: z.number().optional(),
-  tipo_imovel: z.string().optional(),
-  proprietario: z.string().optional(),
-  cpf_cnpj: z.string().optional(),
-  situacao: z.string().optional(),
-}).passthrough();
+export const SncrImoveisItemSchema = z
+  .object({
+    codigo_imovel: z.string().optional(),
+    denominacao: z.string().optional(),
+    municipio: z.string().optional(),
+    uf: z.string().optional(),
+    area_total: z.number().optional(),
+    tipo_imovel: z.string().optional(),
+    proprietario: z.string().optional(),
+    cpf_cnpj: z.string().optional(),
+    situacao: z.string().optional(),
+  })
+  .passthrough();
 
 export const SncrImoveisResponseSchema = z.object({
   code: z.number(),

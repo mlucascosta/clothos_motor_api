@@ -26,7 +26,7 @@ export const SCRBacenDetalhadaRetornoSchema = z.object({
   riscoIndiretoVendor: z.string().nullable().optional(),
   riscoTotal: z.string().nullable().optional(),
   score: z.string().nullable().optional(),
-  scoreObservacao: z.string().nullable().optional()
+  scoreObservacao: z.string().nullable().optional(),
 });
 
 export type SCRBacenDetalhadaRetornoDto = z.infer<typeof SCRBacenDetalhadaRetornoSchema>;

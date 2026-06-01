@@ -15,8 +15,13 @@ import type { TSECertidaodeQuitacaoEleitoralRetornoDto } from '../dtos/TSECertid
  */
 export interface ITSECertidaodeQuitacaoEleitoral {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: TSECertidaodeQuitacaoEleitoralRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: TSECertidaodeQuitacaoEleitoralRetornoDto | null;
+      }
+    >
+  >;
 }

@@ -14,7 +14,7 @@ export const RestituicaoIRPFRetornoSchema = z.object({
   restituicao: z.record(z.unknown()),
   resultado: z.string().nullable().optional(),
   situacao: z.string().nullable().optional(),
-  tipoDeclaracao: z.string().nullable().optional()
+  tipoDeclaracao: z.string().nullable().optional(),
 });
 
 export type RestituicaoIRPFRetornoDto = z.infer<typeof RestituicaoIRPFRetornoSchema>;

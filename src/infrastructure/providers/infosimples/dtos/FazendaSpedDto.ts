@@ -6,14 +6,16 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const FazendaSpedItemSchema = z.object({
-  cnpj: z.string().optional(),
-  razao_social: z.string().optional(),
-  situacao: z.string().optional(),
-  data_situacao: z.string().optional(),
-  uf: z.string().optional(),
-  municipio: z.string().optional(),
-}).passthrough();
+export const FazendaSpedItemSchema = z
+  .object({
+    cnpj: z.string().optional(),
+    razao_social: z.string().optional(),
+    situacao: z.string().optional(),
+    data_situacao: z.string().optional(),
+    uf: z.string().optional(),
+    municipio: z.string().optional(),
+  })
+  .passthrough();
 
 export const FazendaSpedResponseSchema = z.object({
   code: z.number(),

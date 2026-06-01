@@ -15,8 +15,13 @@ import type { PRFInfracoesRetornoDto } from '../dtos/PRFInfracoesDto.js';
  */
 export interface IPRFInfracoes {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: PRFInfracoesRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: PRFInfracoesRetornoDto | null;
+      }
+    >
+  >;
 }

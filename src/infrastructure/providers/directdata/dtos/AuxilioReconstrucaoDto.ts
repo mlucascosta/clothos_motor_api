@@ -10,7 +10,7 @@ export const AuxilioReconstrucaoRetornoSchema = z.object({
   cpf: z.string().nullable().optional(),
   nis: z.string().nullable().optional(),
   nome: z.string().nullable().optional(),
-  quantidadePessoasFamilia: z.number().int().nullable().optional()
+  quantidadePessoasFamilia: z.number().int().nullable().optional(),
 });
 
 export type AuxilioReconstrucaoRetornoDto = z.infer<typeof AuxilioReconstrucaoRetornoSchema>;

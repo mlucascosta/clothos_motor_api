@@ -17,7 +17,7 @@ export const CadastroImoveisRuraisRetornoSchema = z.object({
   municipio: z.string().nullable().optional(),
   nomeImovel: z.string().nullable().optional(),
   situacao: z.string().nullable().optional(),
-  uf: z.string().nullable().optional()
+  uf: z.string().nullable().optional(),
 });
 
 export type CadastroImoveisRuraisRetornoDto = z.infer<typeof CadastroImoveisRuraisRetornoSchema>;

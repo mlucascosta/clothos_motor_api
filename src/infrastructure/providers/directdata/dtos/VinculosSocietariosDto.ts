@@ -10,7 +10,7 @@ export const VinculosSocietariosRetornoSchema = z.object({
   detalhesPessoaJuridica: z.record(z.unknown()),
   documentoConsultado: z.string().nullable().optional(),
   nomeEntidade: z.string().nullable().optional(),
-  relacionamentos: z.array(z.record(z.unknown())).nullable().optional()
+  relacionamentos: z.array(z.record(z.unknown())).nullable().optional(),
 });
 
 export type VinculosSocietariosRetornoDto = z.infer<typeof VinculosSocietariosRetornoSchema>;

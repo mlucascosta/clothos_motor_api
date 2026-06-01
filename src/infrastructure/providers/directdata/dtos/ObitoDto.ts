@@ -11,7 +11,7 @@ export const ObitoRetornoSchema = z.object({
   cpf: z.string().nullable().optional(),
   dataObito: z.string().nullable().optional(),
   nome: z.string().nullable().optional(),
-  status: z.string().nullable().optional()
+  status: z.string().nullable().optional(),
 });
 
 export type ObitoRetornoDto = z.infer<typeof ObitoRetornoSchema>;

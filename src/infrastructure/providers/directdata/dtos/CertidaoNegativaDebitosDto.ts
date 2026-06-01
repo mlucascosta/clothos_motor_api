@@ -18,7 +18,9 @@ export const CertidaoNegativaDebitosRetornoSchema = z.object({
   observacao: z.string().nullable().optional(),
   possuiDebito: z.boolean().nullable().optional(),
   status: z.string().nullable().optional(),
-  uf: z.string().nullable().optional()
+  uf: z.string().nullable().optional(),
 });
 
-export type CertidaoNegativaDebitosRetornoDto = z.infer<typeof CertidaoNegativaDebitosRetornoSchema>;
+export type CertidaoNegativaDebitosRetornoDto = z.infer<
+  typeof CertidaoNegativaDebitosRetornoSchema
+>;

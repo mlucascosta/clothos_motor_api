@@ -6,10 +6,13 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import {
+  type CenprotSpProtestosItem,
+  CenprotSpProtestosResponseSchema,
+} from '../dtos/CenprotSpProtestosDto.js';
 import type { IInfosimplesOperation } from '../ports/IInfosimplesOperation.js';
-import { CenprotSpProtestosResponseSchema, type CenprotSpProtestosItem } from '../dtos/CenprotSpProtestosDto.js';
 
 export class CenprotSpProtestos implements IInfosimplesOperation<CenprotSpProtestosItem> {
   readonly path = 'consultas/cenprot-sp/protestos';

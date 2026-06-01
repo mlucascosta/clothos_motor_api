@@ -15,8 +15,13 @@ import type { ScoreRetornoDto } from '../dtos/ScoreDto.js';
  */
 export interface IScore {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: ScoreRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: ScoreRetornoDto | null;
+      }
+    >
+  >;
 }

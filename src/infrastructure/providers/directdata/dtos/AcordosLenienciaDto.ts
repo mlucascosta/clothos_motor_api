@@ -12,7 +12,7 @@ export const AcordosLenienciaRetornoSchema = z.object({
   observacoes: z.string().nullable().optional(),
   quantidadeAcordos: z.number().int().nullable().optional(),
   razaoSocial: z.string().nullable().optional(),
-  totalSancoes: z.number().int().nullable().optional()
+  totalSancoes: z.number().int().nullable().optional(),
 });
 
 export type AcordosLenienciaRetornoDto = z.infer<typeof AcordosLenienciaRetornoSchema>;

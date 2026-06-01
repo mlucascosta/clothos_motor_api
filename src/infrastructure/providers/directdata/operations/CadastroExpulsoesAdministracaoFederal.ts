@@ -7,12 +7,12 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import { z } from 'zod';
 import { CadastroExpulsoesAdministracaoFederalRetornoSchema } from '../dtos/CadastroExpulsoesAdministracaoFederalDto.js';
 import { DirectDataMetaDadosSchema } from '../dtos/DirectDataResponseDto.js';
 import type { ICadastroExpulsoesAdministracaoFederal } from '../ports/ICadastroExpulsoesAdministracaoFederal.js';
-import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
-import { z } from 'zod';
 
 const ResponseSchema = z.object({
   metaDados: DirectDataMetaDadosSchema,
@@ -25,12 +25,16 @@ const ResponseSchema = z.object({
  * @class CadastroExpulsoesAdministracaoFederal
  * @implements {ICadastroExpulsoesAdministracaoFederal}
  */
-export class CadastroExpulsoesAdministracaoFederal implements ICadastroExpulsoesAdministracaoFederal {
+export class CadastroExpulsoesAdministracaoFederal
+  implements ICadastroExpulsoesAdministracaoFederal
+{
   readonly path = '/api/CadastroExpulsoesAdministracaoFederal';
 
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(params: Record<string, string | undefined>): Promise<Either<SourceError, ReturnType<typeof ResponseSchema.parse>>> {
+  async execute(
+    params: Record<string, string | undefined>,
+  ): Promise<Either<SourceError, ReturnType<typeof ResponseSchema.parse>>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

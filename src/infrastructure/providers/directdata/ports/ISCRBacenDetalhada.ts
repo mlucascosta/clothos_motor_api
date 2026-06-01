@@ -15,8 +15,13 @@ import type { SCRBacenDetalhadaRetornoDto } from '../dtos/SCRBacenDetalhadaDto.j
  */
 export interface ISCRBacenDetalhada {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: SCRBacenDetalhadaRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: SCRBacenDetalhadaRetornoDto | null;
+      }
+    >
+  >;
 }

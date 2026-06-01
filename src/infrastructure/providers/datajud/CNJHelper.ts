@@ -5,23 +5,67 @@
  */
 
 const TJ_SIGLAS = [
-  'tjac', 'tjal', 'tjam', 'tjap', 'tjba', 'tjce', 'tjdft', 'tjes',
-  'tjgo', 'tjma', 'tjmg', 'tjms', 'tjmt', 'tjpa', 'tjpb', 'tjpe',
-  'tjpi', 'tjpr', 'tjrj', 'tjrn', 'tjro', 'tjrr', 'tjrs', 'tjsc',
-  'tjse', 'tjsp', 'tjto',
+  'tjac',
+  'tjal',
+  'tjam',
+  'tjap',
+  'tjba',
+  'tjce',
+  'tjdft',
+  'tjes',
+  'tjgo',
+  'tjma',
+  'tjmg',
+  'tjms',
+  'tjmt',
+  'tjpa',
+  'tjpb',
+  'tjpe',
+  'tjpi',
+  'tjpr',
+  'tjrj',
+  'tjrn',
+  'tjro',
+  'tjrr',
+  'tjrs',
+  'tjsc',
+  'tjse',
+  'tjsp',
+  'tjto',
 ] as const;
 
-const TRF_SIGLAS = [
-  'trf1', 'trf2', 'trf3', 'trf4', 'trf5', 'trf6',
-] as const;
+const TRF_SIGLAS = ['trf1', 'trf2', 'trf3', 'trf4', 'trf5', 'trf6'] as const;
 
 const TRT_SIGLAS = Array.from({ length: 24 }, (_, i) => `trt${i + 1}`);
 
 const TRE_SIGLAS = [
-  'tre-ac', 'tre-al', 'tre-am', 'tre-ap', 'tre-ba', 'tre-ce', 'tre-dft',
-  'tre-es', 'tre-go', 'tre-ma', 'tre-mg', 'tre-ms', 'tre-mt', 'tre-pa',
-  'tre-pb', 'tre-pe', 'tre-pi', 'tre-pr', 'tre-rj', 'tre-rn', 'tre-ro',
-  'tre-rr', 'tre-rs', 'tre-sc', 'tre-se', 'tre-sp', 'tre-to',
+  'tre-ac',
+  'tre-al',
+  'tre-am',
+  'tre-ap',
+  'tre-ba',
+  'tre-ce',
+  'tre-dft',
+  'tre-es',
+  'tre-go',
+  'tre-ma',
+  'tre-mg',
+  'tre-ms',
+  'tre-mt',
+  'tre-pa',
+  'tre-pb',
+  'tre-pe',
+  'tre-pi',
+  'tre-pr',
+  'tre-rj',
+  'tre-rn',
+  'tre-ro',
+  'tre-rr',
+  'tre-rs',
+  'tre-sc',
+  'tre-se',
+  'tre-sp',
+  'tre-to',
 ];
 
 const TJM_SIGLAS = ['tjmmg', 'tjmrs', 'tjmsp'];
@@ -52,27 +96,32 @@ export function extrairSiglaDoCNJ(numeroCNJ: string): string | null {
   if (Number.isNaN(trNum) || trNum < 1) return null;
 
   switch (j) {
-    case '8': { // Justiça Estadual (TJ)
+    case '8': {
+      // Justiça Estadual (TJ)
       const idx = trNum - 1;
       if (idx >= 0 && idx < TJ_SIGLAS.length) return TJ_SIGLAS[idx] ?? null;
       return null;
     }
-    case '4': { // Justiça Federal (TRF)
+    case '4': {
+      // Justiça Federal (TRF)
       const idx = trNum - 1;
       if (idx >= 0 && idx < TRF_SIGLAS.length) return TRF_SIGLAS[idx] ?? null;
       return null;
     }
-    case '5': { // Justiça do Trabalho (TRT)
+    case '5': {
+      // Justiça do Trabalho (TRT)
       const idx = trNum - 1;
       if (idx >= 0 && idx < TRT_SIGLAS.length) return TRT_SIGLAS[idx] ?? null;
       return null;
     }
-    case '6': { // Justiça Eleitoral (TRE)
+    case '6': {
+      // Justiça Eleitoral (TRE)
       const idx = trNum - 1;
       if (idx >= 0 && idx < TRE_SIGLAS.length) return TRE_SIGLAS[idx] ?? null;
       return null;
     }
-    case '7': { // Justiça Militar (TJM)
+    case '7': {
+      // Justiça Militar (TJM)
       const idx = trNum - 1;
       if (idx >= 0 && idx < TJM_SIGLAS.length) return TJM_SIGLAS[idx] ?? null;
       return null;

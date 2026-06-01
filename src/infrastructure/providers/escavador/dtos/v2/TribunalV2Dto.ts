@@ -11,14 +11,16 @@ import { z } from 'zod';
  * Classificação de tribunal (STF, TJSP, TRT, etc.).
  * @type {ZodSchema}
  */
-export const SistemaJudicialSchema = z.object({
-  id: z.number().int().optional(),
-  nome: z.string().optional(),
-  sigla: z.string().optional(),
-  sistema_nome: z.string().optional(),
-  tribunal_sigla: z.string().optional(),
-  tribunal_nome: z.string().optional(),
-}).passthrough();
+export const SistemaJudicialSchema = z
+  .object({
+    id: z.number().int().optional(),
+    nome: z.string().optional(),
+    sigla: z.string().optional(),
+    sistema_nome: z.string().optional(),
+    tribunal_sigla: z.string().optional(),
+    tribunal_nome: z.string().optional(),
+  })
+  .passthrough();
 
 /**
  * Schema de resposta de listagem de sistemas judiciais.

@@ -18,7 +18,7 @@ export const BetSafeComplianceRetornoSchema = z.object({
   parentescos: z.array(z.record(z.unknown())).nullable().optional(),
   pep: z.boolean().nullable().optional(),
   personalidadePublica: z.boolean().nullable().optional(),
-  relacionadoEsporte: z.boolean().nullable().optional()
+  relacionadoEsporte: z.boolean().nullable().optional(),
 });
 
 export type BetSafeComplianceRetornoDto = z.infer<typeof BetSafeComplianceRetornoSchema>;

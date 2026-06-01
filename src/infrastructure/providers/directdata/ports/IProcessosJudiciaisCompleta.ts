@@ -15,8 +15,13 @@ import type { ProcessosJudiciaisCompletaRetornoDto } from '../dtos/ProcessosJudi
  */
 export interface IProcessosJudiciaisCompleta {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: ProcessosJudiciaisCompletaRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: ProcessosJudiciaisCompletaRetornoDto | null;
+      }
+    >
+  >;
 }

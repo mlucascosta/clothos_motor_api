@@ -6,8 +6,8 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { VeiculosDadosV1Schema } from '../dtos/VeiculosDadosV1Dto.js';
 import type { VeiculosDadosV1Dto } from '../dtos/VeiculosDadosV1Dto.js';
 import type { IVeiculosDadosV1 } from '../ports/IVeiculosDadosV1.js';

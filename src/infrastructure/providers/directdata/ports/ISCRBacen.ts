@@ -15,8 +15,13 @@ import type { SCRBacenRetornoDto } from '../dtos/SCRBacenDto.js';
  */
 export interface ISCRBacen {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: SCRBacenRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: SCRBacenRetornoDto | null;
+      }
+    >
+  >;
 }

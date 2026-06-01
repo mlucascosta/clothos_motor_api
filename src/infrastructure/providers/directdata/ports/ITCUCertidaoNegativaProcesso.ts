@@ -15,8 +15,13 @@ import type { TCUCertidaoNegativaProcessoRetornoDto } from '../dtos/TCUCertidaoN
  */
 export interface ITCUCertidaoNegativaProcesso {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: TCUCertidaoNegativaProcessoRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: TCUCertidaoNegativaProcessoRetornoDto | null;
+      }
+    >
+  >;
 }

@@ -6,16 +6,18 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const RegistradoresMatricReciboItemSchema = z.object({
-  protocolo: z.string().optional(),
-  status: z.string().optional(),
-  matricula: z.string().optional(),
-  cartorio: z.string().optional(),
-  data_pedido: z.string().optional(),
-  valor: z.number().optional(),
-  forma_pagamento: z.string().optional(),
-  recibo_numero: z.string().optional(),
-}).passthrough();
+export const RegistradoresMatricReciboItemSchema = z
+  .object({
+    protocolo: z.string().optional(),
+    status: z.string().optional(),
+    matricula: z.string().optional(),
+    cartorio: z.string().optional(),
+    data_pedido: z.string().optional(),
+    valor: z.number().optional(),
+    forma_pagamento: z.string().optional(),
+    recibo_numero: z.string().optional(),
+  })
+  .passthrough();
 
 export const RegistradoresMatricReciboResponseSchema = z.object({
   code: z.number(),

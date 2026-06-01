@@ -6,20 +6,28 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const CvmProcessoAdministrativoItemSchema = z.object({
-  numero_processo: z.string().optional(),
-  assunto: z.string().optional(),
-  situacao: z.string().optional(),
-  data_instauracao: z.string().optional(),
-  acusados: z.array(z.object({
-    nome: z.string().optional(),
-    cpf: z.string().optional(),
-    cnpj: z.string().optional(),
-    penalidade: z.string().optional(),
-  }).passthrough()).optional(),
-  relator: z.string().optional(),
-  decisao: z.string().optional(),
-}).passthrough();
+export const CvmProcessoAdministrativoItemSchema = z
+  .object({
+    numero_processo: z.string().optional(),
+    assunto: z.string().optional(),
+    situacao: z.string().optional(),
+    data_instauracao: z.string().optional(),
+    acusados: z
+      .array(
+        z
+          .object({
+            nome: z.string().optional(),
+            cpf: z.string().optional(),
+            cnpj: z.string().optional(),
+            penalidade: z.string().optional(),
+          })
+          .passthrough(),
+      )
+      .optional(),
+    relator: z.string().optional(),
+    decisao: z.string().optional(),
+  })
+  .passthrough();
 
 export const CvmProcessoAdministrativoResponseSchema = z.object({
   code: z.number(),

@@ -6,16 +6,18 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const MpfAmazoniaProtegeItemSchema = z.object({
-  cpf: z.string().optional(),
-  cnpj: z.string().optional(),
-  nome: z.string().optional(),
-  situacao: z.string().optional(),
-  municipio: z.string().optional(),
-  estado: z.string().optional(),
-  data_inclusao: z.string().optional(),
-  motivo: z.string().optional(),
-}).passthrough();
+export const MpfAmazoniaProtegeItemSchema = z
+  .object({
+    cpf: z.string().optional(),
+    cnpj: z.string().optional(),
+    nome: z.string().optional(),
+    situacao: z.string().optional(),
+    municipio: z.string().optional(),
+    estado: z.string().optional(),
+    data_inclusao: z.string().optional(),
+    motivo: z.string().optional(),
+  })
+  .passthrough();
 
 export const MpfAmazoniaProtegeResponseSchema = z.object({
   code: z.number(),

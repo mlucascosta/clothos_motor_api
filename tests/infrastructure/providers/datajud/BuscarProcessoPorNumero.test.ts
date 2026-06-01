@@ -78,7 +78,9 @@ describe('BuscarProcessoPorNumero', () => {
   });
 
   it('propaga erro do http client', async () => {
-    const http = makeHttp(jest.fn().mockResolvedValue(left(new SourceError('AUTH_FAILED', 'datajud'))));
+    const http = makeHttp(
+      jest.fn().mockResolvedValue(left(new SourceError('AUTH_FAILED', 'datajud'))),
+    );
     const op = new BuscarProcessoPorNumero(http);
 
     const result = await op.execute({

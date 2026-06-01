@@ -6,23 +6,37 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import {
+  type PrefMgBeloHorizonteCndiptuItem,
+  PrefMgBeloHorizonteCndiptuResponseSchema,
+} from '../dtos/PrefMgBeloHorizonteCndiptuDto.js';
 import type { IInfosimplesOperation } from '../ports/IInfosimplesOperation.js';
-import { PrefMgBeloHorizonteCndiptuResponseSchema, type PrefMgBeloHorizonteCndiptuItem } from '../dtos/PrefMgBeloHorizonteCndiptuDto.js';
 
-export class PrefMgBeloHorizonteCndiptu implements IInfosimplesOperation<PrefMgBeloHorizonteCndiptuItem> {
+export class PrefMgBeloHorizonteCndiptu
+  implements IInfosimplesOperation<PrefMgBeloHorizonteCndiptuItem>
+{
   readonly path = 'consultas/pref/mg/belo-horizonte/cndiptu';
 
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(params: Record<string, string | undefined>): Promise<Either<SourceError, PrefMgBeloHorizonteCndiptuItem>> {
+  async execute(
+    params: Record<string, string | undefined>,
+  ): Promise<Either<SourceError, PrefMgBeloHorizonteCndiptuItem>> {
     const cleanParams: Record<string, string> = {};
     for (const [k, v] of Object.entries(params)) {
       if (v !== undefined && v !== '') cleanParams[k] = v;
     }
-    const result = await this.http.request<unknown>(this.path, { method: 'POST', params: cleanParams });
+    const result = await this.http.request<unknown>(this.path, {
+      method: 'POST',
+      params: cleanParams,
+    });
     if (isLeft(result)) return result;
-    return parseOrSchemaError(PrefMgBeloHorizonteCndiptuResponseSchema, result.value, 'infosimples');
+    return parseOrSchemaError(
+      PrefMgBeloHorizonteCndiptuResponseSchema,
+      result.value,
+      'infosimples',
+    );
   }
 }

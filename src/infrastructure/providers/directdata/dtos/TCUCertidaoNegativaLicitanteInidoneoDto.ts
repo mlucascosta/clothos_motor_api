@@ -12,7 +12,9 @@ export const TCUCertidaoNegativaLicitanteInidoneoRetornoSchema = z.object({
   documentoConsultado: z.string().nullable().optional(),
   nomeEntidade: z.string().nullable().optional(),
   possuiSancao: z.boolean().nullable().optional(),
-  status: z.string().nullable().optional()
+  status: z.string().nullable().optional(),
 });
 
-export type TCUCertidaoNegativaLicitanteInidoneoRetornoDto = z.infer<typeof TCUCertidaoNegativaLicitanteInidoneoRetornoSchema>;
+export type TCUCertidaoNegativaLicitanteInidoneoRetornoDto = z.infer<
+  typeof TCUCertidaoNegativaLicitanteInidoneoRetornoSchema
+>;

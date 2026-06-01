@@ -10,7 +10,7 @@ export const APFRuralRetornoSchema = z.object({
   dataConsulta: z.string().nullable().optional(),
   documentoConsultado: z.string().nullable().optional(),
   observacoes: z.string().nullable().optional(),
-  quantidadeAutorizacoes: z.number().int().nullable().optional()
+  quantidadeAutorizacoes: z.number().int().nullable().optional(),
 });
 
 export type APFRuralRetornoDto = z.infer<typeof APFRuralRetornoSchema>;

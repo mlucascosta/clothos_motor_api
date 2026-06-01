@@ -15,7 +15,7 @@ export const CadastroAmbientalRuralRetornoSchema = z.object({
   inscricaoCAR: z.string().nullable().optional(),
   reservaLegal: z.record(z.unknown()),
   situacaoCadastro: z.string().nullable().optional(),
-  usoRestrito: z.record(z.unknown())
+  usoRestrito: z.record(z.unknown()),
 });
 
 export type CadastroAmbientalRuralRetornoDto = z.infer<typeof CadastroAmbientalRuralRetornoSchema>;

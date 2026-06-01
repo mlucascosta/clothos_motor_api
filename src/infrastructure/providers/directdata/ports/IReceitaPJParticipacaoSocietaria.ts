@@ -15,8 +15,13 @@ import type { ReceitaPJParticipacaoSocietariaRetornoDto } from '../dtos/ReceitaP
  */
 export interface IReceitaPJParticipacaoSocietaria {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: ReceitaPJParticipacaoSocietariaRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: ReceitaPJParticipacaoSocietariaRetornoDto | null;
+      }
+    >
+  >;
 }

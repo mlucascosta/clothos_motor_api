@@ -12,7 +12,9 @@ export const CarteiraNacionalHabilitacaoRetornoSchema = z.object({
   nacionalidade: z.string().nullable().optional(),
   nome: z.string().nullable().optional(),
   permissionario: z.boolean().nullable().optional(),
-  uf: z.string().nullable().optional()
+  uf: z.string().nullable().optional(),
 });
 
-export type CarteiraNacionalHabilitacaoRetornoDto = z.infer<typeof CarteiraNacionalHabilitacaoRetornoSchema>;
+export type CarteiraNacionalHabilitacaoRetornoDto = z.infer<
+  typeof CarteiraNacionalHabilitacaoRetornoSchema
+>;

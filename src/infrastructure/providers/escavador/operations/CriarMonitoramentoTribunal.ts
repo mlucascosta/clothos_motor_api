@@ -1,11 +1,14 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
-import { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import type { MonitoramentoTribunalDto } from '../dtos/MonitoramentoDto.js';
 import { MonitoramentoTribunalDtoSchema } from '../dtos/MonitoramentoDto.js';
-import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
-import type { ICriarMonitoramentoTribunal, CriarMonitoramentoTribunalInput } from '../ports/ICriarMonitoramentoTribunal.js';
+import type {
+  CriarMonitoramentoTribunalInput,
+  ICriarMonitoramentoTribunal,
+} from '../ports/ICriarMonitoramentoTribunal.js';
 
 export class CriarMonitoramentoTribunal implements ICriarMonitoramentoTribunal {
   constructor(private readonly http: IHttpClient) {}

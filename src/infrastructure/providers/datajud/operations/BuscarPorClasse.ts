@@ -30,7 +30,9 @@ export class BuscarPorClasse {
     this.buscar = new BuscarGenericoDataJud(http);
   }
 
-  async execute(input: BuscarPorClasseInput): Promise<Either<SourceError, DataJudSearchResponseDto>> {
+  async execute(
+    input: BuscarPorClasseInput,
+  ): Promise<Either<SourceError, DataJudSearchResponseDto>> {
     const query: Record<string, unknown> =
       input.classeCodigo !== undefined
         ? { term: { 'classe.codigo': input.classeCodigo } }

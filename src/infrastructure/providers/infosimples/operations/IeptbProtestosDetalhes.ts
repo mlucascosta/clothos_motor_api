@@ -6,10 +6,13 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import {
+  type IeptbProtestosDetalhesSpItem,
+  IeptbProtestosDetalhesSpResponseSchema,
+} from '../dtos/IeptbProtestosDetalhesSpDto.js';
 import type { IInfosimplesOperation } from '../ports/IInfosimplesOperation.js';
-import { IeptbProtestosDetalhesSpResponseSchema, type IeptbProtestosDetalhesSpItem } from '../dtos/IeptbProtestosDetalhesSpDto.js';
 
 export class IeptbProtestosDetalhes implements IInfosimplesOperation<IeptbProtestosDetalhesSpItem> {
   readonly path = 'consultas/ieptb/protestos/detalhes-sp';

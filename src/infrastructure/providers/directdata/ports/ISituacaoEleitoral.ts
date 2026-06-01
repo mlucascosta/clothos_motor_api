@@ -15,8 +15,13 @@ import type { SituacaoEleitoralRetornoDto } from '../dtos/SituacaoEleitoralDto.j
  */
 export interface ISituacaoEleitoral {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: SituacaoEleitoralRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: SituacaoEleitoralRetornoDto | null;
+      }
+    >
+  >;
 }

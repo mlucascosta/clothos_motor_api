@@ -6,21 +6,29 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const PrefMgBeloHorizonteIptuItemSchema = z.object({
-  identificador: z.string().optional(),
-  inscricao: z.string().optional(),
-  endereco: z.string().optional(),
-  area: z.string().optional(),
-  valor_venal: z.number().optional(),
-  ano: z.string().optional(),
-  parcelas: z.array(z.object({
-    parcela: z.string().optional(),
-    vencimento: z.string().optional(),
-    valor: z.number().optional(),
+export const PrefMgBeloHorizonteIptuItemSchema = z
+  .object({
+    identificador: z.string().optional(),
+    inscricao: z.string().optional(),
+    endereco: z.string().optional(),
+    area: z.string().optional(),
+    valor_venal: z.number().optional(),
+    ano: z.string().optional(),
+    parcelas: z
+      .array(
+        z
+          .object({
+            parcela: z.string().optional(),
+            vencimento: z.string().optional(),
+            valor: z.number().optional(),
+            situacao: z.string().optional(),
+          })
+          .passthrough(),
+      )
+      .optional(),
     situacao: z.string().optional(),
-  }).passthrough()).optional(),
-  situacao: z.string().optional(),
-}).passthrough();
+  })
+  .passthrough();
 
 export const PrefMgBeloHorizonteIptuResponseSchema = z.object({
   code: z.number(),

@@ -15,7 +15,9 @@ export const CaixaRegularidadeEmpregadorFGTSRetornoSchema = z.object({
   periodoValidade: z.record(z.unknown()),
   possuiIrregularidade: z.boolean().nullable().optional(),
   razaoSocial: z.string().nullable().optional(),
-  status: z.string().nullable().optional()
+  status: z.string().nullable().optional(),
 });
 
-export type CaixaRegularidadeEmpregadorFGTSRetornoDto = z.infer<typeof CaixaRegularidadeEmpregadorFGTSRetornoSchema>;
+export type CaixaRegularidadeEmpregadorFGTSRetornoDto = z.infer<
+  typeof CaixaRegularidadeEmpregadorFGTSRetornoSchema
+>;

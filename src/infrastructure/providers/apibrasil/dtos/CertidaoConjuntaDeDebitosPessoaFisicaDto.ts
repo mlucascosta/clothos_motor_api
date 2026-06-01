@@ -7,4 +7,6 @@ import { z } from 'zod';
 
 export const CertidaoConjuntaDeDebitosPessoaFisicaSchema = z.unknown();
 
-export type CertidaoConjuntaDeDebitosPessoaFisicaDto = z.infer<typeof CertidaoConjuntaDeDebitosPessoaFisicaSchema>;
+export type CertidaoConjuntaDeDebitosPessoaFisicaDto = z.infer<
+  typeof CertidaoConjuntaDeDebitosPessoaFisicaSchema
+>;

@@ -11,7 +11,9 @@ export const TCUConsultaConsolidadaPessoaJuridicaRetornoSchema = z.object({
   constamSancoes: z.boolean().nullable().optional(),
   nomeFantasia: z.string().nullable().optional(),
   razaoSocial: z.string().nullable().optional(),
-  uf: z.string().nullable().optional()
+  uf: z.string().nullable().optional(),
 });
 
-export type TCUConsultaConsolidadaPessoaJuridicaRetornoDto = z.infer<typeof TCUConsultaConsolidadaPessoaJuridicaRetornoSchema>;
+export type TCUConsultaConsolidadaPessoaJuridicaRetornoDto = z.infer<
+  typeof TCUConsultaConsolidadaPessoaJuridicaRetornoSchema
+>;

@@ -15,8 +15,13 @@ import type { MPFCertidaoNegativaRetornoDto } from '../dtos/MPFCertidaoNegativaD
  */
 export interface IMPFCertidaoNegativa {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: MPFCertidaoNegativaRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: MPFCertidaoNegativaRetornoDto | null;
+      }
+    >
+  >;
 }

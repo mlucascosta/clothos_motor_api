@@ -6,18 +6,20 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const CarDemonstrativoItemSchema = z.object({
-  car: z.string().optional(),
-  municipio: z.string().optional(),
-  uf: z.string().optional(),
-  status: z.string().optional(),
-  tipo_imovel: z.string().optional(),
-  area_total: z.number().optional(),
-  area_consolidada: z.number().optional(),
-  area_remanescente: z.number().optional(),
-  proprietario: z.string().optional(),
-  cpf_cnpj: z.string().optional(),
-}).passthrough();
+export const CarDemonstrativoItemSchema = z
+  .object({
+    car: z.string().optional(),
+    municipio: z.string().optional(),
+    uf: z.string().optional(),
+    status: z.string().optional(),
+    tipo_imovel: z.string().optional(),
+    area_total: z.number().optional(),
+    area_consolidada: z.number().optional(),
+    area_remanescente: z.number().optional(),
+    proprietario: z.string().optional(),
+    cpf_cnpj: z.string().optional(),
+  })
+  .passthrough();
 
 export const CarDemonstrativoResponseSchema = z.object({
   code: z.number(),

@@ -15,10 +15,16 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
   describe('GET /api/escavador/v1/monitoramentos/tribunal', () => {
     it('sucesso: retorna 200 com lista', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ items: [{ id: 1, ativo: true, tribunal: 'TJSP' }], paginator: { total: 1, current_page: 1, per_page: 20 } }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+        new Response(
+          JSON.stringify({
+            items: [{ id: 1, ativo: true, tribunal: 'TJSP' }],
+            paginator: { total: 1, current_page: 1, per_page: 20 },
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        ),
       );
 
       const res = await app.request('/api/escavador/v1/monitoramentos/tribunal', { headers });
@@ -36,10 +42,13 @@ describe('Escavador V1 — Monitoramentos Tribunal, Callbacks, Auxiliares (E2E)'
 
     it('sem resultado: retorna 200 com dados vazios', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ items: [], paginator: { total: 0, current_page: 1, per_page: 20 } }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+        new Response(
+          JSON.stringify({ items: [], paginator: { total: 0, current_page: 1, per_page: 20 } }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        ),
       );
 
       const res = await app.request('/api/escavador/v1/monitoramentos/tribunal', { headers });

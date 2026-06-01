@@ -19,7 +19,9 @@ export const CertidaoNegativaDebitosMunicipalRetornoSchema = z.object({
   observacao: z.string().nullable().optional(),
   possuiDebito: z.boolean().nullable().optional(),
   status: z.string().nullable().optional(),
-  uf: z.string().nullable().optional()
+  uf: z.string().nullable().optional(),
 });
 
-export type CertidaoNegativaDebitosMunicipalRetornoDto = z.infer<typeof CertidaoNegativaDebitosMunicipalRetornoSchema>;
+export type CertidaoNegativaDebitosMunicipalRetornoDto = z.infer<
+  typeof CertidaoNegativaDebitosMunicipalRetornoSchema
+>;

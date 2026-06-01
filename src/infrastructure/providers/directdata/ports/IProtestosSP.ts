@@ -15,8 +15,13 @@ import type { ProtestosSPRetornoDto } from '../dtos/ProtestosSPDto.js';
  */
 export interface IProtestosSP {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: ProtestosSPRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: ProtestosSPRetornoDto | null;
+      }
+    >
+  >;
 }

@@ -10,7 +10,7 @@ export const DetalhamentoNegativoRetornoSchema = z.object({
   documentoConsultado: z.string().nullable().optional(),
   observacao: z.string().nullable().optional(),
   pessoaFisica: z.record(z.unknown()),
-  pessoaJuridica: z.record(z.unknown())
+  pessoaJuridica: z.record(z.unknown()),
 });
 
 export type DetalhamentoNegativoRetornoDto = z.infer<typeof DetalhamentoNegativoRetornoSchema>;

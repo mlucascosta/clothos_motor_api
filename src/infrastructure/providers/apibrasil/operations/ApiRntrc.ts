@@ -6,8 +6,8 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { ApiRntrcSchema } from '../dtos/ApiRntrcDto.js';
 import type { ApiRntrcDto } from '../dtos/ApiRntrcDto.js';
 import type { IApiRntrc } from '../ports/IApiRntrc.js';

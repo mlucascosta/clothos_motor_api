@@ -17,7 +17,7 @@ export const BeneficiosSociaisRetornoSchema = z.object({
   nome: z.string().nullable().optional(),
   nomeMae: z.string().nullable().optional(),
   obito: z.boolean().nullable().optional(),
-  seguroDefeso: z.boolean().nullable().optional()
+  seguroDefeso: z.boolean().nullable().optional(),
 });
 
 export type BeneficiosSociaisRetornoDto = z.infer<typeof BeneficiosSociaisRetornoSchema>;

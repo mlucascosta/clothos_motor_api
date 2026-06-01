@@ -7,4 +7,6 @@ import { z } from 'zod';
 
 export const CsvRenainfRenajudBinProprietarioSchema = z.unknown();
 
-export type CsvRenainfRenajudBinProprietarioDto = z.infer<typeof CsvRenainfRenajudBinProprietarioSchema>;
+export type CsvRenainfRenajudBinProprietarioDto = z.infer<
+  typeof CsvRenainfRenajudBinProprietarioSchema
+>;

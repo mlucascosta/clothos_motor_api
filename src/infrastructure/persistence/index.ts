@@ -3,8 +3,8 @@
  * @module infrastructure/persistence
  */
 
-import { MongoRawResultStore } from './MongoRawResultStore.js';
 import { MongoQueryRefStore } from './MongoQueryRefStore.js';
+import { MongoRawResultStore } from './MongoRawResultStore.js';
 
 export { MongoRawResultStore };
 export { MongoQueryRefStore };

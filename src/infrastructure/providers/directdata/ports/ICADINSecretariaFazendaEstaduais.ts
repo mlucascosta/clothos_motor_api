@@ -5,8 +5,8 @@
 
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 import type { CADINSecretariaFazendaEstaduaisRetornoDto } from '../dtos/CADINSecretariaFazendaEstaduaisDto.js';
+import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 
 /**
  * Interface para consulta de CADINSecretariaFazendaEstaduais.
@@ -15,8 +15,13 @@ import type { CADINSecretariaFazendaEstaduaisRetornoDto } from '../dtos/CADINSec
  */
 export interface ICADINSecretariaFazendaEstaduais {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: CADINSecretariaFazendaEstaduaisRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: CADINSecretariaFazendaEstaduaisRetornoDto | null;
+      }
+    >
+  >;
 }

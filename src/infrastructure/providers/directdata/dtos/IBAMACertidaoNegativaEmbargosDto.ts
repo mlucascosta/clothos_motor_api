@@ -15,7 +15,9 @@ export const IBAMACertidaoNegativaEmbargosRetornoSchema = z.object({
   numeroCertidao: z.string().nullable().optional(),
   observacoes: z.array(z.record(z.unknown())).nullable().optional(),
   possuiEmbargo: z.boolean().nullable().optional(),
-  status: z.string().nullable().optional()
+  status: z.string().nullable().optional(),
 });
 
-export type IBAMACertidaoNegativaEmbargosRetornoDto = z.infer<typeof IBAMACertidaoNegativaEmbargosRetornoSchema>;
+export type IBAMACertidaoNegativaEmbargosRetornoDto = z.infer<
+  typeof IBAMACertidaoNegativaEmbargosRetornoSchema
+>;

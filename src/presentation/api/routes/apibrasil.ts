@@ -28,12 +28,15 @@
  * independente do endpoint consultado.
  */
 
+import { ApiBrasilHttpClient } from '@infrastructure/providers/apibrasil/ApiBrasilHttpClient.js';
+import {
+  apibrasilRegistry,
+  resolveOperation,
+} from '@infrastructure/providers/apibrasil/operations/registry.js';
+import { apibrasilRequiredParams } from '@infrastructure/providers/apibrasil/operations/validation-map.js';
+import type { IApiBrasilOperation } from '@infrastructure/providers/apibrasil/ports/IApiBrasilOperation.js';
 import { Hono } from 'hono';
 import { handleOp } from '../handleOp.js';
-import { ApiBrasilHttpClient } from '@infrastructure/providers/apibrasil/ApiBrasilHttpClient.js';
-import type { IApiBrasilOperation } from '@infrastructure/providers/apibrasil/ports/IApiBrasilOperation.js';
-import { apibrasilRegistry, resolveOperation } from '@infrastructure/providers/apibrasil/operations/registry.js';
-import { apibrasilRequiredParams } from '@infrastructure/providers/apibrasil/operations/validation-map.js';
 
 const GW = 'apibrasil';
 const BASE_URL = 'https://gateway.apibrasil.io/api/v2';
@@ -73,7 +76,8 @@ apibrasil.post('/:endpoint{.+}', async (c) => {
   let body: Record<string, string> = {};
   try {
     const rawBody = await c.req.json();
-    body = typeof rawBody === 'object' && rawBody !== null ? rawBody as Record<string, string> : {};
+    body =
+      typeof rawBody === 'object' && rawBody !== null ? (rawBody as Record<string, string>) : {};
   } catch {
     body = {};
   }
@@ -104,7 +108,16 @@ apibrasil.post('/:endpoint{.+}', async (c) => {
   }
 
   // ─── Identifica tipo_param / param para auditoria ───
-  const priorityKeys = ['cpf', 'cnpj', 'placa', 'chave', 'cep', 'celular', 'codigo_fipe', 'renavam'];
+  const priorityKeys = [
+    'cpf',
+    'cnpj',
+    'placa',
+    'chave',
+    'cep',
+    'celular',
+    'codigo_fipe',
+    'renavam',
+  ];
   let tipoParam: string | null = null;
   let paramValue: string | null = null;
   for (const key of priorityKeys) {
@@ -119,9 +132,12 @@ apibrasil.post('/:endpoint{.+}', async (c) => {
   if ((tipoParam === 'cpf' || tipoParam === 'cnpj') && paramValue) {
     const digits = paramValue.replace(/\D/g, '');
     if (digits.length !== 11 && digits.length !== 14) {
-      return c.json({
-        error: `Formato inválido para ${tipoParam.toUpperCase()}: deve ter 11 (CPF) ou 14 (CNPJ) dígitos`,
-      }, 422);
+      return c.json(
+        {
+          error: `Formato inválido para ${tipoParam.toUpperCase()}: deve ter 11 (CPF) ou 14 (CNPJ) dígitos`,
+        },
+        422,
+      );
     }
   }
 

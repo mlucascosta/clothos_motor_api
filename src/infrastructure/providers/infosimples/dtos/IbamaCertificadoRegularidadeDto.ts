@@ -6,14 +6,16 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const IbamaCertificadoRegularidadeItemSchema = z.object({
-  cpf_cnpj: z.string().optional(),
-  nome: z.string().optional(),
-  situacao: z.string().optional(),
-  data_emissao: z.string().optional(),
-  data_validade: z.string().optional(),
-  numero_certificado: z.string().optional(),
-}).passthrough();
+export const IbamaCertificadoRegularidadeItemSchema = z
+  .object({
+    cpf_cnpj: z.string().optional(),
+    nome: z.string().optional(),
+    situacao: z.string().optional(),
+    data_emissao: z.string().optional(),
+    data_validade: z.string().optional(),
+    numero_certificado: z.string().optional(),
+  })
+  .passthrough();
 
 export const IbamaCertificadoRegularidadeResponseSchema = z.object({
   code: z.number(),
@@ -25,4 +27,6 @@ export const IbamaCertificadoRegularidadeResponseSchema = z.object({
   site_receipts: z.array(z.string()).optional(),
 });
 
-export type IbamaCertificadoRegularidadeItem = z.infer<typeof IbamaCertificadoRegularidadeItemSchema>;
+export type IbamaCertificadoRegularidadeItem = z.infer<
+  typeof IbamaCertificadoRegularidadeItemSchema
+>;

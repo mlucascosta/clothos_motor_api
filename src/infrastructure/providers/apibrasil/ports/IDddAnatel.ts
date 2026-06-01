@@ -11,7 +11,5 @@ export interface IDddAnatel {
   readonly path: string;
   readonly creditValue: number;
   readonly type: string;
-  execute(
-    params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, DddAnatelDto>>;
+  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, DddAnatelDto>>;
 }

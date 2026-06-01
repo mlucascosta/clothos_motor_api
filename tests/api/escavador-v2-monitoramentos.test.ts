@@ -4,8 +4,8 @@
  * 3 testes por endpoint (30 total): sucesso, erro, sem resultado
  */
 
-import { app } from '../../src/presentation/api/app';
 import { rawStore } from '../../src/infrastructure/persistence/index';
+import { app } from '../../src/presentation/api/app';
 
 describe('Escavador V2 — Monitoramentos (E2E)', () => {
   let saveSpy: jest.SpyInstance;
@@ -222,7 +222,9 @@ describe('Escavador V2 — Monitoramentos (E2E)', () => {
         ),
       );
 
-      const res = await app.request('/api/escavador/v2/monitoramentos/novos-processos/1/resultados');
+      const res = await app.request(
+        '/api/escavador/v2/monitoramentos/novos-processos/1/resultados',
+      );
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -230,7 +232,9 @@ describe('Escavador V2 — Monitoramentos (E2E)', () => {
     });
 
     it('❌ erro: retorna 400 com ID inválido', async () => {
-      const res = await app.request('/api/escavador/v2/monitoramentos/novos-processos/invalid/resultados');
+      const res = await app.request(
+        '/api/escavador/v2/monitoramentos/novos-processos/invalid/resultados',
+      );
 
       expect(res.status).toBe(400);
     });
@@ -246,7 +250,9 @@ describe('Escavador V2 — Monitoramentos (E2E)', () => {
         ),
       );
 
-      const res = await app.request('/api/escavador/v2/monitoramentos/novos-processos/1/resultados');
+      const res = await app.request(
+        '/api/escavador/v2/monitoramentos/novos-processos/1/resultados',
+      );
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;

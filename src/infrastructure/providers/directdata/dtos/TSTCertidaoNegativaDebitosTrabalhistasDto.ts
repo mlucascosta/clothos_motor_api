@@ -14,7 +14,9 @@ export const TSTCertidaoNegativaDebitosTrabalhistasRetornoSchema = z.object({
   possuiProcesso: z.boolean().nullable().optional(),
   processos: z.array(z.record(z.unknown())).nullable().optional(),
   status: z.string().nullable().optional(),
-  totalProcessos: z.number().int().nullable().optional()
+  totalProcessos: z.number().int().nullable().optional(),
 });
 
-export type TSTCertidaoNegativaDebitosTrabalhistasRetornoDto = z.infer<typeof TSTCertidaoNegativaDebitosTrabalhistasRetornoSchema>;
+export type TSTCertidaoNegativaDebitosTrabalhistasRetornoDto = z.infer<
+  typeof TSTCertidaoNegativaDebitosTrabalhistasRetornoSchema
+>;

@@ -5,8 +5,8 @@
 
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 import type { CadastroEntidadesPrivadasImpedidasRetornoDto } from '../dtos/CadastroEntidadesPrivadasImpedidasDto.js';
+import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 
 /**
  * Interface para consulta de CadastroEntidadesPrivadasImpedidas.
@@ -15,8 +15,13 @@ import type { CadastroEntidadesPrivadasImpedidasRetornoDto } from '../dtos/Cadas
  */
 export interface ICadastroEntidadesPrivadasImpedidas {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: CadastroEntidadesPrivadasImpedidasRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: CadastroEntidadesPrivadasImpedidasRetornoDto | null;
+      }
+    >
+  >;
 }

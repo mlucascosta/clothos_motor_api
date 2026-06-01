@@ -11,7 +11,5 @@ export interface ICpfSearch {
   readonly path: string;
   readonly creditValue: number;
   readonly type: string;
-  execute(
-    params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, CpfSearchDto>>;
+  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, CpfSearchDto>>;
 }

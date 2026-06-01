@@ -15,8 +15,13 @@ import type { IBAMACertidaoNegativaEmbargosRetornoDto } from '../dtos/IBAMACerti
  */
 export interface IIBAMACertidaoNegativaEmbargos {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: IBAMACertidaoNegativaEmbargosRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: IBAMACertidaoNegativaEmbargosRetornoDto | null;
+      }
+    >
+  >;
 }

@@ -15,8 +15,13 @@ import type { ObitoRetornoDto } from '../dtos/ObitoDto.js';
  */
 export interface IObito {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: ObitoRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: ObitoRetornoDto | null;
+      }
+    >
+  >;
 }

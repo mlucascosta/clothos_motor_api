@@ -6,15 +6,17 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const IncraSigefParcelasItemSchema = z.object({
-  codigo_parcela: z.string().optional(),
-  municipio: z.string().optional(),
-  uf: z.string().optional(),
-  area: z.number().optional(),
-  situacao: z.string().optional(),
-  proprietario: z.string().optional(),
-  cpf_cnpj: z.string().optional(),
-}).passthrough();
+export const IncraSigefParcelasItemSchema = z
+  .object({
+    codigo_parcela: z.string().optional(),
+    municipio: z.string().optional(),
+    uf: z.string().optional(),
+    area: z.number().optional(),
+    situacao: z.string().optional(),
+    proprietario: z.string().optional(),
+    cpf_cnpj: z.string().optional(),
+  })
+  .passthrough();
 
 export const IncraSigefParcelasResponseSchema = z.object({
   code: z.number(),

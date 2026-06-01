@@ -15,8 +15,13 @@ import type { ReceitaFederalPessoaFisicaRetornoDto } from '../dtos/ReceitaFedera
  */
 export interface IReceitaFederalPessoaFisica {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: ReceitaFederalPessoaFisicaRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: ReceitaFederalPessoaFisicaRetornoDto | null;
+      }
+    >
+  >;
 }

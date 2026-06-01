@@ -6,14 +6,16 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const FgtsGuiaRapidaItemSchema = z.object({
-  cnpj: z.string().optional(),
-  competencia: z.string().optional(),
-  codigo_recolhimento: z.string().optional(),
-  valor: z.number().optional(),
-  data_vencimento: z.string().optional(),
-  situacao: z.string().optional(),
-}).passthrough();
+export const FgtsGuiaRapidaItemSchema = z
+  .object({
+    cnpj: z.string().optional(),
+    competencia: z.string().optional(),
+    codigo_recolhimento: z.string().optional(),
+    valor: z.number().optional(),
+    data_vencimento: z.string().optional(),
+    situacao: z.string().optional(),
+  })
+  .passthrough();
 
 export const FgtsGuiaRapidaResponseSchema = z.object({
   code: z.number(),

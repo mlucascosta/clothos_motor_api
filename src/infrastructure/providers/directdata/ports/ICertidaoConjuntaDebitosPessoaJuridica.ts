@@ -5,8 +5,8 @@
 
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 import type { CertidaoConjuntaDebitosPessoaJuridicaRetornoDto } from '../dtos/CertidaoConjuntaDebitosPessoaJuridicaDto.js';
+import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 
 /**
  * Interface para consulta de CertidaoConjuntaDebitosPessoaJuridica.
@@ -15,8 +15,13 @@ import type { CertidaoConjuntaDebitosPessoaJuridicaRetornoDto } from '../dtos/Ce
  */
 export interface ICertidaoConjuntaDebitosPessoaJuridica {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: CertidaoConjuntaDebitosPessoaJuridicaRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: CertidaoConjuntaDebitosPessoaJuridicaRetornoDto | null;
+      }
+    >
+  >;
 }

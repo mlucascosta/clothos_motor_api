@@ -21,7 +21,7 @@ export const DAPPessoaJuridicaRetornoSchema = z.object({
   resultadoAssociados: z.array(z.record(z.unknown())).nullable().optional(),
   tipo: z.string().nullable().optional(),
   uf: z.string().nullable().optional(),
-  versao: z.string().nullable().optional()
+  versao: z.string().nullable().optional(),
 });
 
 export type DAPPessoaJuridicaRetornoDto = z.infer<typeof DAPPessoaJuridicaRetornoSchema>;

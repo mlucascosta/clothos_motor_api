@@ -11,7 +11,9 @@ export const CadastroExpulsoesAdministracaoFederalRetornoSchema = z.object({
   nome: z.string().nullable().optional(),
   numeroIdentificacao: z.number().int().nullable().optional(),
   observacoes: z.string().nullable().optional(),
-  sancoes: z.array(z.record(z.unknown())).nullable().optional()
+  sancoes: z.array(z.record(z.unknown())).nullable().optional(),
 });
 
-export type CadastroExpulsoesAdministracaoFederalRetornoDto = z.infer<typeof CadastroExpulsoesAdministracaoFederalRetornoSchema>;
+export type CadastroExpulsoesAdministracaoFederalRetornoDto = z.infer<
+  typeof CadastroExpulsoesAdministracaoFederalRetornoSchema
+>;

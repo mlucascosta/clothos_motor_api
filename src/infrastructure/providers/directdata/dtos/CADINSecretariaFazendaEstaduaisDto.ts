@@ -17,7 +17,9 @@ export const CADINSecretariaFazendaEstaduaisRetornoSchema = z.object({
   status: z.string().nullable().optional(),
   totalPendencias: z.number().int().nullable().optional(),
   uf: z.string().nullable().optional(),
-  valorTotal: z.string().nullable().optional()
+  valorTotal: z.string().nullable().optional(),
 });
 
-export type CADINSecretariaFazendaEstaduaisRetornoDto = z.infer<typeof CADINSecretariaFazendaEstaduaisRetornoSchema>;
+export type CADINSecretariaFazendaEstaduaisRetornoDto = z.infer<
+  typeof CADINSecretariaFazendaEstaduaisRetornoSchema
+>;

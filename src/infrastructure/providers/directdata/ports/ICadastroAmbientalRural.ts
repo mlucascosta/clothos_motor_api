@@ -5,8 +5,8 @@
 
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 import type { CadastroAmbientalRuralRetornoDto } from '../dtos/CadastroAmbientalRuralDto.js';
+import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 
 /**
  * Interface para consulta de CadastroAmbientalRural.
@@ -15,8 +15,13 @@ import type { CadastroAmbientalRuralRetornoDto } from '../dtos/CadastroAmbiental
  */
 export interface ICadastroAmbientalRural {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: CadastroAmbientalRuralRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: CadastroAmbientalRuralRetornoDto | null;
+      }
+    >
+  >;
 }

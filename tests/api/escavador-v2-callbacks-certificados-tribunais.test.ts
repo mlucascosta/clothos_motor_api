@@ -72,7 +72,10 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
   describe('POST /api/escavador/v2/callbacks/recebidos', () => {
     it('✅ sucesso: ids válidos retorna 204', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({}), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+        new Response(JSON.stringify({}), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request('/api/escavador/v2/callbacks/recebidos', {
@@ -198,10 +201,10 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
 
     it('⊘ sem resultado: retorna 200 com array vazio', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(
-          JSON.stringify({ items: [] }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } },
-        ),
+        new Response(JSON.stringify({ items: [] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request('/api/escavador/v2/certificados');
@@ -322,7 +325,10 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
   describe('DELETE /api/escavador/v2/certificados/:id', () => {
     it('✅ sucesso: id válido retorna 204', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({}), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+        new Response(JSON.stringify({}), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request('/api/escavador/v2/certificados/1', {
@@ -411,7 +417,10 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
   describe('DELETE /api/escavador/v2/certificados/:id/autenticacoes/:autenticacaoId', () => {
     it('✅ sucesso: ids válidos retorna 204', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({}), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+        new Response(JSON.stringify({}), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request('/api/escavador/v2/certificados/1/autenticacoes/5', {
@@ -486,10 +495,10 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
 
     it('⊘ sem resultado: retorna 200 com array vazio', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(
-          JSON.stringify({ items: [] }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } },
-        ),
+        new Response(JSON.stringify({ items: [] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request('/api/escavador/v2/tribunais/sistemas');
@@ -534,10 +543,10 @@ describe('Escavador V2 — Callbacks, Certificados, Tribunais (E2E)', () => {
 
     it('⊘ sem resultado: sistema_id inexistente retorna array vazio', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(
-          JSON.stringify({ items: [] }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } },
-        ),
+        new Response(JSON.stringify({ items: [] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request('/api/escavador/v2/tribunais?sistema_id=999');

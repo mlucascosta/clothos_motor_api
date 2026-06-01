@@ -48,10 +48,7 @@ export const InfosimplesResponseSchema = z.object({
   code_message: z.string().describe('Mensagem do código de resposta'),
   header: InfosimplesResponseHeaderSchema.describe('Metadados da requisição'),
   data_count: z.number().describe('Quantidade de itens em `data`'),
-  data: z
-    .array(z.unknown())
-    .nullable()
-    .describe('Array de resultados ou null se nenhum resultado'),
+  data: z.array(z.unknown()).nullable().describe('Array de resultados ou null se nenhum resultado'),
   errors: z.array(z.string()).describe('Array de mensagens de erro (vazio se sucesso)'),
   site_receipts: z.array(z.string()).optional().describe('Comprovantes do site'),
 });

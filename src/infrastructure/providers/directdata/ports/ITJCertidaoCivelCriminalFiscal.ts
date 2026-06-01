@@ -15,8 +15,13 @@ import type { TJCertidaoCivelCriminalFiscalRetornoDto } from '../dtos/TJCertidao
  */
 export interface ITJCertidaoCivelCriminalFiscal {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: TJCertidaoCivelCriminalFiscalRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: TJCertidaoCivelCriminalFiscalRetornoDto | null;
+      }
+    >
+  >;
 }

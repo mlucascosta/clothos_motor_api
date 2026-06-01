@@ -12,7 +12,9 @@ export const IBAMAConsultaAutuacoesAmbientaisRetornoSchema = z.object({
   observacoes: z.string().nullable().optional(),
   possuiAutuacao: z.boolean().nullable().optional(),
   totalAutuacoes: z.number().int().nullable().optional(),
-  valorTotalMultas: z.string().nullable().optional()
+  valorTotalMultas: z.string().nullable().optional(),
 });
 
-export type IBAMAConsultaAutuacoesAmbientaisRetornoDto = z.infer<typeof IBAMAConsultaAutuacoesAmbientaisRetornoSchema>;
+export type IBAMAConsultaAutuacoesAmbientaisRetornoDto = z.infer<
+  typeof IBAMAConsultaAutuacoesAmbientaisRetornoSchema
+>;

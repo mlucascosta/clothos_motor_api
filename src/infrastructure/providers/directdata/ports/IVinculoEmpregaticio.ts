@@ -15,8 +15,13 @@ import type { VinculoEmpregaticioRetornoDto } from '../dtos/VinculoEmpregaticioD
  */
 export interface IVinculoEmpregaticio {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: VinculoEmpregaticioRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: VinculoEmpregaticioRetornoDto | null;
+      }
+    >
+  >;
 }

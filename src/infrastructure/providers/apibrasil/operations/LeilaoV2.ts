@@ -6,8 +6,8 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { LeilaoV2Schema } from '../dtos/LeilaoV2Dto.js';
 import type { LeilaoV2Dto } from '../dtos/LeilaoV2Dto.js';
 import type { ILeilaoV2 } from '../ports/ILeilaoV2.js';

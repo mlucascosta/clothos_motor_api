@@ -15,8 +15,13 @@ import type { TituloLocalVotacaoRetornoDto } from '../dtos/TituloLocalVotacaoDto
  */
 export interface ITituloLocalVotacao {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: TituloLocalVotacaoRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: TituloLocalVotacaoRetornoDto | null;
+      }
+    >
+  >;
 }

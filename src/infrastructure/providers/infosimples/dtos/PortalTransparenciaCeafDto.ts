@@ -6,19 +6,21 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const PortalTransparenciaCeafItemSchema = z.object({
-  cpf: z.string().optional(),
-  nome: z.string().optional(),
-  medicamento: z.string().optional(),
-  cid: z.string().optional(),
-  quantidade: z.number().optional(),
-  valor: z.number().optional(),
-  data_inicio: z.string().optional(),
-  data_fim: z.string().optional(),
-  municipio: z.string().optional(),
-  uf: z.string().optional(),
-  situacao: z.string().optional(),
-}).passthrough();
+export const PortalTransparenciaCeafItemSchema = z
+  .object({
+    cpf: z.string().optional(),
+    nome: z.string().optional(),
+    medicamento: z.string().optional(),
+    cid: z.string().optional(),
+    quantidade: z.number().optional(),
+    valor: z.number().optional(),
+    data_inicio: z.string().optional(),
+    data_fim: z.string().optional(),
+    municipio: z.string().optional(),
+    uf: z.string().optional(),
+    situacao: z.string().optional(),
+  })
+  .passthrough();
 
 export const PortalTransparenciaCeafResponseSchema = z.object({
   code: z.number(),

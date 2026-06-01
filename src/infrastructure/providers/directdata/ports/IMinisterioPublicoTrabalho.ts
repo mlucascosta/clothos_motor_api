@@ -15,8 +15,13 @@ import type { MinisterioPublicoTrabalhoRetornoDto } from '../dtos/MinisterioPubl
  */
 export interface IMinisterioPublicoTrabalho {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: MinisterioPublicoTrabalhoRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: MinisterioPublicoTrabalhoRetornoDto | null;
+      }
+    >
+  >;
 }

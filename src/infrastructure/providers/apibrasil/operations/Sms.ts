@@ -6,8 +6,8 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { SmsSchema } from '../dtos/SmsDto.js';
 import type { SmsDto } from '../dtos/SmsDto.js';
 import type { ISms } from '../ports/ISms.js';
@@ -19,9 +19,7 @@ export class Sms implements ISms {
 
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(
-    params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, SmsDto>> {
+  async execute(params: Record<string, string | undefined>): Promise<Either<SourceError, SmsDto>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

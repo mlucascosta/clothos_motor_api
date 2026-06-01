@@ -84,12 +84,14 @@ export const IniciarBuscaLoteResponseSchema = z.object({
 export const ListarBuscasAssincronasResponseSchema = z.object({
   /** Array de buscas assíncronas */
   items: z.array(BuscaAssincronaDtoSchema),
-  paginator: z.object({
-    total: z.number().int().nullish(),
-    total_pages: z.number().int().nullish(),
-    current_page: z.number().int().nullish(),
-    per_page: z.number().int().nullish(),
-  }).nullish(),
+  paginator: z
+    .object({
+      total: z.number().int().nullish(),
+      total_pages: z.number().int().nullish(),
+      current_page: z.number().int().nullish(),
+      per_page: z.number().int().nullish(),
+    })
+    .nullish(),
   links: z.object({ next: z.string().nullish(), prev: z.string().nullish() }).nullish(),
   total: z.number().int().nullish(),
 });

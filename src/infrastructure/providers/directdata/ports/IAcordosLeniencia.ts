@@ -5,8 +5,8 @@
 
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 import type { AcordosLenienciaRetornoDto } from '../dtos/AcordosLenienciaDto.js';
+import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 
 /**
  * Interface para consulta de AcordosLeniencia.
@@ -15,8 +15,13 @@ import type { AcordosLenienciaRetornoDto } from '../dtos/AcordosLenienciaDto.js'
  */
 export interface IAcordosLeniencia {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: AcordosLenienciaRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: AcordosLenienciaRetornoDto | null;
+      }
+    >
+  >;
 }

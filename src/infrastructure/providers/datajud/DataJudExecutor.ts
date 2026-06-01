@@ -4,9 +4,13 @@
  * @module infrastructure/providers/datajud/DataJudExecutor
  */
 
-import { isLeft, left, right, type Either } from '@shared/domain/Either.js';
+import type {
+  ISourceExecutor,
+  SourceContext,
+  SourceResult,
+} from '@application/queries/ports/ISourceExecutor.js';
+import { type Either, isLeft, left, right } from '@shared/domain/Either.js';
 import { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { ISourceExecutor, SourceContext, SourceResult } from '@application/queries/ports/ISourceExecutor.js';
 import { extrairSiglaDoCNJ } from './CNJHelper.js';
 import type { IBuscarProcessoPorNumero } from './operations/IBuscarProcessoPorNumero.js';
 
@@ -71,7 +75,11 @@ export class DataJudExecutor implements ISourceExecutor {
     const sigla = extrairSiglaDoCNJ(context.identifier);
     if (!sigla) {
       return left(
-        new SourceError('SCHEMA_MISMATCH', this.sourceName, `Número CNJ inválido: ${context.identifier}`),
+        new SourceError(
+          'SCHEMA_MISMATCH',
+          this.sourceName,
+          `Número CNJ inválido: ${context.identifier}`,
+        ),
       );
     }
 

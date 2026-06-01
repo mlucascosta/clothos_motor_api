@@ -8,11 +8,10 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
-import { InfosimplesResponseSchema } from '../dtos/InfosimplesResponseDto.js';
-import type { IInfosimplesOperation } from '../ports/IInfosimplesOperation.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { z } from 'zod';
+import type { IInfosimplesOperation } from '../ports/IInfosimplesOperation.js';
 
 /**
  * Schema específico dos dados retornados por esta operação.
@@ -37,12 +36,14 @@ export type CadastroPessoaFisicaData = z.infer<typeof CadastroPessoaFisicaDataSc
 const ResponseSchema = z.object({
   code: z.number(),
   code_message: z.string(),
-  header: z.object({
-    api_version: z.string().optional(),
-    billable: z.boolean().optional(),
-    price: z.number().optional(),
-    elapsed_time_in_milliseconds: z.number().optional(),
-  }).passthrough(),
+  header: z
+    .object({
+      api_version: z.string().optional(),
+      billable: z.boolean().optional(),
+      price: z.number().optional(),
+      elapsed_time_in_milliseconds: z.number().optional(),
+    })
+    .passthrough(),
   data: z.array(CadastroPessoaFisicaDataSchema).nullable(),
   errors: z.array(z.string()),
   data_count: z.number(),
@@ -57,9 +58,7 @@ type CadastroPessoaFisicaResponse = z.infer<typeof ResponseSchema>;
  * @class CadastroPessoaFisica
  * @implements {IInfosimplesOperation<CadastroPessoaFisicaData>}
  */
-export class CadastroPessoaFisica
-  implements IInfosimplesOperation<CadastroPessoaFisicaResponse>
-{
+export class CadastroPessoaFisica implements IInfosimplesOperation<CadastroPessoaFisicaResponse> {
   readonly path = 'consultas/receita-federal/cpf';
   readonly requiredParams = ['cpf'];
 

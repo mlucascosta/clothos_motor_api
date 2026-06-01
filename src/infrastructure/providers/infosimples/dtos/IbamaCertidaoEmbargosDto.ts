@@ -6,15 +6,17 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const IbamaCertidaoEmbargosItemSchema = z.object({
-  cpf_cnpj: z.string().optional(),
-  nome: z.string().optional(),
-  situacao: z.string().optional(),
-  data_emissao: z.string().optional(),
-  data_validade: z.string().optional(),
-  numero_certidao: z.string().optional(),
-  embargos: z.array(z.unknown()).optional(),
-}).passthrough();
+export const IbamaCertidaoEmbargosItemSchema = z
+  .object({
+    cpf_cnpj: z.string().optional(),
+    nome: z.string().optional(),
+    situacao: z.string().optional(),
+    data_emissao: z.string().optional(),
+    data_validade: z.string().optional(),
+    numero_certidao: z.string().optional(),
+    embargos: z.array(z.unknown()).optional(),
+  })
+  .passthrough();
 
 export const IbamaCertidaoEmbargosResponseSchema = z.object({
   code: z.number(),

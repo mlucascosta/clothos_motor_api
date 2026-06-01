@@ -15,8 +15,13 @@ import type { IBAMACertificadoRegularidadeRetornoDto } from '../dtos/IBAMACertif
  */
 export interface IIBAMACertificadoRegularidade {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: IBAMACertificadoRegularidadeRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: IBAMACertificadoRegularidadeRetornoDto | null;
+      }
+    >
+  >;
 }

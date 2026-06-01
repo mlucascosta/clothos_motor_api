@@ -5,8 +5,8 @@
 
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 import type { CadastroExpulsoesAdministracaoFederalRetornoDto } from '../dtos/CadastroExpulsoesAdministracaoFederalDto.js';
+import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 
 /**
  * Interface para consulta de CadastroExpulsoesAdministracaoFederal.
@@ -15,8 +15,13 @@ import type { CadastroExpulsoesAdministracaoFederalRetornoDto } from '../dtos/Ca
  */
 export interface ICadastroExpulsoesAdministracaoFederal {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: CadastroExpulsoesAdministracaoFederalRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: CadastroExpulsoesAdministracaoFederalRetornoDto | null;
+      }
+    >
+  >;
 }

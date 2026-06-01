@@ -12,12 +12,14 @@ function makeApp(secret: string | undefined) {
   const app = new Hono();
   app.use('/protected/*', (c, next) => {
     // Sobrescreve NODE_ENV para simular ambiente real
-    const original = process.env['NODE_ENV'];
-    process.env['NODE_ENV'] = 'production';
-    process.env['MOTOR_INTERNAL_SECRET'] = secret ?? '';
-    if (!secret) delete process.env['MOTOR_INTERNAL_SECRET'];
+    const original = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    process.env.MOTOR_INTERNAL_SECRET = secret ?? '';
+    // `delete` é necessário: atribuir `undefined` a process.env armazena a string "undefined".
+    // biome-ignore lint/performance/noDelete: remoção real da env var para simular ausência de secret
+    if (!secret) delete process.env.MOTOR_INTERNAL_SECRET;
     const result = bearerAuth(c, next);
-    process.env['NODE_ENV'] = original;
+    process.env.NODE_ENV = original;
     return result;
   });
   app.get('/protected/ping', (c) => c.json({ ok: true }));
@@ -32,7 +34,7 @@ describe('bearerAuth middleware', () => {
     const res = await app.request('/protected/ping');
     expect(res.status).toBe(401);
     const body = (await res.json()) as Record<string, unknown>;
-    expect(body['error']).toBe('Não autorizado');
+    expect(body.error).toBe('Não autorizado');
   });
 
   it('retorna 401 quando token está incorreto', async () => {
@@ -58,7 +60,7 @@ describe('bearerAuth middleware', () => {
     });
     expect(res.status).toBe(500);
     const body = (await res.json()) as Record<string, unknown>;
-    expect(body['error']).toBe('Servidor mal configurado');
+    expect(body.error).toBe('Servidor mal configurado');
   });
 
   it('passa para o próximo handler com token correto', async () => {
@@ -68,7 +70,7 @@ describe('bearerAuth middleware', () => {
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as Record<string, unknown>;
-    expect(body['ok']).toBe(true);
+    expect(body.ok).toBe(true);
   });
 
   it('usa comparação em tempo constante — token com mesmo prefixo é rejeitado', async () => {

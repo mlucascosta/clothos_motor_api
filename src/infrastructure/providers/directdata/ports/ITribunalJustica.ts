@@ -15,8 +15,13 @@ import type { TribunalJusticaRetornoDto } from '../dtos/TribunalJusticaDto.js';
  */
 export interface ITribunalJustica {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: TribunalJusticaRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: TribunalJusticaRetornoDto | null;
+      }
+    >
+  >;
 }

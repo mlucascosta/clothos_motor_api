@@ -12,7 +12,9 @@ export const MTEInfracoesTrabalhistasRetornoSchema = z.object({
   infracoesTrabalhistas: z.array(z.record(z.unknown())).nullable().optional(),
   status: z.string().nullable().optional(),
   tipoConsultado: z.string().nullable().optional(),
-  totalProcessos: z.string().nullable().optional()
+  totalProcessos: z.string().nullable().optional(),
 });
 
-export type MTEInfracoesTrabalhistasRetornoDto = z.infer<typeof MTEInfracoesTrabalhistasRetornoSchema>;
+export type MTEInfracoesTrabalhistasRetornoDto = z.infer<
+  typeof MTEInfracoesTrabalhistasRetornoSchema
+>;

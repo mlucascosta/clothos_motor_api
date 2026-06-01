@@ -1,4 +1,4 @@
-import { isLeft, type Either, right } from '@shared/domain/Either.js';
+import { type Either, isLeft, right } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import type { IRemoverMonitoramentoNovosProcessos } from '../../ports/IRemoverMonitoramentoNovosProcessos.js';

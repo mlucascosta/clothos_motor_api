@@ -5,8 +5,8 @@
  * @module presentation/api/middlewares/errorHandler
  */
 
-import type { Context, Next } from 'hono';
 import { logger } from '@shared/infrastructure/logger.js';
+import type { Context, Next } from 'hono';
 
 /**
  * Middleware Hono que captura exceções não tratadas em handlers e middlewares subsequentes.

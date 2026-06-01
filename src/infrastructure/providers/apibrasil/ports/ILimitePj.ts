@@ -11,7 +11,5 @@ export interface ILimitePj {
   readonly path: string;
   readonly creditValue: number;
   readonly type: string;
-  execute(
-    params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, LimitePjDto>>;
+  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, LimitePjDto>>;
 }

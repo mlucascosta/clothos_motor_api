@@ -4,14 +4,14 @@
  * @module infrastructure/providers/directdata/DirectDataExecutor
  */
 
-import type { Either } from '@shared/domain/Either.js';
-import { isLeft, left, right } from '@shared/domain/Either.js';
-import { SourceError } from '@shared/domain/errors/SourceError.js';
 import type {
   ISourceExecutor,
   SourceContext,
   SourceResult,
 } from '@application/queries/ports/ISourceExecutor.js';
+import type { Either } from '@shared/domain/Either.js';
+import { isLeft, left, right } from '@shared/domain/Either.js';
+import { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { IDirectDataOperation } from './ports/IDirectDataOperation.js';
 
 /**

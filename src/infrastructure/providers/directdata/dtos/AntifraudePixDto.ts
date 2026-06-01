@@ -13,7 +13,7 @@ export const AntifraudePixRetornoSchema = z.object({
   riscoFraude: z.string().nullable().optional(),
   riscoLaranja: z.string().nullable().optional(),
   status: z.string().nullable().optional(),
-  tipo: z.string().nullable().optional()
+  tipo: z.string().nullable().optional(),
 });
 
 export type AntifraudePixRetornoDto = z.infer<typeof AntifraudePixRetornoSchema>;

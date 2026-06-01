@@ -15,8 +15,13 @@ import type { FBIMostWantedRetornoDto } from '../dtos/FBIMostWantedDto.js';
  */
 export interface IFBIMostWanted {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: FBIMostWantedRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: FBIMostWantedRetornoDto | null;
+      }
+    >
+  >;
 }

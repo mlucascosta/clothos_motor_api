@@ -10,7 +10,9 @@ export const BeneficioPrestacaoContinuadaRetornoSchema = z.object({
   beneficios: z.array(z.record(z.unknown())).nullable().optional(),
   cpf: z.string().nullable().optional(),
   nis: z.string().nullable().optional(),
-  nome: z.string().nullable().optional()
+  nome: z.string().nullable().optional(),
 });
 
-export type BeneficioPrestacaoContinuadaRetornoDto = z.infer<typeof BeneficioPrestacaoContinuadaRetornoSchema>;
+export type BeneficioPrestacaoContinuadaRetornoDto = z.infer<
+  typeof BeneficioPrestacaoContinuadaRetornoSchema
+>;

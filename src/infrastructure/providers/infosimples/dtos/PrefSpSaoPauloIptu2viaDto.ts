@@ -6,18 +6,20 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const PrefSpSaoPauloIptu2viaItemSchema = z.object({
-  sql: z.string().optional(),
-  parcela: z.string().optional(),
-  ano: z.string().optional(),
-  endereco: z.string().optional(),
-  vencimento: z.string().optional(),
-  valor: z.number().optional(),
-  codigo_barras: z.string().optional(),
-  linha_digitavel: z.string().optional(),
-  situacao: z.string().optional(),
-  url_boleto: z.string().optional(),
-}).passthrough();
+export const PrefSpSaoPauloIptu2viaItemSchema = z
+  .object({
+    sql: z.string().optional(),
+    parcela: z.string().optional(),
+    ano: z.string().optional(),
+    endereco: z.string().optional(),
+    vencimento: z.string().optional(),
+    valor: z.number().optional(),
+    codigo_barras: z.string().optional(),
+    linha_digitavel: z.string().optional(),
+    situacao: z.string().optional(),
+    url_boleto: z.string().optional(),
+  })
+  .passthrough();
 
 export const PrefSpSaoPauloIptu2viaResponseSchema = z.object({
   code: z.number(),

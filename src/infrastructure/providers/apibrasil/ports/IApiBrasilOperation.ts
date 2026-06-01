@@ -11,7 +11,5 @@ export interface IApiBrasilOperation<T = unknown> {
   readonly path: string;
   readonly creditValue: number;
   readonly type: string;
-  execute(
-    params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, T>>;
+  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, T>>;
 }

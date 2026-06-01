@@ -12,7 +12,9 @@ export const MinisterioPublicoTrabalhoRetornoSchema = z.object({
   ocorrencias: z.array(z.record(z.unknown())).nullable().optional(),
   possuiOcorrencia: z.boolean().nullable().optional(),
   regiao: z.string().nullable().optional(),
-  status: z.string().nullable().optional()
+  status: z.string().nullable().optional(),
 });
 
-export type MinisterioPublicoTrabalhoRetornoDto = z.infer<typeof MinisterioPublicoTrabalhoRetornoSchema>;
+export type MinisterioPublicoTrabalhoRetornoDto = z.infer<
+  typeof MinisterioPublicoTrabalhoRetornoSchema
+>;

@@ -30,7 +30,9 @@ export class BuscarPorEnvolvido {
     this.buscar = new BuscarGenericoDataJud(http);
   }
 
-  async execute(input: BuscarPorEnvolvidoInput): Promise<Either<SourceError, DataJudSearchResponseDto>> {
+  async execute(
+    input: BuscarPorEnvolvidoInput,
+  ): Promise<Either<SourceError, DataJudSearchResponseDto>> {
     const must: Array<Record<string, unknown>> = [];
     if (input.nome) {
       must.push({ match: { 'partes.nome': input.nome } });

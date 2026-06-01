@@ -50,17 +50,21 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com certidão negativa de débito IPTU', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              identificador: '4100123456',
-              inscricao: '0001.0002.0003.000',
-              situacao: 'Negativa',
-              certidao_numero: 'CND-2024-001',
-              data_emissao: '2024-01-15',
-              validade: '2024-07-15',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  identificador: '4100123456',
+                  inscricao: '0001.0002.0003.000',
+                  situacao: 'Negativa',
+                  certidao_numero: 'CND-2024-001',
+                  data_emissao: '2024-01-15',
+                  validade: '2024-07-15',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -75,7 +79,11 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/pref/mg/belo-horizonte/cndiptu', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/pref/mg/belo-horizonte/cndiptu',
+          status: 'success',
+        }),
       );
     });
 
@@ -126,16 +134,20 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com dados do IPTU BH', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              identificador: '4100123456',
-              inscricao: '0001.0002.0003.000',
-              endereco: 'Av. Afonso Pena, 1000, Belo Horizonte - MG',
-              ano: '2024',
-              situacao: 'Em aberto',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  identificador: '4100123456',
+                  inscricao: '0001.0002.0003.000',
+                  endereco: 'Av. Afonso Pena, 1000, Belo Horizonte - MG',
+                  ano: '2024',
+                  situacao: 'Em aberto',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -147,7 +159,11 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/pref/mg/belo-horizonte/iptu', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/pref/mg/belo-horizonte/iptu',
+          status: 'success',
+        }),
       );
     });
 
@@ -192,15 +208,19 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com dados do IPTU Rio', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              inscricao: '0.1234.5678.00001',
-              endereco: 'Rua da Carioca, 10, Centro, Rio de Janeiro - RJ',
-              ano: '2024',
-              situacao: 'Pago',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  inscricao: '0.1234.5678.00001',
+                  endereco: 'Rua da Carioca, 10, Centro, Rio de Janeiro - RJ',
+                  ano: '2024',
+                  situacao: 'Pago',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -212,7 +232,11 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/pref/rj/rio-janeiro/iptu', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/pref/rj/rio-janeiro/iptu',
+          status: 'success',
+        }),
       );
     });
 
@@ -257,16 +281,20 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com dados do IPTU Campinas', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              codigo_cartografico: '3234567890123456',
-              nome_devedor: 'EMPRESA TESTE LTDA',
-              endereco: 'Rua Barão de Jaguara, 901, Centro, Campinas - SP',
-              ano: '2024',
-              situacao: 'Em aberto',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  codigo_cartografico: '3234567890123456',
+                  nome_devedor: 'EMPRESA TESTE LTDA',
+                  endereco: 'Rua Barão de Jaguara, 901, Centro, Campinas - SP',
+                  ano: '2024',
+                  situacao: 'Em aberto',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -281,7 +309,11 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/pref/sp/campinas/iptu', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/pref/sp/campinas/iptu',
+          status: 'success',
+        }),
       );
     });
 
@@ -293,10 +325,9 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
         ),
       );
 
-      const res = await app.request(
-        `${PATH}?codigo_cartografico=9999&nome_devedor=INEXISTENTE`,
-        { method: 'POST' },
-      );
+      const res = await app.request(`${PATH}?codigo_cartografico=9999&nome_devedor=INEXISTENTE`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -332,32 +363,39 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com dados do imóvel SP', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              cadastro_imovel: '123456789',
-              sql: '001.001.0001.0001.00001',
-              ano_exercicio: '2024',
-              endereco: 'Av. Paulista, 1000, Bela Vista, São Paulo - SP',
-              valor_venal_total: 500000.00,
-              situacao: 'Regular',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  cadastro_imovel: '123456789',
+                  sql: '001.001.0001.0001.00001',
+                  ano_exercicio: '2024',
+                  endereco: 'Av. Paulista, 1000, Bela Vista, São Paulo - SP',
+                  valor_venal_total: 500000.0,
+                  situacao: 'Regular',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
 
-      const res = await app.request(
-        `${PATH}?cadastro_imovel=123456789&ano_exercicio=2024`,
-        { method: 'POST' },
-      );
+      const res = await app.request(`${PATH}?cadastro_imovel=123456789&ano_exercicio=2024`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/pref/sp/sao-paulo/dados-imovel', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/pref/sp/sao-paulo/dados-imovel',
+          status: 'success',
+        }),
       );
     });
 
@@ -369,10 +407,9 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
         ),
       );
 
-      const res = await app.request(
-        `${PATH}?cadastro_imovel=9999&ano_exercicio=2024`,
-        { method: 'POST' },
-      );
+      const res = await app.request(`${PATH}?cadastro_imovel=9999&ano_exercicio=2024`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -383,10 +420,9 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('falha — upstream error → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
-      const res = await app.request(
-        `${PATH}?cadastro_imovel=123456789&ano_exercicio=2024`,
-        { method: 'POST' },
-      );
+      const res = await app.request(`${PATH}?cadastro_imovel=123456789&ano_exercicio=2024`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(500);
       expect(saveSpy).toHaveBeenCalledWith(
@@ -408,18 +444,32 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com débitos IPTU SP', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              cadastro_imovel: '123456789',
-              endereco: 'Av. Paulista, 1000, São Paulo - SP',
-              total_debitos: 3500.00,
-              debitos: [
-                { exercicio: '2022', parcela: '1', valor_atualizado: 1200.00, situacao: 'Em aberto' },
-                { exercicio: '2023', parcela: '1', valor_atualizado: 2300.00, situacao: 'Em aberto' },
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  cadastro_imovel: '123456789',
+                  endereco: 'Av. Paulista, 1000, São Paulo - SP',
+                  total_debitos: 3500.0,
+                  debitos: [
+                    {
+                      exercicio: '2022',
+                      parcela: '1',
+                      valor_atualizado: 1200.0,
+                      situacao: 'Em aberto',
+                    },
+                    {
+                      exercicio: '2023',
+                      parcela: '1',
+                      valor_atualizado: 2300.0,
+                      situacao: 'Em aberto',
+                    },
+                  ],
+                },
               ],
-            }],
-          })),
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -431,7 +481,11 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/pref/sp/sao-paulo/debitos-iptu', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/pref/sp/sao-paulo/debitos-iptu',
+          status: 'success',
+        }),
       );
     });
 
@@ -476,33 +530,40 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com 2ª via do IPTU SP', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              sql: '001.001.0001.0001.00001',
-              parcela: '1',
-              ano: '2024',
-              valor: 1200.00,
-              vencimento: '2024-02-28',
-              codigo_barras: '85620000012000020242024020010010001000100001',
-              situacao: 'Em aberto',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  sql: '001.001.0001.0001.00001',
+                  parcela: '1',
+                  ano: '2024',
+                  valor: 1200.0,
+                  vencimento: '2024-02-28',
+                  codigo_barras: '85620000012000020242024020010010001000100001',
+                  situacao: 'Em aberto',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
 
-      const res = await app.request(
-        `${PATH}?sql=001.001.0001.0001.00001&parcela=1&ano=2024`,
-        { method: 'POST' },
-      );
+      const res = await app.request(`${PATH}?sql=001.001.0001.0001.00001&parcela=1&ano=2024`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/pref/sp/sao-paulo/iptu2via', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/pref/sp/sao-paulo/iptu2via',
+          status: 'success',
+        }),
       );
     });
 
@@ -525,10 +586,9 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('falha — upstream error → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
-      const res = await app.request(
-        `${PATH}?sql=001.001.0001.0001.00001&parcela=1&ano=2024`,
-        { method: 'POST' },
-      );
+      const res = await app.request(`${PATH}?sql=001.001.0001.0001.00001&parcela=1&ano=2024`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(500);
       expect(saveSpy).toHaveBeenCalledWith(
@@ -550,16 +610,20 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com IPTU SP', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              sql: '001.001.0001.0001.00001',
-              endereco: 'Av. Paulista, 1000, Bela Vista, São Paulo - SP',
-              ano: '2024',
-              valor_venal: 500000.00,
-              situacao: 'Em aberto',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  sql: '001.001.0001.0001.00001',
+                  endereco: 'Av. Paulista, 1000, Bela Vista, São Paulo - SP',
+                  ano: '2024',
+                  valor_venal: 500000.0,
+                  situacao: 'Em aberto',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -571,7 +635,11 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/pref/sp/sao-paulo/iptu', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/pref/sp/sao-paulo/iptu',
+          status: 'success',
+        }),
       );
     });
 
@@ -616,16 +684,20 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com IPTU DF', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              inscricao_imovel: 'DF-0001234567',
-              endereco: 'SQN 203 BL A AP 101, Asa Norte, Brasília - DF',
-              ano: '2024',
-              valor_venal: 350000.00,
-              situacao: 'Pago',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  inscricao_imovel: 'DF-0001234567',
+                  endereco: 'SQN 203 BL A AP 101, Asa Norte, Brasília - DF',
+                  ano: '2024',
+                  valor_venal: 350000.0,
+                  situacao: 'Pago',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -637,7 +709,11 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/sefaz/df/iptu', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/sefaz/df/iptu',
+          status: 'success',
+        }),
       );
     });
 
@@ -682,16 +758,20 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com certidão de imóveis SPU', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              tipo_certidao: 'negativa',
-              numero_certidao: 'SPU-CND-2024-001',
-              data_emissao: '2024-01-15',
-              validade: '2024-07-15',
-              situacao: 'Emitida',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  tipo_certidao: 'negativa',
+                  numero_certidao: 'SPU-CND-2024-001',
+                  data_emissao: '2024-01-15',
+                  validade: '2024-07-15',
+                  situacao: 'Emitida',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -703,7 +783,11 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/sefaz/spu/certidao-imoveis', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/sefaz/spu/certidao-imoveis',
+          status: 'success',
+        }),
       );
     });
 
@@ -748,13 +832,27 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com dados de imóveis SPU', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 2,
-            data: [
-              { rip: 'RIP-001', denominacao: 'Imóvel União SP', municipio: 'São Paulo', uf: 'SP', situacao: 'Ocupado' },
-              { rip: 'RIP-002', denominacao: 'Terreno União RJ', municipio: 'Rio de Janeiro', uf: 'RJ', situacao: 'Disponível' },
-            ],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 2,
+              data: [
+                {
+                  rip: 'RIP-001',
+                  denominacao: 'Imóvel União SP',
+                  municipio: 'São Paulo',
+                  uf: 'SP',
+                  situacao: 'Ocupado',
+                },
+                {
+                  rip: 'RIP-002',
+                  denominacao: 'Terreno União RJ',
+                  municipio: 'Rio de Janeiro',
+                  uf: 'RJ',
+                  situacao: 'Disponível',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -766,7 +864,11 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(2);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/sefaz/spu/dados-imoveis', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/sefaz/spu/dados-imoveis',
+          status: 'success',
+        }),
       );
     });
 
@@ -809,17 +911,21 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com download de certidão', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              protocolo: 'CERTID-2024-001',
-              status: 'disponivel',
-              url_download: 'https://registradores.com.br/download/certid-2024-001.pdf',
-              nome_arquivo: 'certid-2024-001.pdf',
-              data_disponibilizacao: '2024-01-20',
-              validade: '2024-04-20',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  protocolo: 'CERTID-2024-001',
+                  status: 'disponivel',
+                  url_download: 'https://registradores.com.br/download/certid-2024-001.pdf',
+                  nome_arquivo: 'certid-2024-001.pdf',
+                  data_disponibilizacao: '2024-01-20',
+                  validade: '2024-04-20',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -831,7 +937,11 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/registradores/certid/download', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/registradores/certid/download',
+          status: 'success',
+        }),
       );
     });
 
@@ -870,21 +980,25 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com pedido de certidão', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              protocolo: 'CERTID-2024-001',
-              status: 'em_processamento',
-              uf: 'SP',
-              municipio: 'São Paulo',
-              cartorio: '1º Cartório de Registro de Imóveis',
-              tipo_certidao: 'certidao_inteiro_teor',
-              matricula: '12345',
-              data_pedido: '2024-01-15',
-              previsao_entrega: '2024-01-20',
-              valor: 120.00,
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  protocolo: 'CERTID-2024-001',
+                  status: 'em_processamento',
+                  uf: 'SP',
+                  municipio: 'São Paulo',
+                  cartorio: '1º Cartório de Registro de Imóveis',
+                  tipo_certidao: 'certidao_inteiro_teor',
+                  matricula: '12345',
+                  data_pedido: '2024-01-15',
+                  previsao_entrega: '2024-01-20',
+                  valor: 120.0,
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -899,7 +1013,11 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/registradores/certid/pedido', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/registradores/certid/pedido',
+          status: 'success',
+        }),
       );
     });
 
@@ -950,18 +1068,22 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com recibo de certidão', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              protocolo: 'CERTID-2024-001',
-              status: 'pago',
-              cartorio: '1º Cartório de Registro de Imóveis',
-              tipo_certidao: 'certidao_inteiro_teor',
-              matricula: '12345',
-              valor: 120.00,
-              recibo_numero: 'REC-2024-001',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  protocolo: 'CERTID-2024-001',
+                  status: 'pago',
+                  cartorio: '1º Cartório de Registro de Imóveis',
+                  tipo_certidao: 'certidao_inteiro_teor',
+                  matricula: '12345',
+                  valor: 120.0,
+                  recibo_numero: 'REC-2024-001',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -973,7 +1095,11 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/registradores/certid/recibo', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/registradores/certid/recibo',
+          status: 'success',
+        }),
       );
     });
 
@@ -1012,17 +1138,21 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com informações da conta', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              nome: 'Empresa Consultas Ltda',
-              cpf_cnpj: '12345678000190',
-              email: 'contato@empresa.com',
-              saldo: 500.00,
-              situacao: 'ativa',
-              data_cadastro: '2022-01-01',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  nome: 'Empresa Consultas Ltda',
+                  cpf_cnpj: '12345678000190',
+                  email: 'contato@empresa.com',
+                  saldo: 500.0,
+                  situacao: 'ativa',
+                  data_cadastro: '2022-01-01',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -1034,7 +1164,11 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/registradores/info-conta', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/registradores/info-conta',
+          status: 'success',
+        }),
       );
     });
 
@@ -1073,17 +1207,21 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com download de matrícula', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              protocolo: 'MATRIC-2024-001',
-              status: 'disponivel',
-              url_download: 'https://registradores.com.br/download/matric-2024-001.pdf',
-              matricula: '12345',
-              cartorio: '1º Cartório de Registro de Imóveis',
-              data_disponibilizacao: '2024-01-20',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  protocolo: 'MATRIC-2024-001',
+                  status: 'disponivel',
+                  url_download: 'https://registradores.com.br/download/matric-2024-001.pdf',
+                  matricula: '12345',
+                  cartorio: '1º Cartório de Registro de Imóveis',
+                  data_disponibilizacao: '2024-01-20',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -1095,7 +1233,11 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/registradores/matric/download', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/registradores/matric/download',
+          status: 'success',
+        }),
       );
     });
 
@@ -1134,13 +1276,27 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com lista de matrículas', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 2,
-            data: [
-              { protocolo: 'MATRIC-2024-001', status: 'disponivel', matricula: '12345', cartorio: '1º RI SP', uf: 'SP' },
-              { protocolo: 'MATRIC-2024-002', status: 'em_processamento', matricula: '67890', cartorio: '2º RI SP', uf: 'SP' },
-            ],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 2,
+              data: [
+                {
+                  protocolo: 'MATRIC-2024-001',
+                  status: 'disponivel',
+                  matricula: '12345',
+                  cartorio: '1º RI SP',
+                  uf: 'SP',
+                },
+                {
+                  protocolo: 'MATRIC-2024-002',
+                  status: 'em_processamento',
+                  matricula: '67890',
+                  cartorio: '2º RI SP',
+                  uf: 'SP',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -1152,7 +1308,11 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(2);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/registradores/matric/lista', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/registradores/matric/lista',
+          status: 'success',
+        }),
       );
     });
 
@@ -1191,21 +1351,25 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com pedido de matrícula', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              protocolo: 'MATRIC-2024-001',
-              status: 'em_processamento',
-              matricula: '12345',
-              cartorio: '1º Cartório de Registro de Imóveis',
-              municipio: 'São Paulo',
-              uf: 'SP',
-              finalidade: 'fins_judiciais',
-              data_pedido: '2024-01-15',
-              previsao_entrega: '2024-01-20',
-              valor: 85.00,
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  protocolo: 'MATRIC-2024-001',
+                  status: 'em_processamento',
+                  matricula: '12345',
+                  cartorio: '1º Cartório de Registro de Imóveis',
+                  municipio: 'São Paulo',
+                  uf: 'SP',
+                  finalidade: 'fins_judiciais',
+                  data_pedido: '2024-01-15',
+                  previsao_entrega: '2024-01-20',
+                  valor: 85.0,
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -1220,7 +1384,11 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/registradores/matric/pedido', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/registradores/matric/pedido',
+          status: 'success',
+        }),
       );
     });
 
@@ -1271,18 +1439,22 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
     it('sucesso — retorna 200 com recibo de matrícula', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              protocolo: 'MATRIC-2024-001',
-              status: 'pago',
-              matricula: '12345',
-              cartorio: '1º RI São Paulo',
-              valor: 85.00,
-              forma_pagamento: 'cartao_credito',
-              recibo_numero: 'REC-MATRIC-2024-001',
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  protocolo: 'MATRIC-2024-001',
+                  status: 'pago',
+                  matricula: '12345',
+                  cartorio: '1º RI São Paulo',
+                  valor: 85.0,
+                  forma_pagamento: 'cartao_credito',
+                  recibo_numero: 'REC-MATRIC-2024-001',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -1294,7 +1466,11 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/registradores/matric/recibo', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/registradores/matric/recibo',
+          status: 'success',
+        }),
       );
     });
 

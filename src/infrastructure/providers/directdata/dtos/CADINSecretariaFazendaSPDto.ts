@@ -13,7 +13,9 @@ export const CADINSecretariaFazendaSPRetornoSchema = z.object({
   pendencias: z.array(z.record(z.unknown())).nullable().optional(),
   possuiPendencias: z.boolean().nullable().optional(),
   status: z.string().nullable().optional(),
-  totalPendencias: z.number().int().nullable().optional()
+  totalPendencias: z.number().int().nullable().optional(),
 });
 
-export type CADINSecretariaFazendaSPRetornoDto = z.infer<typeof CADINSecretariaFazendaSPRetornoSchema>;
+export type CADINSecretariaFazendaSPRetornoDto = z.infer<
+  typeof CADINSecretariaFazendaSPRetornoSchema
+>;

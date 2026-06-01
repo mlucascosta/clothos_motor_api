@@ -27,7 +27,5 @@ export interface IInfosimplesOperation<T = unknown> {
    * @param {Record<string, string | undefined>} params - Query params da requisição
    * @returns {Promise<Either<SourceError, { code: number; header: InfosimplesResponseHeader; data: T[] | null; errors: string[] }>>}
    */
-  execute(
-    params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, T>>;
+  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, T>>;
 }

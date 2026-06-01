@@ -10,7 +10,7 @@ export const MinisterioTrabalhoPISRetornoSchema = z.object({
   dataNascimento: z.string().nullable().optional(),
   nome: z.string().nullable().optional(),
   nomeMae: z.string().nullable().optional(),
-  pis: z.string().nullable().optional()
+  pis: z.string().nullable().optional(),
 });
 
 export type MinisterioTrabalhoPISRetornoDto = z.infer<typeof MinisterioTrabalhoPISRetornoSchema>;

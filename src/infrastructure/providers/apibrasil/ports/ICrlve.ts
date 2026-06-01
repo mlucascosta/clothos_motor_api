@@ -11,7 +11,5 @@ export interface ICrlve {
   readonly path: string;
   readonly creditValue: number;
   readonly type: string;
-  execute(
-    params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, CrlveDto>>;
+  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, CrlveDto>>;
 }

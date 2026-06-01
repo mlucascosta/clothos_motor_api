@@ -15,8 +15,13 @@ import type { RestituicaoIRPFRetornoDto } from '../dtos/RestituicaoIRPFDto.js';
  */
 export interface IRestituicaoIRPF {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: RestituicaoIRPFRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: RestituicaoIRPFRetornoDto | null;
+      }
+    >
+  >;
 }

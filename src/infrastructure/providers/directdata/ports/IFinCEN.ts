@@ -15,8 +15,13 @@ import type { FinCENRetornoDto } from '../dtos/FinCENDto.js';
  */
 export interface IFinCEN {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: FinCENRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: FinCENRetornoDto | null;
+      }
+    >
+  >;
 }

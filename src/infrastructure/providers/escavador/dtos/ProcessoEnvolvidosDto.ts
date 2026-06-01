@@ -15,7 +15,14 @@ export const ProcessoEnvolvidosResponseSchema = z.object({
   /** Array de pessoas envolvidas no processo (partes, advogados, etc.) */
   items: z.array(z.unknown()),
   total: z.number().nullish(),
-  paginator: z.object({ total: z.number().nullish(), total_pages: z.number().nullish(), current_page: z.number().nullish(), per_page: z.number().nullish() }).nullish(),
+  paginator: z
+    .object({
+      total: z.number().nullish(),
+      total_pages: z.number().nullish(),
+      current_page: z.number().nullish(),
+      per_page: z.number().nullish(),
+    })
+    .nullish(),
   links: z.object({ next: z.string().nullish(), prev: z.string().nullish() }).nullish(),
 });
 

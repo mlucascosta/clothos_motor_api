@@ -5,5 +5,7 @@ import type { ResumoAdvogado } from '../operations/v2/ResumoProcessosPorAdvogado
 export type { ResumoAdvogado };
 
 export interface IResumoProcessosPorAdvogado {
-  execute(input: { oab: string; oab_estado?: string }): Promise<Either<SourceError, ResumoAdvogado>>;
+  execute(input: { oab: string; oab_estado?: string }): Promise<
+    Either<SourceError, ResumoAdvogado>
+  >;
 }

@@ -5,8 +5,8 @@
 
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 import type { CaixaRegularidadeEmpregadorFGTSRetornoDto } from '../dtos/CaixaRegularidadeEmpregadorFGTSDto.js';
+import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 
 /**
  * Interface para consulta de CaixaRegularidadeEmpregadorFGTS.
@@ -15,8 +15,13 @@ import type { CaixaRegularidadeEmpregadorFGTSRetornoDto } from '../dtos/CaixaReg
  */
 export interface ICaixaRegularidadeEmpregadorFGTS {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: CaixaRegularidadeEmpregadorFGTSRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: CaixaRegularidadeEmpregadorFGTSRetornoDto | null;
+      }
+    >
+  >;
 }

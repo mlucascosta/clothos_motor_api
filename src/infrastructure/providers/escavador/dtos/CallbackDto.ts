@@ -33,12 +33,14 @@ export const CallbackDtoSchema = z.object({
 export const ListarCallbacksResponseSchema = z.object({
   /** Array de callbacks pendentes/recebidos */
   items: z.array(CallbackDtoSchema),
-  paginator: z.object({
-    total: z.number().int().nullish(),
-    total_pages: z.number().int().nullish(),
-    current_page: z.number().int().nullish(),
-    per_page: z.number().int().nullish(),
-  }).nullish(),
+  paginator: z
+    .object({
+      total: z.number().int().nullish(),
+      total_pages: z.number().int().nullish(),
+      current_page: z.number().int().nullish(),
+      per_page: z.number().int().nullish(),
+    })
+    .nullish(),
   links: z.object({ next: z.string().nullish(), prev: z.string().nullish() }).nullish(),
   total: z.number().int().nullish(),
 });

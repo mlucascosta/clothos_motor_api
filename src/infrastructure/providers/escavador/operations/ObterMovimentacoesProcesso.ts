@@ -1,6 +1,7 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
-import { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import {
   type MovimentacoesResponse,
@@ -10,7 +11,6 @@ import type {
   IObterMovimentacoesProcesso,
   ObterMovimentacoesProcessoInput,
 } from '../ports/IObterMovimentacoesProcesso.js';
-import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 
 export class ObterMovimentacoesProcesso implements IObterMovimentacoesProcesso {
   constructor(private readonly http: IHttpClient) {}

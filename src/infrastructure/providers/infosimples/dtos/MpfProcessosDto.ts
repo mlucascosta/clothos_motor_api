@@ -6,18 +6,26 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const MpfProcessosItemSchema = z.object({
-  numero_processo: z.string().optional(),
-  assunto: z.string().optional(),
-  situacao: z.string().optional(),
-  data_autuacao: z.string().optional(),
-  classe: z.string().optional(),
-  orgao: z.string().optional(),
-  partes: z.array(z.object({
-    nome: z.string().optional(),
-    tipo: z.string().optional(),
-  }).passthrough()).optional(),
-}).passthrough();
+export const MpfProcessosItemSchema = z
+  .object({
+    numero_processo: z.string().optional(),
+    assunto: z.string().optional(),
+    situacao: z.string().optional(),
+    data_autuacao: z.string().optional(),
+    classe: z.string().optional(),
+    orgao: z.string().optional(),
+    partes: z
+      .array(
+        z
+          .object({
+            nome: z.string().optional(),
+            tipo: z.string().optional(),
+          })
+          .passthrough(),
+      )
+      .optional(),
+  })
+  .passthrough();
 
 export const MpfProcessosResponseSchema = z.object({
   code: z.number(),

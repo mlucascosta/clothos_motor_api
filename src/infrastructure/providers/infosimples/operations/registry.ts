@@ -7,27 +7,50 @@
 
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import type { IInfosimplesOperation } from '../ports/IInfosimplesOperation.js';
-import { CadastroPessoaFisica } from './CadastroPessoaFisica.js';
-import { CadastroPessoaJuridica } from './CadastroPessoaJuridica.js';
-import { CenprotSpProtestos } from './CenprotSpProtestos.js';
-import { IeptbProtestos } from './IeptbProtestos.js';
-import { IeptbProtestosDetalhes } from './IeptbProtestosDetalhes.js';
 import { AntecedenteCriminaisMg } from './AntecedenteCriminaisMg.js';
 import { AntecedenteCriminaisPfEmit } from './AntecedenteCriminaisPfEmit.js';
 import { AntecedenteCriminaisPfVal } from './AntecedenteCriminaisPfVal.js';
 import { AntecedenteCriminaisSp } from './AntecedenteCriminaisSp.js';
+import { B3Participantes } from './B3Participantes.js';
 import { BcbChequesSemFundo } from './BcbChequesSemFundo.js';
 import { BcbValoresReceber } from './BcbValoresReceber.js';
-import { B3Participantes } from './B3Participantes.js';
+import { CadastroPessoaFisica } from './CadastroPessoaFisica.js';
+import { CadastroPessoaJuridica } from './CadastroPessoaJuridica.js';
 import { CadeProcessos } from './CadeProcessos.js';
+// Lote 5 — Social
+import { CaixaRegularidade } from './CaixaRegularidade.js';
+// Lote 6 — Imóveis/Rural
+import { CarDemonstrativo } from './CarDemonstrativo.js';
+import { CarDemonstrativoPdf } from './CarDemonstrativoPdf.js';
+import { CarDownloadShapefile } from './CarDownloadShapefile.js';
+import { CarImovel } from './CarImovel.js';
+import { CenprotSpProtestos } from './CenprotSpProtestos.js';
+import { CnisPreInscricao } from './CnisPreInscricao.js';
 import { CvmParticipante } from './CvmParticipante.js';
 import { CvmProcessoAdministrativo } from './CvmProcessoAdministrativo.js';
 import { CvmSancionadores } from './CvmSancionadores.js';
+import { DataprevFap } from './DataprevFap.js';
+import { DataprevQualificacao } from './DataprevQualificacao.js';
+import { DiarioOficialSpValorVenal } from './DiarioOficialSpValorVenal.js';
+import { FazendaSped } from './FazendaSped.js';
+import { FgtsGuia } from './FgtsGuia.js';
+import { FgtsGuiaRapida } from './FgtsGuiaRapida.js';
+import { IbamaAutuacoes } from './IbamaAutuacoes.js';
+import { IbamaCertidaoDebitos } from './IbamaCertidaoDebitos.js';
+import { IbamaCertidaoEmbargos } from './IbamaCertidaoEmbargos.js';
+import { IbamaCertificadoRegularidade } from './IbamaCertificadoRegularidade.js';
+import { IeptbProtestos } from './IeptbProtestos.js';
+import { IeptbProtestosDetalhes } from './IeptbProtestosDetalhes.js';
+import { IncraCoordenadas } from './IncraCoordenadas.js';
+import { IncraSigefDetalhesParcela } from './IncraSigefDetalhesParcela.js';
+import { IncraSigefParcelas } from './IncraSigefParcelas.js';
+import { IncraSigefRequerimentos } from './IncraSigefRequerimentos.js';
+import { MpSpInquiritoCivil } from './MpSpInquiritoCivil.js';
 import { MpfAmazoniaProtege } from './MpfAmazoniaProtege.js';
 import { MpfCertidaoNegativa } from './MpfCertidaoNegativa.js';
 import { MpfLavaJato } from './MpfLavaJato.js';
 import { MpfProcessos } from './MpfProcessos.js';
-import { MpSpInquiritoCivil } from './MpSpInquiritoCivil.js';
+import { OnrMapaRegistroImoveis } from './OnrMapaRegistroImoveis.js';
 import { PortalTransparenciaAuxilio } from './PortalTransparenciaAuxilio.js';
 import { PortalTransparenciaBolsa } from './PortalTransparenciaBolsa.js';
 import { PortalTransparenciaBpc } from './PortalTransparenciaBpc.js';
@@ -43,33 +66,6 @@ import { PortalTransparenciaRepasse } from './PortalTransparenciaRepasse.js';
 import { PortalTransparenciaSafra } from './PortalTransparenciaSafra.js';
 import { PortalTransparenciaSeguro } from './PortalTransparenciaSeguro.js';
 import { PortalTransparenciaServidor } from './PortalTransparenciaServidor.js';
-// Lote 5 — Social
-import { CaixaRegularidade } from './CaixaRegularidade.js';
-import { FgtsGuia } from './FgtsGuia.js';
-import { FgtsGuiaRapida } from './FgtsGuiaRapida.js';
-import { DataprevFap } from './DataprevFap.js';
-import { DataprevQualificacao } from './DataprevQualificacao.js';
-import { CnisPreInscricao } from './CnisPreInscricao.js';
-import { FazendaSped } from './FazendaSped.js';
-import { SitCaepi } from './SitCaepi.js';
-import { SitTrabalhoEscravo } from './SitTrabalhoEscravo.js';
-// Lote 6 — Imóveis/Rural
-import { CarDemonstrativo } from './CarDemonstrativo.js';
-import { CarDemonstrativoPdf } from './CarDemonstrativoPdf.js';
-import { CarDownloadShapefile } from './CarDownloadShapefile.js';
-import { CarImovel } from './CarImovel.js';
-import { IncraCoordenadas } from './IncraCoordenadas.js';
-import { IncraSigefDetalhesParcela } from './IncraSigefDetalhesParcela.js';
-import { IncraSigefParcelas } from './IncraSigefParcelas.js';
-import { IncraSigefRequerimentos } from './IncraSigefRequerimentos.js';
-import { SncrCcir } from './SncrCcir.js';
-import { SncrImoveis } from './SncrImoveis.js';
-import { OnrMapaRegistroImoveis } from './OnrMapaRegistroImoveis.js';
-import { IbamaAutuacoes } from './IbamaAutuacoes.js';
-import { IbamaCertidaoDebitos } from './IbamaCertidaoDebitos.js';
-import { IbamaCertidaoEmbargos } from './IbamaCertidaoEmbargos.js';
-import { IbamaCertificadoRegularidade } from './IbamaCertificadoRegularidade.js';
-import { DiarioOficialSpValorVenal } from './DiarioOficialSpValorVenal.js';
 // Lote 7 — Prefeituras IPTU + Sefaz
 import { PrefMgBeloHorizonteCndiptu } from './PrefMgBeloHorizonteCndiptu.js';
 import { PrefMgBeloHorizonteIptu } from './PrefMgBeloHorizonteIptu.js';
@@ -77,11 +73,8 @@ import { PrefRjRioJaneiroIptu } from './PrefRjRioJaneiroIptu.js';
 import { PrefSpCampinasIptu } from './PrefSpCampinasIptu.js';
 import { PrefSpSaoPauloDadosImovel } from './PrefSpSaoPauloDadosImovel.js';
 import { PrefSpSaoPauloDebitosIptu } from './PrefSpSaoPauloDebitosIptu.js';
-import { PrefSpSaoPauloIptu2via } from './PrefSpSaoPauloIptu2via.js';
 import { PrefSpSaoPauloIptu } from './PrefSpSaoPauloIptu.js';
-import { SefazDfIptu } from './SefazDfIptu.js';
-import { SefazSpuCertidaoImoveis } from './SefazSpuCertidaoImoveis.js';
-import { SefazSpuDadosImoveis } from './SefazSpuDadosImoveis.js';
+import { PrefSpSaoPauloIptu2via } from './PrefSpSaoPauloIptu2via.js';
 // Lote 8 — Registradores
 import { RegistradoresCertidDownload } from './RegistradoresCertidDownload.js';
 import { RegistradoresCertidPedido } from './RegistradoresCertidPedido.js';
@@ -91,6 +84,13 @@ import { RegistradoresMatricDownload } from './RegistradoresMatricDownload.js';
 import { RegistradoresMatricLista } from './RegistradoresMatricLista.js';
 import { RegistradoresMatricPedido } from './RegistradoresMatricPedido.js';
 import { RegistradoresMatricRecibo } from './RegistradoresMatricRecibo.js';
+import { SefazDfIptu } from './SefazDfIptu.js';
+import { SefazSpuCertidaoImoveis } from './SefazSpuCertidaoImoveis.js';
+import { SefazSpuDadosImoveis } from './SefazSpuDadosImoveis.js';
+import { SitCaepi } from './SitCaepi.js';
+import { SitTrabalhoEscravo } from './SitTrabalhoEscravo.js';
+import { SncrCcir } from './SncrCcir.js';
+import { SncrImoveis } from './SncrImoveis.js';
 
 const operationRegistry: Record<string, (http: IHttpClient) => IInfosimplesOperation> = {
   // RFB — path completo
@@ -203,10 +203,7 @@ const operationRegistry: Record<string, (http: IHttpClient) => IInfosimplesOpera
  *
  * @throws {Error} Se operação não existe no registry
  */
-export function resolveOperation(
-  registryKey: string,
-  http: IHttpClient,
-): IInfosimplesOperation {
+export function resolveOperation(registryKey: string, http: IHttpClient): IInfosimplesOperation {
   const normalized = registryKey.toLowerCase();
   const factory = operationRegistry[normalized];
 

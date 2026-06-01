@@ -6,18 +6,20 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const PrefMgBeloHorizonteCndiptuItemSchema = z.object({
-  identificador: z.string().optional(),
-  inscricao: z.string().optional(),
-  endereco: z.string().optional(),
-  situacao: z.string().optional(),
-  data_inicio: z.string().optional(),
-  data_fim: z.string().optional(),
-  certidao_numero: z.string().optional(),
-  data_emissao: z.string().optional(),
-  validade: z.string().optional(),
-  url_certidao: z.string().optional(),
-}).passthrough();
+export const PrefMgBeloHorizonteCndiptuItemSchema = z
+  .object({
+    identificador: z.string().optional(),
+    inscricao: z.string().optional(),
+    endereco: z.string().optional(),
+    situacao: z.string().optional(),
+    data_inicio: z.string().optional(),
+    data_fim: z.string().optional(),
+    certidao_numero: z.string().optional(),
+    data_emissao: z.string().optional(),
+    validade: z.string().optional(),
+    url_certidao: z.string().optional(),
+  })
+  .passthrough();
 
 export const PrefMgBeloHorizonteCndiptuResponseSchema = z.object({
   code: z.number(),

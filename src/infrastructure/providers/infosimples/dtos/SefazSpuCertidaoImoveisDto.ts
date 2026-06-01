@@ -6,23 +6,31 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const SefazSpuCertidaoImoveisItemSchema = z.object({
-  tipo_certidao: z.string().optional(),
-  numero_certidao: z.string().optional(),
-  data_emissao: z.string().optional(),
-  validade: z.string().optional(),
-  requerente: z.string().optional(),
-  cpf_cnpj: z.string().optional(),
-  situacao: z.string().optional(),
-  url_certidao: z.string().optional(),
-  imoveis: z.array(z.object({
-    rip: z.string().optional(),
-    endereco: z.string().optional(),
-    municipio: z.string().optional(),
-    uf: z.string().optional(),
+export const SefazSpuCertidaoImoveisItemSchema = z
+  .object({
+    tipo_certidao: z.string().optional(),
+    numero_certidao: z.string().optional(),
+    data_emissao: z.string().optional(),
+    validade: z.string().optional(),
+    requerente: z.string().optional(),
+    cpf_cnpj: z.string().optional(),
     situacao: z.string().optional(),
-  }).passthrough()).optional(),
-}).passthrough();
+    url_certidao: z.string().optional(),
+    imoveis: z
+      .array(
+        z
+          .object({
+            rip: z.string().optional(),
+            endereco: z.string().optional(),
+            municipio: z.string().optional(),
+            uf: z.string().optional(),
+            situacao: z.string().optional(),
+          })
+          .passthrough(),
+      )
+      .optional(),
+  })
+  .passthrough();
 
 export const SefazSpuCertidaoImoveisResponseSchema = z.object({
   code: z.number(),

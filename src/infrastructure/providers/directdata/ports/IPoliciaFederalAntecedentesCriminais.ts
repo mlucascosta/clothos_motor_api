@@ -15,8 +15,13 @@ import type { PoliciaFederalAntecedentesCriminaisRetornoDto } from '../dtos/Poli
  */
 export interface IPoliciaFederalAntecedentesCriminais {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: PoliciaFederalAntecedentesCriminaisRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: PoliciaFederalAntecedentesCriminaisRetornoDto | null;
+      }
+    >
+  >;
 }

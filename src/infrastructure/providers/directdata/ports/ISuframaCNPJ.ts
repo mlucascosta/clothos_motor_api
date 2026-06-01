@@ -15,8 +15,13 @@ import type { SuframaCNPJRetornoDto } from '../dtos/SuframaCNPJDto.js';
  */
 export interface ISuframaCNPJ {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: SuframaCNPJRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: SuframaCNPJRetornoDto | null;
+      }
+    >
+  >;
 }

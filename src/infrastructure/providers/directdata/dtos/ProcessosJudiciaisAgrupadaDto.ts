@@ -12,7 +12,9 @@ export const ProcessosJudiciaisAgrupadaRetornoSchema = z.object({
   observacoes: z.string().nullable().optional(),
   segmentos: z.array(z.record(z.unknown())).nullable().optional(),
   totalProcessos: z.number().int().nullable().optional(),
-  tribunais: z.array(z.record(z.unknown())).nullable().optional()
+  tribunais: z.array(z.record(z.unknown())).nullable().optional(),
 });
 
-export type ProcessosJudiciaisAgrupadaRetornoDto = z.infer<typeof ProcessosJudiciaisAgrupadaRetornoSchema>;
+export type ProcessosJudiciaisAgrupadaRetornoDto = z.infer<
+  typeof ProcessosJudiciaisAgrupadaRetornoSchema
+>;

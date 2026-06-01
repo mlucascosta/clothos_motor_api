@@ -7,7 +7,9 @@ import { z } from 'zod';
 
 export const CadastroReceitaPessoaFisicaRetornoSchema = z.object({
   cadastro: z.record(z.unknown()),
-  receita: z.record(z.unknown())
+  receita: z.record(z.unknown()),
 });
 
-export type CadastroReceitaPessoaFisicaRetornoDto = z.infer<typeof CadastroReceitaPessoaFisicaRetornoSchema>;
+export type CadastroReceitaPessoaFisicaRetornoDto = z.infer<
+  typeof CadastroReceitaPessoaFisicaRetornoSchema
+>;

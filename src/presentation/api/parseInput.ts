@@ -12,9 +12,9 @@
  * changes em 3.25 (propriedades de instância em ZodType).
  */
 interface SafeParseSchema<T> {
-  safeParse(data: unknown):
-    | { success: true; data: T }
-    | { success: false; error: { issues: unknown[] } };
+  safeParse(
+    data: unknown,
+  ): { success: true; data: T } | { success: false; error: { issues: unknown[] } };
 }
 
 /**

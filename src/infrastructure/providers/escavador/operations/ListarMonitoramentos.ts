@@ -1,10 +1,10 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
-import { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import type { ListarMonitoramentosResponse } from '../dtos/MonitoramentoDto.js';
 import { ListarMonitoramentosResponseSchema } from '../dtos/MonitoramentoDto.js';
-import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IListarMonitoramentos } from '../ports/IListarMonitoramentos.js';
 
 export class ListarMonitoramentos implements IListarMonitoramentos {

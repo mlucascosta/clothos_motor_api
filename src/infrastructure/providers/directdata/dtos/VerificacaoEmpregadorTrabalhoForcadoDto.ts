@@ -12,7 +12,9 @@ export const VerificacaoEmpregadorTrabalhoForcadoRetornoSchema = z.object({
   locais: z.array(z.record(z.unknown())).nullable().optional(),
   possuiTrabalhoForcado: z.boolean().nullable().optional(),
   status: z.string().nullable().optional(),
-  totalTrabalhadores: z.number().int().nullable().optional()
+  totalTrabalhadores: z.number().int().nullable().optional(),
 });
 
-export type VerificacaoEmpregadorTrabalhoForcadoRetornoDto = z.infer<typeof VerificacaoEmpregadorTrabalhoForcadoRetornoSchema>;
+export type VerificacaoEmpregadorTrabalhoForcadoRetornoDto = z.infer<
+  typeof VerificacaoEmpregadorTrabalhoForcadoRetornoSchema
+>;

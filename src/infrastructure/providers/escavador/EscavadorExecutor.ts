@@ -169,9 +169,7 @@ export class EscavadorExecutor implements ISourceExecutor {
     }
 
     const budget = context.timeoutMs - (Date.now() - start);
-    const pollResults = await Promise.all(
-      buscaIds.map((id) => this.pollAssincrona(id, budget)),
-    );
+    const pollResults = await Promise.all(buscaIds.map((id) => this.pollAssincrona(id, budget)));
 
     const allResultados: unknown[] = [];
     let pollFailures = 0;
@@ -234,6 +232,7 @@ export class EscavadorExecutor implements ISourceExecutor {
       const status = rawStatus
         .toUpperCase()
         .normalize('NFD')
+        // biome-ignore lint/suspicious/noMisleadingCharacterClass: remo\u00E7\u00E3o intencional de marcas diacr\u00EDticas combinantes p\u00F3s-NFD (strip de acentos)
         .replace(/[\u0300-\u036F]/g, '');
 
       if (status === 'SUCESSO' || status === 'CONCLUIDO') {
@@ -242,7 +241,11 @@ export class EscavadorExecutor implements ISourceExecutor {
 
       if (status === 'ERRO' || status === 'NAO_ENCONTRADO') {
         return left(
-          new SourceError('UPSTREAM_ERROR', this.sourceName, `Busca assíncrona: ${result.value.status}`),
+          new SourceError(
+            'UPSTREAM_ERROR',
+            this.sourceName,
+            `Busca assíncrona: ${result.value.status}`,
+          ),
         );
       }
 
@@ -266,7 +269,9 @@ export class EscavadorExecutor implements ISourceExecutor {
    */
   private findBestMatch(items: BuscaResultItem[], cnpj: string): BuscaResultItem | undefined {
     const clean = cnpj.replace(/\D/g, '');
-    return items.find((i) => (i['cnpj'] as string | undefined)?.replace(/\D/g, '') === clean) ?? items[0];
+    return (
+      items.find((i) => (i['cnpj'] as string | undefined)?.replace(/\D/g, '') === clean) ?? items[0]
+    );
   }
 
   /**

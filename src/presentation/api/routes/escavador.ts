@@ -195,22 +195,19 @@
  * @see @infrastructure/providers/escavador/operations — Implementations dos operations
  */
 
+import { rawStore } from '@infrastructure/persistence/index.js';
+import { EscavadorHttpClient } from '@infrastructure/providers/escavador/EscavadorHttpClient.js';
+import { isLeft } from '@shared/domain/Either.js';
 import { Hono } from 'hono';
-import type { Context } from 'hono';
 import { z } from 'zod';
 import { handleOp, handleOpVoid } from '../handleOp.js';
 import { parseInput } from '../parseInput.js';
-import { isLeft } from '@shared/domain/Either.js';
-import { rawStore } from '@infrastructure/persistence/index.js';
-import { EscavadorHttpClient } from '@infrastructure/providers/escavador/EscavadorHttpClient.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // IMPORTS — Operations V1 e V2
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { BuscarGeral } from '@infrastructure/providers/escavador/operations/BuscarGeral.js';
-import { ListarBuscasAssincronas } from '@infrastructure/providers/escavador/operations/ListarBuscasAssincronas.js';
-import { ObterBuscaAssincrona } from '@infrastructure/providers/escavador/operations/ObterBuscaAssincrona.js';
 import { BuscarProcessosDiarioPorNumero } from '@infrastructure/providers/escavador/operations/BuscarProcessosDiarioPorNumero.js';
 import { BuscarProcessosDiarioPorOab } from '@infrastructure/providers/escavador/operations/BuscarProcessosDiarioPorOab.js';
 import { BuscarPublicacoes } from '@infrastructure/providers/escavador/operations/BuscarPublicacoes.js';
@@ -218,12 +215,13 @@ import { CriarMonitoramento } from '@infrastructure/providers/escavador/operatio
 import { CriarMonitoramentoTribunal } from '@infrastructure/providers/escavador/operations/CriarMonitoramentoTribunal.js';
 import { EditarMonitoramento } from '@infrastructure/providers/escavador/operations/EditarMonitoramento.js';
 import { EditarMonitoramentoTribunal } from '@infrastructure/providers/escavador/operations/EditarMonitoramentoTribunal.js';
-import { IniciarBuscaProcesso } from '@infrastructure/providers/escavador/operations/IniciarBuscaProcesso.js';
-import { IniciarBuscaProcessoNup } from '@infrastructure/providers/escavador/operations/IniciarBuscaProcessoNup.js';
 // ──── Operations V1 ────
 import { IniciarBuscaLote } from '@infrastructure/providers/escavador/operations/IniciarBuscaLote.js';
+import { IniciarBuscaProcesso } from '@infrastructure/providers/escavador/operations/IniciarBuscaProcesso.js';
+import { IniciarBuscaProcessoNup } from '@infrastructure/providers/escavador/operations/IniciarBuscaProcessoNup.js';
 import { IniciarBuscaProcessosLote } from '@infrastructure/providers/escavador/operations/IniciarBuscaProcessosLote.js';
 import { IniciarBuscaProcessosOab } from '@infrastructure/providers/escavador/operations/IniciarBuscaProcessosOab.js';
+import { ListarBuscasAssincronas } from '@infrastructure/providers/escavador/operations/ListarBuscasAssincronas.js';
 import { ListarCallbacks } from '@infrastructure/providers/escavador/operations/ListarCallbacks.js';
 import { ListarMonitoramentos } from '@infrastructure/providers/escavador/operations/ListarMonitoramentos.js';
 import { ListarMonitoramentosTribunal } from '@infrastructure/providers/escavador/operations/ListarMonitoramentosTribunal.js';
@@ -232,6 +230,7 @@ import { ListarOrigensDiariosOficiais } from '@infrastructure/providers/escavado
 import { ListarTribunais } from '@infrastructure/providers/escavador/operations/ListarTribunais.js';
 import { MarcarCallbacksRecebidos } from '@infrastructure/providers/escavador/operations/MarcarCallbacksRecebidos.js';
 import { ObterAparicoes } from '@infrastructure/providers/escavador/operations/ObterAparicoes.js';
+import { ObterBuscaAssincrona } from '@infrastructure/providers/escavador/operations/ObterBuscaAssincrona.js';
 import { ObterDetalhesProcesso } from '@infrastructure/providers/escavador/operations/ObterDetalhesProcesso.js';
 import { ObterEnvolvidosProcesso } from '@infrastructure/providers/escavador/operations/ObterEnvolvidosProcesso.js';
 import { ObterInstituicao } from '@infrastructure/providers/escavador/operations/ObterInstituicao.js';
@@ -353,16 +352,25 @@ escavador.get('/v1/quantidade-creditos', (c) =>
 
 escavador.get('/v1/buscas-assincronas', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'buscas-assincronas/listar', tipo_param: null, param: null }, () =>
-    new ListarBuscasAssincronas(buildHttp()).execute({ pagina }),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v1', fonte: 'buscas-assincronas/listar', tipo_param: null, param: null },
+    () => new ListarBuscasAssincronas(buildHttp()).execute({ pagina }),
   );
 });
 
 escavador.get('/v1/buscas-assincronas/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'buscas-assincronas/obter', tipo_param: 'id', param: String(id) }, () =>
-    new ObterBuscaAssincrona(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'buscas-assincronas/obter',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new ObterBuscaAssincrona(buildHttp()).execute({ id }),
   );
 });
 
@@ -373,22 +381,29 @@ escavador.post('/v1/processos/tribunal/cpf-cnpj', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(
-    z
-    .object({
+    z.object({
       cpf_cnpj: z.string().min(11).max(18),
       tribunais: z.array(z.string()).optional(),
     }),
     body,
   );
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'processos/tribunal/cpf-cnpj', tipo_param: 'cpf_cnpj', param: parsed.data.cpf_cnpj, statusCode: 202 }, () =>
-    new IniciarBuscaLote(buildHttp()).execute({
-      tipo: 'busca_por_documento',
-      cpfCnpj: parsed.data.cpf_cnpj,
-      ...(parsed.data.tribunais !== undefined ? { tribunais: parsed.data.tribunais } : {}),
-    }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'processos/tribunal/cpf-cnpj',
+      tipo_param: 'cpf_cnpj',
+      param: parsed.data.cpf_cnpj,
+      statusCode: 202,
+    },
+    () =>
+      new IniciarBuscaLote(buildHttp()).execute({
+        tipo: 'busca_por_documento',
+        cpfCnpj: parsed.data.cpf_cnpj,
+        ...(parsed.data.tribunais !== undefined ? { tribunais: parsed.data.tribunais } : {}),
+      }),
   );
 });
 
@@ -408,22 +423,29 @@ escavador.post('/v1/processos/tribunal/envolvido', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(
-    z
-    .object({
+    z.object({
       nome: z.string().min(1),
       tribunais: z.array(z.string()).optional(),
     }),
     body,
   );
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'processos/tribunal/envolvido', tipo_param: 'nome', param: parsed.data.nome, statusCode: 202 }, () =>
-    new IniciarBuscaLote(buildHttp()).execute({
-      tipo: 'busca_por_nome',
-      nome: parsed.data.nome,
-      ...(parsed.data.tribunais !== undefined ? { tribunais: parsed.data.tribunais } : {}),
-    }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'processos/tribunal/envolvido',
+      tipo_param: 'nome',
+      param: parsed.data.nome,
+      statusCode: 202,
+    },
+    () =>
+      new IniciarBuscaLote(buildHttp()).execute({
+        tipo: 'busca_por_nome',
+        nome: parsed.data.nome,
+        ...(parsed.data.tribunais !== undefined ? { tribunais: parsed.data.tribunais } : {}),
+      }),
   );
 });
 
@@ -443,16 +465,14 @@ escavador.post('/v1/processos/tribunal/oab', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(
-    z
-    .object({
+    z.object({
       numero_oab: z.string().min(1),
       estado_oab: z.string().length(2),
       tribunais: z.array(z.string()).optional(),
     }),
     body,
   );
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new IniciarBuscaProcessosOab(buildHttp());
   const input: Parameters<typeof op.execute>[0] = {
@@ -460,8 +480,16 @@ escavador.post('/v1/processos/tribunal/oab', async (c) => {
     estado_oab: parsed.data.estado_oab,
   };
   if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'processos/tribunal/oab', tipo_param: 'numero_oab', param: `${parsed.data.numero_oab}/${parsed.data.estado_oab}`, statusCode: 202 }, () =>
-    op.execute(input),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'processos/tribunal/oab',
+      tipo_param: 'numero_oab',
+      param: `${parsed.data.numero_oab}/${parsed.data.estado_oab}`,
+      statusCode: 202,
+    },
+    () => op.execute(input),
   );
 });
 
@@ -481,11 +509,18 @@ escavador.post('/v1/processos/administrativo/nup', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(z.object({ nup: z.string().min(1) }), body);
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'processos/administrativo/nup', tipo_param: 'nup', param: parsed.data.nup, statusCode: 202 }, () =>
-    new IniciarBuscaProcessoNup(buildHttp()).execute({ nup: parsed.data.nup }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'processos/administrativo/nup',
+      tipo_param: 'nup',
+      param: parsed.data.nup,
+      statusCode: 202,
+    },
+    () => new IniciarBuscaProcessoNup(buildHttp()).execute({ nup: parsed.data.nup }),
   );
 });
 
@@ -505,17 +540,23 @@ escavador.post('/v1/processos/pesquisar', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(
-    z
-    .object({
+    z.object({
       numero_cnj: z.string().min(1),
     }),
     body,
   );
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'processos/pesquisar', tipo_param: 'numero_cnj', param: parsed.data.numero_cnj, statusCode: 202 }, () =>
-    new IniciarBuscaProcesso(buildHttp()).execute({ numero_cnj: parsed.data.numero_cnj }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'processos/pesquisar',
+      tipo_param: 'numero_cnj',
+      param: parsed.data.numero_cnj,
+      statusCode: 202,
+    },
+    () => new IniciarBuscaProcesso(buildHttp()).execute({ numero_cnj: parsed.data.numero_cnj }),
   );
 });
 
@@ -524,8 +565,7 @@ escavador.post('/v1/processos/tribunal/lote', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(
-    z
-    .object({
+    z.object({
       tipo: z.enum(['busca_por_nome', 'busca_por_documento', 'busca_por_oab']),
       tribunais: z.array(z.string()).min(1),
       nome: z.string().optional(),
@@ -535,20 +575,29 @@ escavador.post('/v1/processos/tribunal/lote', async (c) => {
     }),
     body,
   );
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new IniciarBuscaProcessosLote(buildHttp());
   const input: Parameters<typeof op.execute>[0] = {
     tipo: parsed.data.tipo,
     tribunais: parsed.data.tribunais,
     ...(parsed.data.nome !== undefined && { nome: parsed.data.nome }),
-    ...(parsed.data.numero_documento !== undefined && { numero_documento: parsed.data.numero_documento }),
+    ...(parsed.data.numero_documento !== undefined && {
+      numero_documento: parsed.data.numero_documento,
+    }),
     ...(parsed.data.numero_oab !== undefined && { numero_oab: parsed.data.numero_oab }),
     ...(parsed.data.estado_oab !== undefined && { estado_oab: parsed.data.estado_oab }),
   };
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'processos/tribunal/lote', tipo_param: null, param: null, statusCode: 202 }, () =>
-    op.execute(input),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'processos/tribunal/lote',
+      tipo_param: null,
+      param: null,
+      statusCode: 202,
+    },
+    () => op.execute(input),
   );
 });
 
@@ -572,8 +621,15 @@ escavador.get('/v1/processos/diarios-oficiais/numero', async (c) => {
   const numero = c.req.query('numero') ?? '';
   if (!numero) return c.json({ error: 'Parâmetro numero obrigatório' }, 400);
 
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'processos/diarios-oficiais/numero', tipo_param: 'numero', param: numero }, () =>
-    new BuscarProcessosDiarioPorNumero(buildHttp()).execute({ numero }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'processos/diarios-oficiais/numero',
+      tipo_param: 'numero',
+      param: numero,
+    },
+    () => new BuscarProcessosDiarioPorNumero(buildHttp()).execute({ numero }),
   );
 });
 
@@ -591,8 +647,15 @@ escavador.get('/v1/processos/diarios-oficiais/oab', async (c) => {
   const oab = c.req.query('oab') ?? '';
   if (!oab) return c.json({ error: 'Parâmetro oab obrigatório' }, 400);
 
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'processos/diarios-oficiais/oab', tipo_param: 'oab', param: oab }, () =>
-    new BuscarProcessosDiarioPorOab(buildHttp()).execute({ oab }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'processos/diarios-oficiais/oab',
+      tipo_param: 'oab',
+      param: oab,
+    },
+    () => new BuscarProcessosDiarioPorOab(buildHttp()).execute({ oab }),
   );
 });
 
@@ -613,8 +676,15 @@ escavador.get('/v1/processos/diarios-oficiais/oab', async (c) => {
  */
 escavador.get('/v1/processos/:numero_cnj', async (c) => {
   const numeroCnj = c.req.param('numero_cnj');
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'processos/obter', tipo_param: 'numero_cnj', param: numeroCnj }, () =>
-    new ObterDetalhesProcesso(buildHttp()).execute({ numeroCnj }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'processos/obter',
+      tipo_param: 'numero_cnj',
+      param: numeroCnj,
+    },
+    () => new ObterDetalhesProcesso(buildHttp()).execute({ numeroCnj }),
   );
 });
 
@@ -632,8 +702,15 @@ escavador.get('/v1/processos/:numero_cnj', async (c) => {
 escavador.get('/v1/processos/:numero_cnj/movimentacoes', async (c) => {
   const numeroCnj = c.req.param('numero_cnj');
   const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'processos/movimentacoes', tipo_param: 'numero_cnj', param: numeroCnj }, () =>
-    new ObterMovimentacoesProcesso(buildHttp()).execute({ numeroCnj, pagina }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'processos/movimentacoes',
+      tipo_param: 'numero_cnj',
+      param: numeroCnj,
+    },
+    () => new ObterMovimentacoesProcesso(buildHttp()).execute({ numeroCnj, pagina }),
   );
 });
 
@@ -652,8 +729,15 @@ escavador.get('/v1/processos/:id/envolvidos-diarios', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'processos/envolvidos-diarios', tipo_param: 'id', param: String(id) }, () =>
-    new ObterEnvolvidosProcesso(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'processos/envolvidos-diarios',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new ObterEnvolvidosProcesso(buildHttp()).execute({ id }),
   );
 });
 
@@ -675,8 +759,10 @@ escavador.get('/v1/movimentacoes/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'movimentacoes/obter', tipo_param: 'id', param: String(id) }, () =>
-    new ObterMovimentacao(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v1', fonte: 'movimentacoes/obter', tipo_param: 'id', param: String(id) },
+    () => new ObterMovimentacao(buildHttp()).execute({ id }),
   );
 });
 
@@ -707,8 +793,10 @@ escavador.get('/v1/busca', async (c) => {
   const input: Parameters<typeof op.execute>[0] = { query, pagina };
   if (tipoRaw === 'pessoa' || tipoRaw === 'processo' || tipoRaw === 'instituicao')
     input.tipo = tipoRaw;
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'busca', tipo_param: 'query', param: query }, () =>
-    op.execute(input),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v1', fonte: 'busca', tipo_param: 'query', param: query },
+    () => op.execute(input),
   );
 });
 
@@ -731,8 +819,10 @@ escavador.get('/v1/pessoas/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'pessoas/obter', tipo_param: 'id', param: String(id) }, () =>
-    new ObterPessoa(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v1', fonte: 'pessoas/obter', tipo_param: 'id', param: String(id) },
+    () => new ObterPessoa(buildHttp()).execute({ id }),
   );
 });
 
@@ -751,8 +841,10 @@ escavador.get('/v1/pessoas/:id/processos', async (c) => {
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
   const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'pessoas/processos', tipo_param: 'id', param: String(id) }, () =>
-    new ObterProcessosPessoa(buildHttp()).execute({ id, pagina }),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v1', fonte: 'pessoas/processos', tipo_param: 'id', param: String(id) },
+    () => new ObterProcessosPessoa(buildHttp()).execute({ id, pagina }),
   );
 });
 
@@ -771,8 +863,10 @@ escavador.get('/v1/pessoas/:id/publicacoes', async (c) => {
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
   const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'pessoas/publicacoes', tipo_param: 'id', param: String(id) }, () =>
-    new BuscarPublicacoes(buildHttp()).execute({ entidadeId: id, pagina }),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v1', fonte: 'pessoas/publicacoes', tipo_param: 'id', param: String(id) },
+    () => new BuscarPublicacoes(buildHttp()).execute({ entidadeId: id, pagina }),
   );
 });
 
@@ -794,8 +888,10 @@ escavador.get('/v1/instituicoes/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'instituicoes/obter', tipo_param: 'id', param: String(id) }, () =>
-    new ObterInstituicao(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v1', fonte: 'instituicoes/obter', tipo_param: 'id', param: String(id) },
+    () => new ObterInstituicao(buildHttp()).execute({ id }),
   );
 });
 
@@ -811,8 +907,10 @@ escavador.get('/v1/instituicoes/:id/pessoas', async (c) => {
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
   const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'instituicoes/pessoas', tipo_param: 'id', param: String(id) }, () =>
-    new ObterPessoasInstituicao(buildHttp()).execute({ id, pagina }),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v1', fonte: 'instituicoes/pessoas', tipo_param: 'id', param: String(id) },
+    () => new ObterPessoasInstituicao(buildHttp()).execute({ id, pagina }),
   );
 });
 
@@ -828,8 +926,15 @@ escavador.get('/v1/instituicoes/:id/processos', async (c) => {
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
   const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'instituicoes/processos', tipo_param: 'id', param: String(id) }, () =>
-    new ObterProcessosInstituicao(buildHttp()).execute({ id, pagina }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'instituicoes/processos',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new ObterProcessosInstituicao(buildHttp()).execute({ id, pagina }),
   );
 });
 
@@ -882,8 +987,10 @@ escavador.get('/v1/monitoramentos', async (c) => {
   const op = new ListarMonitoramentos(buildHttp());
   const input: Parameters<typeof op.execute>[0] = { pagina };
   if (ativo !== undefined) input.ativo = ativo;
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/listar', tipo_param: null, param: null }, () =>
-    op.execute(input),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v1', fonte: 'monitoramentos/listar', tipo_param: null, param: null },
+    () => op.execute(input),
   );
 });
 
@@ -906,8 +1013,7 @@ escavador.post('/v1/monitoramentos', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(CriarMonitoramentoSchema, body);
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new CriarMonitoramento(buildHttp());
   const input: Parameters<typeof op.execute>[0] = {
@@ -917,8 +1023,16 @@ escavador.post('/v1/monitoramentos', async (c) => {
   };
   if (parsed.data.callback_url !== undefined) input.callback_url = parsed.data.callback_url;
   if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/criar', tipo_param: null, param: null, statusCode: 201 }, () =>
-    op.execute(input),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'monitoramentos/criar',
+      tipo_param: null,
+      param: null,
+      statusCode: 201,
+    },
+    () => op.execute(input),
   );
 });
 
@@ -930,8 +1044,15 @@ escavador.get('/v1/monitoramentos/tribunal', async (c) => {
   const op = new ListarMonitoramentosTribunal(buildHttp());
   const input: Parameters<typeof op.execute>[0] = { pagina };
   if (ativo !== undefined) input.ativo = ativo;
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/tribunal/listar', tipo_param: null, param: null }, () =>
-    op.execute(input),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'monitoramentos/tribunal/listar',
+      tipo_param: null,
+      param: null,
+    },
+    () => op.execute(input),
   );
 });
 
@@ -940,8 +1061,7 @@ escavador.post('/v1/monitoramentos/tribunal', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(CriarMonitoramentoTribunalSchema, body);
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new CriarMonitoramentoTribunal(buildHttp());
   const input: Parameters<typeof op.execute>[0] = {
@@ -950,8 +1070,16 @@ escavador.post('/v1/monitoramentos/tribunal', async (c) => {
     tribunal: parsed.data.tribunal,
   };
   if (parsed.data.callback_url !== undefined) input.callback_url = parsed.data.callback_url;
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/tribunal/criar', tipo_param: null, param: null, statusCode: 201 }, () =>
-    op.execute(input),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'monitoramentos/tribunal/criar',
+      tipo_param: null,
+      param: null,
+      statusCode: 201,
+    },
+    () => op.execute(input),
   );
 });
 
@@ -959,8 +1087,15 @@ escavador.get('/v1/monitoramentos/tribunal/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/tribunal/obter', tipo_param: 'id', param: String(id) }, () =>
-    new ObterMonitoramentoTribunal(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'monitoramentos/tribunal/obter',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new ObterMonitoramentoTribunal(buildHttp()).execute({ id }),
   );
 });
 
@@ -972,23 +1107,36 @@ escavador.put('/v1/monitoramentos/tribunal/:id', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(EditarMonitoramentoTribunalSchema, body);
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new EditarMonitoramentoTribunal(buildHttp());
   const input: Parameters<typeof op.execute>[0] = { id };
   if (parsed.data.ativo !== undefined) input.ativo = parsed.data.ativo;
   if (parsed.data.callback_url !== undefined) input.callback_url = parsed.data.callback_url;
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/tribunal/editar', tipo_param: 'id', param: String(id) }, () =>
-    op.execute(input),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'monitoramentos/tribunal/editar',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => op.execute(input),
   );
 });
 
 escavador.delete('/v1/monitoramentos/tribunal/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-  return handleOpVoid(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/tribunal/remover', tipo_param: 'id', param: String(id) }, () =>
-    new RemoverMonitoramentoTribunal(buildHttp()).execute({ id }),
+  return handleOpVoid(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'monitoramentos/tribunal/remover',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new RemoverMonitoramentoTribunal(buildHttp()).execute({ id }),
   );
 });
 
@@ -1000,8 +1148,10 @@ escavador.get('/v1/monitoramentos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/obter', tipo_param: 'id', param: String(id) }, () =>
-    new ObterMonitoramento(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v1', fonte: 'monitoramentos/obter', tipo_param: 'id', param: String(id) },
+    () => new ObterMonitoramento(buildHttp()).execute({ id }),
   );
 });
 
@@ -1013,24 +1163,37 @@ escavador.put('/v1/monitoramentos/:id', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(EditarMonitoramentoSchema, body);
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new EditarMonitoramento(buildHttp());
   const input: Parameters<typeof op.execute>[0] = { id };
   if (parsed.data.ativo !== undefined) input.ativo = parsed.data.ativo;
   if (parsed.data.callback_url !== undefined) input.callback_url = parsed.data.callback_url;
   if (parsed.data.nome !== undefined) input.nome = parsed.data.nome;
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/editar', tipo_param: 'id', param: String(id) }, () =>
-    op.execute(input),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'monitoramentos/editar',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => op.execute(input),
   );
 });
 
 escavador.delete('/v1/monitoramentos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-  return handleOpVoid(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/remover', tipo_param: 'id', param: String(id) }, () =>
-    new RemoverMonitoramento(buildHttp()).execute({ id }),
+  return handleOpVoid(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'monitoramentos/remover',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new RemoverMonitoramento(buildHttp()).execute({ id }),
   );
 });
 
@@ -1039,16 +1202,30 @@ escavador.get('/v1/monitoramentos/:id/aparicoes', async (c) => {
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
   const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/aparicoes', tipo_param: 'id', param: String(id) }, () =>
-    new ObterAparicoes(buildHttp()).execute({ id, pagina }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'monitoramentos/aparicoes',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new ObterAparicoes(buildHttp()).execute({ id, pagina }),
   );
 });
 
 escavador.post('/v1/monitoramentos/:id/testar-callback', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-  return handleOpVoid(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/testar-callback', tipo_param: 'id', param: String(id) }, () =>
-    new TestarCallbackMonitoramento(buildHttp()).execute({ id }),
+  return handleOpVoid(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'monitoramentos/testar-callback',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new TestarCallbackMonitoramento(buildHttp()).execute({ id }),
   );
 });
 
@@ -1056,8 +1233,15 @@ escavador.get('/v1/monitoramentos/:id/origens', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'monitoramentos/origens', tipo_param: 'id', param: String(id) }, () =>
-    new ObterOrigensMonitoramento(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'monitoramentos/origens',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new ObterOrigensMonitoramento(buildHttp()).execute({ id }),
   );
 });
 
@@ -1077,8 +1261,10 @@ escavador.get('/v1/monitoramentos/:id/origens', async (c) => {
  */
 escavador.get('/v1/callbacks', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'callbacks/listar', tipo_param: null, param: null }, () =>
-    new ListarCallbacks(buildHttp()).execute({ pagina }),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v1', fonte: 'callbacks/listar', tipo_param: null, param: null },
+    () => new ListarCallbacks(buildHttp()).execute({ pagina }),
   );
 });
 
@@ -1087,11 +1273,12 @@ escavador.post('/v1/callbacks/recebidos', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(z.object({ ids: z.array(z.number().int()).min(1) }), body);
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
-  return handleOpVoid(c, { gateway: 'escavador-v1', fonte: 'callbacks/recebidos', tipo_param: null, param: null }, () =>
-    new MarcarCallbacksRecebidos(buildHttp()).execute({ ids: parsed.data.ids }),
+  return handleOpVoid(
+    c,
+    { gateway: 'escavador-v1', fonte: 'callbacks/recebidos', tipo_param: null, param: null },
+    () => new MarcarCallbacksRecebidos(buildHttp()).execute({ ids: parsed.data.ids }),
   );
 });
 
@@ -1099,8 +1286,10 @@ escavador.post('/v1/callbacks/:id/reenviar', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'callbacks/reenviar', tipo_param: 'id', param: String(id) }, () =>
-    new ReenviarCallback(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v1', fonte: 'callbacks/reenviar', tipo_param: 'id', param: String(id) },
+    () => new ReenviarCallback(buildHttp()).execute({ id }),
   );
 });
 
@@ -1123,8 +1312,10 @@ escavador.get('/v1/tribunais', async (c) => {
   const op = new ListarTribunais(buildHttp());
   const input: { tipo?: string } = {};
   if (tipo !== undefined) input.tipo = tipo;
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'tribunais/listar', tipo_param: null, param: null }, () =>
-    op.execute(input),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v1', fonte: 'tribunais/listar', tipo_param: null, param: null },
+    () => op.execute(input),
   );
 });
 
@@ -1132,15 +1323,24 @@ escavador.get('/v1/tribunais/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'tribunais/obter', tipo_param: 'id', param: String(id) }, () =>
-    new ObterTribunal(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v1', fonte: 'tribunais/obter', tipo_param: 'id', param: String(id) },
+    () => new ObterTribunal(buildHttp()).execute({ id }),
   );
 });
 
 escavador.get('/v1/orgaos-administrativos', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'orgaos-administrativos/listar', tipo_param: null, param: null }, () =>
-    new ListarOrgaosAdministrativos(buildHttp()).execute({ pagina }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v1',
+      fonte: 'orgaos-administrativos/listar',
+      tipo_param: null,
+      param: null,
+    },
+    () => new ListarOrgaosAdministrativos(buildHttp()).execute({ pagina }),
   );
 });
 
@@ -1149,8 +1349,10 @@ escavador.get('/v1/diarios-oficiais/origens', async (c) => {
   const op = new ListarOrigensDiariosOficiais(buildHttp());
   const input: { estado?: string } = {};
   if (estado !== undefined) input.estado = estado;
-  return handleOp(c, { gateway: 'escavador-v1', fonte: 'diarios-oficiais/origens', tipo_param: null, param: null }, () =>
-    op.execute(input),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v1', fonte: 'diarios-oficiais/origens', tipo_param: null, param: null },
+    () => op.execute(input),
   );
 });
 
@@ -1182,8 +1384,15 @@ escavador.get('/v1/diarios-oficiais/origens', async (c) => {
  */
 escavador.get('/v2/processos/numero_cnj/:numero', async (c) => {
   const numero = c.req.param('numero');
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/obter', tipo_param: 'numero_cnj', param: numero }, () =>
-    new ObterProcessoPorCnj(buildHttp()).execute({ numero }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/processos/obter',
+      tipo_param: 'numero_cnj',
+      param: numero,
+    },
+    () => new ObterProcessoPorCnj(buildHttp()).execute({ numero }),
   );
 });
 
@@ -1211,8 +1420,15 @@ escavador.get('/v2/processos/numero_cnj/:numero', async (c) => {
 escavador.get('/v2/processos/movimentacoes/:numero_cnj', async (c) => {
   const numero_cnj = c.req.param('numero_cnj');
   const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/movimentacoes', tipo_param: 'numero_cnj', param: numero_cnj }, () =>
-    new ObterMovimentacoesV2(buildHttp()).execute({ numero_cnj, pagina }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/processos/movimentacoes',
+      tipo_param: 'numero_cnj',
+      param: numero_cnj,
+    },
+    () => new ObterMovimentacoesV2(buildHttp()).execute({ numero_cnj, pagina }),
   );
 });
 
@@ -1250,8 +1466,15 @@ escavador.get('/v2/envolvido/processos', async (c) => {
   if (li !== undefined) input.li = li;
   const tipoParam = cpf_cnpj !== undefined ? 'cpf_cnpj' : nome !== undefined ? 'nome' : null;
   const paramVal = cpf_cnpj ?? nome ?? null;
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/envolvido', tipo_param: tipoParam, param: paramVal }, () =>
-    op.execute(input),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/processos/envolvido',
+      tipo_param: tipoParam,
+      param: paramVal,
+    },
+    () => op.execute(input),
   );
 });
 
@@ -1283,8 +1506,15 @@ escavador.get('/v2/envolvido/resumo', async (c) => {
   if (cpf_cnpj !== undefined) input.cpf_cnpj = cpf_cnpj;
   const tipoParam = cpf_cnpj !== undefined ? 'cpf_cnpj' : nome !== undefined ? 'nome' : null;
   const paramVal = cpf_cnpj ?? nome ?? null;
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/envolvido/resumo', tipo_param: tipoParam, param: paramVal }, () =>
-    op.execute(input),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/processos/envolvido/resumo',
+      tipo_param: tipoParam,
+      param: paramVal,
+    },
+    () => op.execute(input),
   );
 });
 
@@ -1308,17 +1538,20 @@ escavador.get('/v2/envolvido/resumo', async (c) => {
 escavador.get('/v2/processos/advogado', async (c) => {
   const oab_numero = c.req.query('oab_numero') ?? '';
   const oab_estado = c.req.query('oab_estado');
-  const oab_tipo   = c.req.query('oab_tipo');
+  const oab_tipo = c.req.query('oab_tipo');
   const pagina = Number(c.req.query('page') ?? '1');
   if (!oab_numero) return c.json({ error: 'Parâmetro oab_numero obrigatório' }, 400);
   const param = oab_estado ? `${oab_numero}/${oab_estado}` : oab_numero;
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/advogado', tipo_param: 'oab', param }, () =>
-    new BuscarProcessosPorAdvogado(buildHttp()).execute({
-      oab_numero,
-      ...(oab_estado && { oab_estado }),
-      ...(oab_tipo && { oab_tipo }),
-      pagina,
-    }),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v2', fonte: 'v2/processos/advogado', tipo_param: 'oab', param },
+    () =>
+      new BuscarProcessosPorAdvogado(buildHttp()).execute({
+        oab_numero,
+        ...(oab_estado && { oab_estado }),
+        ...(oab_tipo && { oab_tipo }),
+        pagina,
+      }),
   );
 });
 
@@ -1345,11 +1578,14 @@ escavador.get('/v2/processos/advogado/resumo', async (c) => {
   const oab_estado = c.req.query('oab_estado');
   if (!oab_numero) return c.json({ error: 'Parâmetro oab_numero obrigatório' }, 400);
   const param = oab_estado ? `${oab_numero}/${oab_estado}` : oab_numero;
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/advogado/resumo', tipo_param: 'oab', param }, () =>
-    new ResumoProcessosPorAdvogado(buildHttp()).execute({
-      oab: oab_numero,
-      ...(oab_estado && { oab_estado }),
-    }),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v2', fonte: 'v2/processos/advogado/resumo', tipo_param: 'oab', param },
+    () =>
+      new ResumoProcessosPorAdvogado(buildHttp()).execute({
+        oab: oab_numero,
+        ...(oab_estado && { oab_estado }),
+      }),
   );
 });
 
@@ -1376,8 +1612,15 @@ escavador.get('/v2/processos/advogado/resumo', async (c) => {
 escavador.get('/v2/processos/:numero_cnj/documentos', async (c) => {
   const numero_cnj = c.req.param('numero_cnj');
   const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/documentos', tipo_param: 'numero_cnj', param: numero_cnj }, () =>
-    new ObterDocumentosProcesso(buildHttp()).execute({ numero_cnj, pagina }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/processos/documentos',
+      tipo_param: 'numero_cnj',
+      param: numero_cnj,
+    },
+    () => new ObterDocumentosProcesso(buildHttp()).execute({ numero_cnj, pagina }),
   );
 });
 
@@ -1404,8 +1647,15 @@ escavador.get('/v2/processos/:numero_cnj/documentos', async (c) => {
 escavador.get('/v2/processos/:numero_cnj/autos', async (c) => {
   const numero_cnj = c.req.param('numero_cnj');
   const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/autos', tipo_param: 'numero_cnj', param: numero_cnj }, () =>
-    new ObterAutosProcesso(buildHttp()).execute({ numero_cnj, pagina }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/processos/autos',
+      tipo_param: 'numero_cnj',
+      param: numero_cnj,
+    },
+    () => new ObterAutosProcesso(buildHttp()).execute({ numero_cnj, pagina }),
   );
 });
 
@@ -1430,8 +1680,15 @@ escavador.get('/v2/processos/:numero_cnj/autos', async (c) => {
  */
 escavador.get('/v2/processos/:numero_cnj/envolvidos', async (c) => {
   const numero_cnj = c.req.param('numero_cnj');
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/envolvidos', tipo_param: 'numero_cnj', param: numero_cnj }, () =>
-    new ObterEnvolvidosProcessoV2(buildHttp()).execute({ numero_cnj }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/processos/envolvidos',
+      tipo_param: 'numero_cnj',
+      param: numero_cnj,
+    },
+    () => new ObterEnvolvidosProcessoV2(buildHttp()).execute({ numero_cnj }),
   );
 });
 
@@ -1466,19 +1723,29 @@ escavador.post('/v2/processos/atualizacao', async (c) => {
 
   const parsed = parseInput(
     z.object({
-    processos: z.array(z.object({ numero_cnj: z.string().min(1) })).min(1),
-    enviar_callback: z.boolean().optional(),
-  }),
+      processos: z.array(z.object({ numero_cnj: z.string().min(1) })).min(1),
+      enviar_callback: z.boolean().optional(),
+    }),
     body,
   );
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/atualizacao/lote', tipo_param: null, param: null, statusCode: 202 }, () =>
-    new SolicitarAtualizacaoLote(buildHttp()).execute({
-      processos: parsed.data.processos,
-      ...(parsed.data.enviar_callback !== undefined && { enviar_callback: parsed.data.enviar_callback }),
-    }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/processos/atualizacao/lote',
+      tipo_param: null,
+      param: null,
+      statusCode: 202,
+    },
+    () =>
+      new SolicitarAtualizacaoLote(buildHttp()).execute({
+        processos: parsed.data.processos,
+        ...(parsed.data.enviar_callback !== undefined && {
+          enviar_callback: parsed.data.enviar_callback,
+        }),
+      }),
   );
 });
 
@@ -1506,8 +1773,15 @@ escavador.get('/v2/processos/atualizacao/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/atualizacao/lote/status', tipo_param: 'id', param: String(id) }, () =>
-    new ObterStatusAtualizacaoLote(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/processos/atualizacao/lote/status',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new ObterStatusAtualizacaoLote(buildHttp()).execute({ id }),
   );
 });
 
@@ -1532,8 +1806,15 @@ escavador.get('/v2/processos/atualizacao/:id', async (c) => {
  */
 escavador.get('/v2/processos/:id/atualizacao', async (c) => {
   const id = c.req.param('id');
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/atualizacao/status', tipo_param: 'numero_cnj', param: id }, () =>
-    new ObterStatusAtualizacaoProcesso(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/processos/atualizacao/status',
+      tipo_param: 'numero_cnj',
+      param: id,
+    },
+    () => new ObterStatusAtualizacaoProcesso(buildHttp()).execute({ id }),
   );
 });
 
@@ -1556,8 +1837,16 @@ escavador.get('/v2/processos/:id/atualizacao', async (c) => {
  */
 escavador.post('/v2/processos/:id/atualizacao', async (c) => {
   const id = c.req.param('id');
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/atualizacao/solicitar', tipo_param: 'numero_cnj', param: id, statusCode: 202 }, () =>
-    new SolicitarAtualizacaoProcesso(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/processos/atualizacao/solicitar',
+      tipo_param: 'numero_cnj',
+      param: id,
+      statusCode: 202,
+    },
+    () => new SolicitarAtualizacaoProcesso(buildHttp()).execute({ id }),
   );
 });
 
@@ -1584,8 +1873,16 @@ escavador.post('/v2/processos/:id/atualizacao', async (c) => {
 escavador.post('/v2/processos/:id/resumo', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/resumo/solicitar', tipo_param: 'numero_cnj', param: String(id), statusCode: 202 }, () =>
-    new SolicitarResumoProcesso(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/processos/resumo/solicitar',
+      tipo_param: 'numero_cnj',
+      param: String(id),
+      statusCode: 202,
+    },
+    () => new SolicitarResumoProcesso(buildHttp()).execute({ id }),
   );
 });
 
@@ -1611,8 +1908,15 @@ escavador.post('/v2/processos/:id/resumo', async (c) => {
 escavador.get('/v2/processos/:id/resumo', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/resumo/obter', tipo_param: 'numero_cnj', param: String(id) }, () =>
-    new ObterResumoProcesso(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/processos/resumo/obter',
+      tipo_param: 'numero_cnj',
+      param: String(id),
+    },
+    () => new ObterResumoProcesso(buildHttp()).execute({ id }),
   );
 });
 
@@ -1637,8 +1941,15 @@ escavador.get('/v2/processos/:id/resumo', async (c) => {
 escavador.get('/v2/processos/:id/resumo/status', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/processos/resumo/status', tipo_param: 'numero_cnj', param: String(id) }, () =>
-    new ObterStatusResumoProcesso(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/processos/resumo/status',
+      tipo_param: 'numero_cnj',
+      param: String(id),
+    },
+    () => new ObterStatusResumoProcesso(buildHttp()).execute({ id }),
   );
 });
 
@@ -1717,8 +2028,15 @@ escavador.get('/v2/documentos/:id/download', async (c) => {
  */
 escavador.get('/v2/monitoramentos/novos-processos', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/monitoramentos/novos-processos/list', tipo_param: null, param: null }, () =>
-    new ListarMonitoramentosNovosProcessos(buildHttp()).execute({ pagina }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/monitoramentos/novos-processos/list',
+      tipo_param: null,
+      param: null,
+    },
+    () => new ListarMonitoramentosNovosProcessos(buildHttp()).execute({ pagina }),
   );
 });
 
@@ -1727,23 +2045,29 @@ escavador.post('/v2/monitoramentos/novos-processos', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(
-    z
-    .object({
+    z.object({
       variacao_busca: z.string().min(1),
       tribunais: z.array(z.number().int()).optional(),
       callback_url: z.string().url().optional(),
     }),
     body,
   );
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new CriarMonitoramentoNovosProcessos(buildHttp());
   const input: Parameters<typeof op.execute>[0] = { variacao_busca: parsed.data.variacao_busca };
   if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
   if (parsed.data.callback_url !== undefined) input.callback_url = parsed.data.callback_url;
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/monitoramentos/novos-processos/criar', tipo_param: null, param: null, statusCode: 201 }, () =>
-    op.execute(input),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/monitoramentos/novos-processos/criar',
+      tipo_param: null,
+      param: null,
+      statusCode: 201,
+    },
+    () => op.execute(input),
   );
 });
 
@@ -1772,8 +2096,15 @@ escavador.get('/v2/monitoramentos/novos-processos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/monitoramentos/novos-processos/obter', tipo_param: 'id', param: String(id) }, () =>
-    new ObterMonitoramentoNovosProcessos(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/monitoramentos/novos-processos/obter',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new ObterMonitoramentoNovosProcessos(buildHttp()).execute({ id }),
   );
 });
 
@@ -1813,8 +2144,7 @@ escavador.patch('/v2/monitoramentos/novos-processos/:id', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(
-    z
-    .object({
+    z.object({
       variacao_busca: z.string().optional(),
       tribunais: z.array(z.number().int()).optional(),
       callback_url: z.string().url().optional(),
@@ -1822,8 +2152,7 @@ escavador.patch('/v2/monitoramentos/novos-processos/:id', async (c) => {
     }),
     body,
   );
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new EditarMonitoramentoNovosProcessos(buildHttp());
   const input: Parameters<typeof op.execute>[0] = { id };
@@ -1831,8 +2160,15 @@ escavador.patch('/v2/monitoramentos/novos-processos/:id', async (c) => {
   if (parsed.data.tribunais !== undefined) input.tribunais = parsed.data.tribunais;
   if (parsed.data.callback_url !== undefined) input.callback_url = parsed.data.callback_url;
   if (parsed.data.ativo !== undefined) input.ativo = parsed.data.ativo;
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/monitoramentos/novos-processos/editar', tipo_param: 'id', param: String(id) }, () =>
-    op.execute(input),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/monitoramentos/novos-processos/editar',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => op.execute(input),
   );
 });
 
@@ -1851,8 +2187,15 @@ escavador.patch('/v2/monitoramentos/novos-processos/:id', async (c) => {
 escavador.delete('/v2/monitoramentos/novos-processos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-  return handleOpVoid(c, { gateway: 'escavador-v2', fonte: 'v2/monitoramentos/novos-processos/remover', tipo_param: 'id', param: String(id) }, () =>
-    new RemoverMonitoramentoNovosProcessos(buildHttp()).execute({ id }),
+  return handleOpVoid(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/monitoramentos/novos-processos/remover',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new RemoverMonitoramentoNovosProcessos(buildHttp()).execute({ id }),
   );
 });
 
@@ -1861,8 +2204,15 @@ escavador.get('/v2/monitoramentos/novos-processos/:id/resultados', async (c) => 
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
   const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/monitoramentos/novos-processos/resultados', tipo_param: 'id', param: String(id) }, () =>
-    new ObterResultadosMonitoramentoNovosProcessos(buildHttp()).execute({ id, pagina }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/monitoramentos/novos-processos/resultados',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new ObterResultadosMonitoramentoNovosProcessos(buildHttp()).execute({ id, pagina }),
   );
 });
 
@@ -1887,8 +2237,15 @@ escavador.get('/v2/monitoramentos/novos-processos/:id/resultados', async (c) => 
  */
 escavador.get('/v2/monitoramentos/processos', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/monitoramentos/processos/listar', tipo_param: null, param: null }, () =>
-    new ListarMonitoramentosProcesso(buildHttp()).execute({ pagina }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/monitoramentos/processos/listar',
+      tipo_param: null,
+      param: null,
+    },
+    () => new ListarMonitoramentosProcesso(buildHttp()).execute({ pagina }),
   );
 });
 
@@ -1922,21 +2279,27 @@ escavador.post('/v2/monitoramentos/processos', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(
-    z
-    .object({
+    z.object({
       processo_id: z.number().int(),
       callback_url: z.string().url().optional(),
     }),
     body,
   );
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new CriarMonitoramentoProcesso(buildHttp());
   const input: Parameters<typeof op.execute>[0] = { processo_id: parsed.data.processo_id };
   if (parsed.data.callback_url !== undefined) input.callback_url = parsed.data.callback_url;
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/monitoramentos/processos/criar', tipo_param: null, param: null, statusCode: 201 }, () =>
-    op.execute(input),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/monitoramentos/processos/criar',
+      tipo_param: null,
+      param: null,
+      statusCode: 201,
+    },
+    () => op.execute(input),
   );
 });
 
@@ -1964,8 +2327,15 @@ escavador.get('/v2/monitoramentos/processos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/monitoramentos/processos/obter', tipo_param: 'id', param: String(id) }, () =>
-    new ObterMonitoramentoProcesso(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/monitoramentos/processos/obter',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new ObterMonitoramentoProcesso(buildHttp()).execute({ id }),
   );
 });
 
@@ -1984,8 +2354,15 @@ escavador.get('/v2/monitoramentos/processos/:id', async (c) => {
 escavador.delete('/v2/monitoramentos/processos/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-  return handleOpVoid(c, { gateway: 'escavador-v2', fonte: 'v2/monitoramentos/processos/remover', tipo_param: 'id', param: String(id) }, () =>
-    new RemoverMonitoramentoProcesso(buildHttp()).execute({ id }),
+  return handleOpVoid(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/monitoramentos/processos/remover',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new RemoverMonitoramentoProcesso(buildHttp()).execute({ id }),
   );
 });
 
@@ -2010,8 +2387,10 @@ escavador.delete('/v2/monitoramentos/processos/:id', async (c) => {
  */
 escavador.get('/v2/callbacks', async (c) => {
   const pagina = Number(c.req.query('page') ?? '1');
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/callbacks/listar', tipo_param: null, param: null }, () =>
-    new ListarCallbacksV2(buildHttp()).execute({ pagina }),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v2', fonte: 'v2/callbacks/listar', tipo_param: null, param: null },
+    () => new ListarCallbacksV2(buildHttp()).execute({ pagina }),
   );
 });
 
@@ -2036,8 +2415,7 @@ escavador.post('/v2/callbacks/recebidos', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(z.object({ ids: z.array(z.number().int()).min(1).max(20) }), body);
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   return handleOpVoid(
     c,
@@ -2068,8 +2446,15 @@ escavador.post('/v2/callbacks/:id/reenviar', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/callbacks/reenviar', tipo_param: 'id', param: String(id) }, () =>
-    new ReenviarCallbackV2(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/callbacks/reenviar',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new ReenviarCallbackV2(buildHttp()).execute({ id }),
   );
 });
 
@@ -2091,8 +2476,10 @@ escavador.post('/v2/callbacks/:id/reenviar', async (c) => {
  * }
  */
 escavador.get('/v2/certificados', async (c) => {
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/certificados/listar', tipo_param: null, param: null }, () =>
-    new ListarCertificados(buildHttp()).execute(),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v2', fonte: 'v2/certificados/listar', tipo_param: null, param: null },
+    () => new ListarCertificados(buildHttp()).execute(),
   );
 });
 
@@ -2128,19 +2515,25 @@ escavador.post('/v2/certificados', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(
-    z
-    .object({
+    z.object({
       nome: z.string().min(1),
       arquivo_base64: z.string().min(1),
       senha: z.string().min(1),
     }),
     body,
   );
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/certificados/criar', tipo_param: null, param: null, statusCode: 201 }, () =>
-    new CriarCertificado(buildHttp()).execute(parsed.data),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/certificados/criar',
+      tipo_param: null,
+      param: null,
+      statusCode: 201,
+    },
+    () => new CriarCertificado(buildHttp()).execute(parsed.data),
   );
 });
 
@@ -2169,8 +2562,15 @@ escavador.get('/v2/certificados/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
 
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/certificados/obter', tipo_param: 'id', param: String(id) }, () =>
-    new ObterCertificado(buildHttp()).execute({ id }),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/certificados/obter',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new ObterCertificado(buildHttp()).execute({ id }),
   );
 });
 
@@ -2189,8 +2589,15 @@ escavador.get('/v2/certificados/:id', async (c) => {
 escavador.delete('/v2/certificados/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (Number.isNaN(id)) return c.json({ error: 'ID inválido' }, 400);
-  return handleOpVoid(c, { gateway: 'escavador-v2', fonte: 'v2/certificados/remover', tipo_param: 'id', param: String(id) }, () =>
-    new RemoverCertificado(buildHttp()).execute({ id }),
+  return handleOpVoid(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/certificados/remover',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new RemoverCertificado(buildHttp()).execute({ id }),
   );
 });
 
@@ -2227,21 +2634,27 @@ escavador.post('/v2/certificados/:id/autenticacoes', async (c) => {
   if (!body) return c.json({ error: 'Body inválido' }, 400);
 
   const parsed = parseInput(
-    z
-    .object({
+    z.object({
       tipo: z.string().min(1),
       valor: z.string().optional(),
     }),
     body,
   );
-  if (!parsed.ok)
-    return c.json({ error: parsed.error, details: parsed.details }, 422);
+  if (!parsed.ok) return c.json({ error: parsed.error, details: parsed.details }, 422);
 
   const op = new CriarAutenticacaoCertificado(buildHttp());
   const input: Parameters<typeof op.execute>[0] = { id, tipo: parsed.data.tipo };
   if (parsed.data.valor !== undefined) input.valor = parsed.data.valor;
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/certificados/autenticacoes/criar', tipo_param: 'id', param: String(id), statusCode: 201 }, () =>
-    op.execute(input),
+  return handleOp(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/certificados/autenticacoes/criar',
+      tipo_param: 'id',
+      param: String(id),
+      statusCode: 201,
+    },
+    () => op.execute(input),
   );
 });
 
@@ -2263,8 +2676,15 @@ escavador.delete('/v2/certificados/:id/autenticacoes/:autenticacaoId', async (c)
   const autenticacaoId = Number(c.req.param('autenticacaoId'));
   if (Number.isNaN(id) || Number.isNaN(autenticacaoId))
     return c.json({ error: 'ID inválido' }, 400);
-  return handleOpVoid(c, { gateway: 'escavador-v2', fonte: 'v2/certificados/autenticacoes/remover', tipo_param: 'id', param: String(id) }, () =>
-    new RemoverAutenticacaoCertificado(buildHttp()).execute({ id, autenticacaoId }),
+  return handleOpVoid(
+    c,
+    {
+      gateway: 'escavador-v2',
+      fonte: 'v2/certificados/autenticacoes/remover',
+      tipo_param: 'id',
+      param: String(id),
+    },
+    () => new RemoverAutenticacaoCertificado(buildHttp()).execute({ id, autenticacaoId }),
   );
 });
 
@@ -2287,8 +2707,10 @@ escavador.delete('/v2/certificados/:id/autenticacoes/:autenticacaoId', async (c)
  * }
  */
 escavador.get('/v2/tribunais/sistemas', async (c) => {
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/tribunais/sistemas', tipo_param: null, param: null }, () =>
-    new ListarSistemasTribunais(buildHttp()).execute(),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v2', fonte: 'v2/tribunais/sistemas', tipo_param: null, param: null },
+    () => new ListarSistemasTribunais(buildHttp()).execute(),
   );
 });
 
@@ -2317,8 +2739,10 @@ escavador.get('/v2/tribunais', async (c) => {
     const id = Number(sistemaIdRaw);
     if (!Number.isNaN(id)) input.sistema_id = id;
   }
-  return handleOp(c, { gateway: 'escavador-v2', fonte: 'v2/tribunais/listar', tipo_param: null, param: null }, () =>
-    op.execute(input),
+  return handleOp(
+    c,
+    { gateway: 'escavador-v2', fonte: 'v2/tribunais/listar', tipo_param: null, param: null },
+    () => op.execute(input),
   );
 });
 

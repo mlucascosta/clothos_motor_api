@@ -187,8 +187,10 @@ export const apibrasilRegistry: Record<string, OperationFactory> = {
   bet_safe_compliance: (http) => new BetSafeCompliance(http),
   calcula_distancia_cep: (http) => new CalculaDistanciaCep(http),
   cep: (http) => new Cep(http),
-  certidao_conjunta_de_debitos_pessoa_fisica: (http) => new CertidaoConjuntaDeDebitosPessoaFisica(http),
-  certidao_conjunta_de_debitos_pessoa_juridica: (http) => new CertidaoConjuntaDeDebitosPessoaJuridica(http),
+  certidao_conjunta_de_debitos_pessoa_fisica: (http) =>
+    new CertidaoConjuntaDeDebitosPessoaFisica(http),
+  certidao_conjunta_de_debitos_pessoa_juridica: (http) =>
+    new CertidaoConjuntaDeDebitosPessoaJuridica(http),
   certidao_negativa_de_debitos: (http) => new CertidaoNegativaDeDebitos(http),
   certidao_negativa_de_debitos_pj: (http) => new CertidaoNegativaDeDebitosPj(http),
   certidao_negativa_de_licitante_inidoneo: (http) => new CertidaoNegativaDeLicitanteInidoneo(http),

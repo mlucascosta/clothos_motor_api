@@ -14,7 +14,9 @@ export const PessoaExpostaPoliticamenteRetornoSchema = z.object({
   parentescosPEP: z.array(z.record(z.unknown())).nullable().optional(),
   pep: z.boolean().nullable().optional(),
   relacionadoComPEP: z.boolean().nullable().optional(),
-  status: z.string().nullable().optional()
+  status: z.string().nullable().optional(),
 });
 
-export type PessoaExpostaPoliticamenteRetornoDto = z.infer<typeof PessoaExpostaPoliticamenteRetornoSchema>;
+export type PessoaExpostaPoliticamenteRetornoDto = z.infer<
+  typeof PessoaExpostaPoliticamenteRetornoSchema
+>;

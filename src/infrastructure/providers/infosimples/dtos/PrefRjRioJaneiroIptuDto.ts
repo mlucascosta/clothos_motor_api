@@ -6,22 +6,30 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const PrefRjRioJaneiroIptuItemSchema = z.object({
-  inscricao: z.string().optional(),
-  endereco: z.string().optional(),
-  area_terreno: z.string().optional(),
-  area_construida: z.string().optional(),
-  valor_venal: z.number().optional(),
-  ano: z.string().optional(),
-  parcelas: z.array(z.object({
-    parcela: z.string().optional(),
-    vencimento: z.string().optional(),
-    valor: z.number().optional(),
+export const PrefRjRioJaneiroIptuItemSchema = z
+  .object({
+    inscricao: z.string().optional(),
+    endereco: z.string().optional(),
+    area_terreno: z.string().optional(),
+    area_construida: z.string().optional(),
+    valor_venal: z.number().optional(),
+    ano: z.string().optional(),
+    parcelas: z
+      .array(
+        z
+          .object({
+            parcela: z.string().optional(),
+            vencimento: z.string().optional(),
+            valor: z.number().optional(),
+            situacao: z.string().optional(),
+            codigo_barras: z.string().optional(),
+          })
+          .passthrough(),
+      )
+      .optional(),
     situacao: z.string().optional(),
-    codigo_barras: z.string().optional(),
-  }).passthrough()).optional(),
-  situacao: z.string().optional(),
-}).passthrough();
+  })
+  .passthrough();
 
 export const PrefRjRioJaneiroIptuResponseSchema = z.object({
   code: z.number(),

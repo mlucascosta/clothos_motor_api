@@ -1,7 +1,7 @@
 import 'dotenv/config.js';
 import { serve } from '@hono/node-server';
-import { app } from './api/app.js';
 import { logger } from '@shared/infrastructure/logger.js';
+import { app } from './api/app.js';
 
 if (!process.env['MOTOR_INTERNAL_SECRET']) {
   logger.fatal('MOTOR_INTERNAL_SECRET não configurada — encerrando');

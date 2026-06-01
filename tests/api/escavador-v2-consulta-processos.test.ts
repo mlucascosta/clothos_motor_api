@@ -31,7 +31,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
         ),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/numero_cnj/0000001-00.0000.0.00.0000');
+      const res = await app.request(
+        '/api/escavador/v2/processos/numero_cnj/0000001-00.0000.0.00.0000',
+      );
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -41,7 +43,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
     it('❌ erro: retorna 500 quando upstream falha', async () => {
       fetchSpy.mockResolvedValue(new Response('Internal Server Error', { status: 500 }));
 
-      const res = await app.request('/api/escavador/v2/processos/numero_cnj/0000001-00.0000.0.00.0000');
+      const res = await app.request(
+        '/api/escavador/v2/processos/numero_cnj/0000001-00.0000.0.00.0000',
+      );
 
       expect(res.status).toBe(500);
     });
@@ -54,7 +58,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
         }),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/numero_cnj/9999999-99.9999.9.99.9999');
+      const res = await app.request(
+        '/api/escavador/v2/processos/numero_cnj/9999999-99.9999.9.99.9999',
+      );
 
       expect(res.status).toBe(200);
     });
@@ -72,17 +78,21 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
         ),
       );
 
-        const res = await app.request('/api/escavador/v2/processos/movimentacoes/0000001-00.0000.0.00.0000?page=1');
+      const res = await app.request(
+        '/api/escavador/v2/processos/movimentacoes/0000001-00.0000.0.00.0000?page=1',
+      );
 
-        expect(res.status).toBe(200);
-        const body = (await res.json()) as Record<string, unknown>;
-        expect(Array.isArray(body.items)).toBe(true);
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(Array.isArray(body.items)).toBe(true);
     });
 
     it('❌ erro: retorna 500 quando API upstream falha', async () => {
       fetchSpy.mockResolvedValue(new Response('Gateway Timeout', { status: 504 }));
 
-      const res = await app.request('/api/escavador/v2/processos/movimentacoes/0000001-00.0000.0.00.0000?page=1');
+      const res = await app.request(
+        '/api/escavador/v2/processos/movimentacoes/0000001-00.0000.0.00.0000?page=1',
+      );
 
       expect(res.status).toBe(500);
     });
@@ -98,7 +108,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
         ),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/movimentacoes/0000001-00.0000.0.00.0000?page=1');
+      const res = await app.request(
+        '/api/escavador/v2/processos/movimentacoes/0000001-00.0000.0.00.0000?page=1',
+      );
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -111,7 +123,11 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
       fetchSpy.mockResolvedValue(
         new Response(
           JSON.stringify({
-            envolvido_encontrado: { nome: 'João Silva', tipo_pessoa: 'FISICA', quantidade_processos: 1 },
+            envolvido_encontrado: {
+              nome: 'João Silva',
+              tipo_pessoa: 'FISICA',
+              quantidade_processos: 1,
+            },
             items: [{ numero_cnj: '0000001-00.0000.0.00.0000', ano_inicio: 2020 }],
             paginator: { per_page: 20, current_page: 1, total: 1 },
           }),
@@ -119,7 +135,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
         ),
       );
 
-      const res = await app.request('/api/escavador/v2/envolvido/processos?nome=João%20Silva&page=1');
+      const res = await app.request(
+        '/api/escavador/v2/envolvido/processos?nome=João%20Silva&page=1',
+      );
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -148,7 +166,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
         ),
       );
 
-      const res = await app.request('/api/escavador/v2/envolvido/processos?cpf_cnpj=999.999.999-99&page=1');
+      const res = await app.request(
+        '/api/escavador/v2/envolvido/processos?cpf_cnpj=999.999.999-99&page=1',
+      );
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -180,7 +200,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
     it('❌ erro: retorna 500 quando upstream falha', async () => {
       fetchSpy.mockResolvedValue(new Response('Service Unavailable', { status: 503 }));
 
-      const res = await app.request('/api/escavador/v2/envolvido/resumo?cpf_cnpj=11.222.333/0001-81');
+      const res = await app.request(
+        '/api/escavador/v2/envolvido/resumo?cpf_cnpj=11.222.333/0001-81',
+      );
 
       expect(res.status).toBe(500);
     });
@@ -218,7 +240,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
         ),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/advogado?oab_numero=123456&oab_estado=SP&page=1');
+      const res = await app.request(
+        '/api/escavador/v2/processos/advogado?oab_numero=123456&oab_estado=SP&page=1',
+      );
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -242,7 +266,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
         ),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/advogado?oab_numero=999999&oab_estado=XX&page=1');
+      const res = await app.request(
+        '/api/escavador/v2/processos/advogado?oab_numero=999999&oab_estado=XX&page=1',
+      );
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -264,7 +290,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
         ),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/advogado/resumo?oab_numero=123456&oab_estado=SP');
+      const res = await app.request(
+        '/api/escavador/v2/processos/advogado/resumo?oab_numero=123456&oab_estado=SP',
+      );
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -274,7 +302,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
     it('❌ erro: retorna 500 quando upstream falha', async () => {
       fetchSpy.mockResolvedValue(new Response('Internal Server Error', { status: 500 }));
 
-      const res = await app.request('/api/escavador/v2/processos/advogado/resumo?oab_numero=123456&oab_estado=SP');
+      const res = await app.request(
+        '/api/escavador/v2/processos/advogado/resumo?oab_numero=123456&oab_estado=SP',
+      );
 
       expect(res.status).toBe(500);
     });
@@ -298,7 +328,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
         ),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/0000001-00.0000.0.00.0000/documentos?page=1');
+      const res = await app.request(
+        '/api/escavador/v2/processos/0000001-00.0000.0.00.0000/documentos?page=1',
+      );
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -308,7 +340,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
     it('❌ erro: retorna 500 quando API upstream falha', async () => {
       fetchSpy.mockResolvedValue(new Response('Bad Gateway', { status: 502 }));
 
-      const res = await app.request('/api/escavador/v2/processos/0000001-00.0000.0.00.0000/documentos?page=1');
+      const res = await app.request(
+        '/api/escavador/v2/processos/0000001-00.0000.0.00.0000/documentos?page=1',
+      );
 
       expect(res.status).toBe(500);
     });
@@ -324,7 +358,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
         ),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/0000001-00.0000.0.00.0000/documentos?page=1');
+      const res = await app.request(
+        '/api/escavador/v2/processos/0000001-00.0000.0.00.0000/documentos?page=1',
+      );
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -344,7 +380,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
         ),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/0000001-00.0000.0.00.0000/autos?page=1');
+      const res = await app.request(
+        '/api/escavador/v2/processos/0000001-00.0000.0.00.0000/autos?page=1',
+      );
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -354,7 +392,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
     it('❌ erro: retorna 500 quando upstream falha', async () => {
       fetchSpy.mockResolvedValue(new Response('Service Unavailable', { status: 503 }));
 
-      const res = await app.request('/api/escavador/v2/processos/0000001-00.0000.0.00.0000/autos?page=1');
+      const res = await app.request(
+        '/api/escavador/v2/processos/0000001-00.0000.0.00.0000/autos?page=1',
+      );
 
       expect(res.status).toBe(500);
     });
@@ -370,7 +410,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
         ),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/0000001-00.0000.0.00.0000/autos?page=1');
+      const res = await app.request(
+        '/api/escavador/v2/processos/0000001-00.0000.0.00.0000/autos?page=1',
+      );
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -390,7 +432,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
         ),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/0000001-00.0000.0.00.0000/envolvidos');
+      const res = await app.request(
+        '/api/escavador/v2/processos/0000001-00.0000.0.00.0000/envolvidos',
+      );
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -400,7 +444,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
     it('❌ erro: retorna 500 quando API upstream falha', async () => {
       fetchSpy.mockResolvedValue(new Response('Gateway Timeout', { status: 504 }));
 
-      const res = await app.request('/api/escavador/v2/processos/0000001-00.0000.0.00.0000/envolvidos');
+      const res = await app.request(
+        '/api/escavador/v2/processos/0000001-00.0000.0.00.0000/envolvidos',
+      );
 
       expect(res.status).toBe(500);
     });
@@ -416,7 +462,9 @@ describe('Escavador V2 — Consulta de Processos (E2E)', () => {
         ),
       );
 
-      const res = await app.request('/api/escavador/v2/processos/0000001-00.0000.0.00.0000/envolvidos');
+      const res = await app.request(
+        '/api/escavador/v2/processos/0000001-00.0000.0.00.0000/envolvidos',
+      );
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;

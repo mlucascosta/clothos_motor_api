@@ -6,16 +6,18 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const IncraSigefRequerimentosItemSchema = z.object({
-  numero_requerimento: z.string().optional(),
-  tipo: z.string().optional(),
-  situacao: z.string().optional(),
-  municipio: z.string().optional(),
-  uf: z.string().optional(),
-  area: z.number().optional(),
-  requerente: z.string().optional(),
-  data_requerimento: z.string().optional(),
-}).passthrough();
+export const IncraSigefRequerimentosItemSchema = z
+  .object({
+    numero_requerimento: z.string().optional(),
+    tipo: z.string().optional(),
+    situacao: z.string().optional(),
+    municipio: z.string().optional(),
+    uf: z.string().optional(),
+    area: z.number().optional(),
+    requerente: z.string().optional(),
+    data_requerimento: z.string().optional(),
+  })
+  .passthrough();
 
 export const IncraSigefRequerimentosResponseSchema = z.object({
   code: z.number(),

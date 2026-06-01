@@ -17,7 +17,7 @@ export const SimplesNacionalRetornoSchema = z.object({
   simeiPeriodosAnteriores: z.array(z.record(z.unknown())).nullable().optional(),
   simplesNacionalPeriodosAnteriores: z.array(z.record(z.unknown())).nullable().optional(),
   situacaoSIMEI: z.string().nullable().optional(),
-  situacaoSimplesNacional: z.string().nullable().optional()
+  situacaoSimplesNacional: z.string().nullable().optional(),
 });
 
 export type SimplesNacionalRetornoDto = z.infer<typeof SimplesNacionalRetornoSchema>;

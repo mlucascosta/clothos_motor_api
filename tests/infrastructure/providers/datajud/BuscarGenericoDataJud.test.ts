@@ -1,5 +1,5 @@
-import { BuscarGenericoDataJud } from '../../../../src/infrastructure/providers/datajud/operations/BuscarGenericoDataJud';
 import { DataJudSearchResponseSchema } from '../../../../src/infrastructure/providers/datajud/dtos/DataJudSearchResponseDto';
+import { BuscarGenericoDataJud } from '../../../../src/infrastructure/providers/datajud/operations/BuscarGenericoDataJud';
 import { isLeft, isRight, left, right } from '../../../../src/shared/domain/Either';
 import { SourceError } from '../../../../src/shared/domain/errors/SourceError';
 import type { IHttpClient } from '../../../../src/shared/infrastructure/IHttpClient';

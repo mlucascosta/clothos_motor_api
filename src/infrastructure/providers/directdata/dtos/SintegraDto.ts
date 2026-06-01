@@ -41,7 +41,7 @@ export const SintegraRetornoSchema = z.object({
   telefone: z.string().nullable().optional(),
   tipoIE: z.string().nullable().optional(),
   uf: z.string().nullable().optional(),
-  ufie: z.string().nullable().optional()
+  ufie: z.string().nullable().optional(),
 });
 
 export type SintegraRetornoDto = z.infer<typeof SintegraRetornoSchema>;

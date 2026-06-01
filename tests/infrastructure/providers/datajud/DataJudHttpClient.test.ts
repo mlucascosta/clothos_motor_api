@@ -2,17 +2,21 @@ import { DataJudHttpClient } from '../../../../src/infrastructure/providers/data
 import { isLeft, isRight } from '../../../../src/shared/domain/Either';
 
 describe('DataJudHttpClient', () => {
-  const client = new DataJudHttpClient(
-    'test-api-key',
-    'https://api-publica.datajud.cnj.jus.br',
-  );
+  const client = new DataJudHttpClient('test-api-key', 'https://api-publica.datajud.cnj.jus.br');
 
   it('configura Authorization com APIKey', async () => {
     const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ took: 1, timed_out: false, hits: { total: { value: 0, relation: 'eq' }, hits: [] } }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
+      new Response(
+        JSON.stringify({
+          took: 1,
+          timed_out: false,
+          hits: { total: { value: 0, relation: 'eq' }, hits: [] },
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      ),
     );
 
     const result = await client.request('/api_publica_tjsp/_search', {
@@ -26,16 +30,14 @@ describe('DataJudHttpClient', () => {
     const init = call[1] as RequestInit;
     const headers = init.headers as Record<string, string>;
 
-    expect(headers['Authorization']).toBe('APIKey test-api-key');
+    expect(headers.Authorization).toBe('APIKey test-api-key');
     expect(headers['Content-Type']).toBe('application/json');
 
     fetchSpy.mockRestore();
   });
 
   it('retorna AUTH_FAILED em 401', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response('Unauthorized', { status: 401 }),
-    );
+    jest.spyOn(global, 'fetch').mockResolvedValue(new Response('Unauthorized', { status: 401 }));
 
     const result = await client.request('/api_publica_tjsp/_search');
 
@@ -49,9 +51,7 @@ describe('DataJudHttpClient', () => {
   });
 
   it('retorna NOT_FOUND em 404', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response('Not Found', { status: 404 }),
-    );
+    jest.spyOn(global, 'fetch').mockResolvedValue(new Response('Not Found', { status: 404 }));
 
     const result = await client.request('/api_publica_invalid/_search');
 
@@ -64,9 +64,9 @@ describe('DataJudHttpClient', () => {
   });
 
   it('retorna RATE_LIMITED em 429', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response('Too Many Requests', { status: 429 }),
-    );
+    jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(new Response('Too Many Requests', { status: 429 }));
 
     const result = await client.request('/api_publica_tjsp/_search');
 
@@ -79,9 +79,9 @@ describe('DataJudHttpClient', () => {
   });
 
   it('retorna UPSTREAM_ERROR em 500', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response('Internal Server Error', { status: 500 }),
-    );
+    jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(new Response('Internal Server Error', { status: 500 }));
 
     const result = await client.request('/api_publica_tjsp/_search');
 
@@ -94,9 +94,9 @@ describe('DataJudHttpClient', () => {
   });
 
   it('retorna TIMEOUT em abort timeout', async () => {
-    jest.spyOn(global, 'fetch').mockRejectedValue(
-      new DOMException('The operation timed out.', 'TimeoutError'),
-    );
+    jest
+      .spyOn(global, 'fetch')
+      .mockRejectedValue(new DOMException('The operation timed out.', 'TimeoutError'));
 
     const result = await client.request('/api_publica_tjsp/_search', { timeoutMs: 1 });
 

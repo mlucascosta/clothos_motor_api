@@ -5,8 +5,8 @@
 
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 import type { CadastroPessoaJuridicaRetornoDto } from '../dtos/CadastroPessoaJuridicaDto.js';
+import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 
 /**
  * Interface para consulta de CadastroPessoaJuridica.
@@ -15,8 +15,13 @@ import type { CadastroPessoaJuridicaRetornoDto } from '../dtos/CadastroPessoaJur
  */
 export interface ICadastroPessoaJuridica {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: CadastroPessoaJuridicaRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: CadastroPessoaJuridicaRetornoDto | null;
+      }
+    >
+  >;
 }

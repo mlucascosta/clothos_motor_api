@@ -6,19 +6,21 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const PortalTransparenciaRepasseItemSchema = z.object({
-  ano: z.string().optional(),
-  localidade: z.string().optional(),
-  municipio: z.string().optional(),
-  uf: z.string().optional(),
-  codigo_ibge: z.string().optional(),
-  funcao: z.string().optional(),
-  subfuncao: z.string().optional(),
-  valor: z.number().optional(),
-  valor_empenhado: z.number().optional(),
-  valor_liquidado: z.number().optional(),
-  valor_pago: z.number().optional(),
-}).passthrough();
+export const PortalTransparenciaRepasseItemSchema = z
+  .object({
+    ano: z.string().optional(),
+    localidade: z.string().optional(),
+    municipio: z.string().optional(),
+    uf: z.string().optional(),
+    codigo_ibge: z.string().optional(),
+    funcao: z.string().optional(),
+    subfuncao: z.string().optional(),
+    valor: z.number().optional(),
+    valor_empenhado: z.number().optional(),
+    valor_liquidado: z.number().optional(),
+    valor_pago: z.number().optional(),
+  })
+  .passthrough();
 
 export const PortalTransparenciaRepasseResponseSchema = z.object({
   code: z.number(),

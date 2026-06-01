@@ -12,19 +12,21 @@ import { z } from 'zod';
  *
  * @type {ZodSchema}
  */
-export const BuscaResultItemSchema = z.object({
-  id: z.number().int().positive(),
-  nome: z.string().nullish(),
-  tipo_resultado: z.string().nullish(),
-  resumo: z.string().nullish(),
-  quantidade_processos: z.number().int().min(0).nullish(),
-  slug: z.string().nullish(),
-  link: z.string().nullish(),
-  link_api: z.string().nullish(),
-  url_id: z.number().nullish(),
-  oab_numero: z.string().nullish(),
-  updated_at: z.string().nullish(),
-}).passthrough();
+export const BuscaResultItemSchema = z
+  .object({
+    id: z.number().int().positive(),
+    nome: z.string().nullish(),
+    tipo_resultado: z.string().nullish(),
+    resumo: z.string().nullish(),
+    quantidade_processos: z.number().int().min(0).nullish(),
+    slug: z.string().nullish(),
+    link: z.string().nullish(),
+    link_api: z.string().nullish(),
+    url_id: z.number().nullish(),
+    oab_numero: z.string().nullish(),
+    updated_at: z.string().nullish(),
+  })
+  .passthrough();
 
 /**
  * Schema de resposta da operação "Busca Geral".

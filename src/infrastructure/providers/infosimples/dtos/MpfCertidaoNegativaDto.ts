@@ -6,16 +6,18 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const MpfCertidaoNegativaItemSchema = z.object({
-  cpf: z.string().optional(),
-  cnpj: z.string().optional(),
-  nome: z.string().optional(),
-  resultado: z.string().optional(),
-  numero_certidao: z.string().optional(),
-  data_emissao: z.string().optional(),
-  data_validade: z.string().optional(),
-  negativa: z.boolean().optional(),
-}).passthrough();
+export const MpfCertidaoNegativaItemSchema = z
+  .object({
+    cpf: z.string().optional(),
+    cnpj: z.string().optional(),
+    nome: z.string().optional(),
+    resultado: z.string().optional(),
+    numero_certidao: z.string().optional(),
+    data_emissao: z.string().optional(),
+    data_validade: z.string().optional(),
+    negativa: z.boolean().optional(),
+  })
+  .passthrough();
 
 export const MpfCertidaoNegativaResponseSchema = z.object({
   code: z.number(),

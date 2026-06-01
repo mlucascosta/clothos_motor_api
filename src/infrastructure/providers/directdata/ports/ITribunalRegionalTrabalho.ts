@@ -15,8 +15,13 @@ import type { TribunalRegionalTrabalhoRetornoDto } from '../dtos/TribunalRegiona
  */
 export interface ITribunalRegionalTrabalho {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: TribunalRegionalTrabalhoRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: TribunalRegionalTrabalhoRetornoDto | null;
+      }
+    >
+  >;
 }

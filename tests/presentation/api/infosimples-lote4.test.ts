@@ -50,22 +50,32 @@ describe('POST /api/infosimples — Portal Transparência', () => {
     it('sucesso — retorna 200 com registros de auxílio', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{ cpf: '11144477735', nome: 'João Silva', valor: 600, competencia: '2024-01' }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                { cpf: '11144477735', nome: 'João Silva', valor: 600, competencia: '2024-01' },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
 
-      const res = await app.request(`${PATH}?data_inicio=2024-01-01&data_fim=2024-01-31`, { method: 'POST' });
+      const res = await app.request(`${PATH}?data_inicio=2024-01-01&data_fim=2024-01-31`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.code).toBe(0);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/portal-transparencia/auxilio', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/portal-transparencia/auxilio',
+          status: 'success',
+        }),
       );
     });
 
@@ -77,7 +87,9 @@ describe('POST /api/infosimples — Portal Transparência', () => {
         ),
       );
 
-      const res = await app.request(`${PATH}?data_inicio=2020-01-01&data_fim=2020-01-31`, { method: 'POST' });
+      const res = await app.request(`${PATH}?data_inicio=2020-01-01&data_fim=2020-01-31`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -87,7 +99,9 @@ describe('POST /api/infosimples — Portal Transparência', () => {
 
     it('falha — upstream timeout → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
-      const res = await app.request(`${PATH}?data_inicio=2024-01-01&data_fim=2024-01-31`, { method: 'POST' });
+      const res = await app.request(`${PATH}?data_inicio=2024-01-01&data_fim=2024-01-31`, {
+        method: 'POST',
+      });
       expect(res.status).toBe(500);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
     });
@@ -108,21 +122,38 @@ describe('POST /api/infosimples — Portal Transparência', () => {
     it('sucesso — retorna 200 com registros de bolsa família', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{ cpf: '11144477735', nome: 'Maria Souza', valor: 400, competencia: '2024-01', municipio: 'São Paulo', uf: 'SP' }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  cpf: '11144477735',
+                  nome: 'Maria Souza',
+                  valor: 400,
+                  competencia: '2024-01',
+                  municipio: 'São Paulo',
+                  uf: 'SP',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
 
-      const res = await app.request(`${PATH}?data_inicio=2024-01-01&data_fim=2024-01-31`, { method: 'POST' });
+      const res = await app.request(`${PATH}?data_inicio=2024-01-01&data_fim=2024-01-31`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/portal-transparencia/bolsa', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/portal-transparencia/bolsa',
+          status: 'success',
+        }),
       );
     });
 
@@ -134,7 +165,9 @@ describe('POST /api/infosimples — Portal Transparência', () => {
         ),
       );
 
-      const res = await app.request(`${PATH}?data_inicio=2010-01-01&data_fim=2010-01-31`, { method: 'POST' });
+      const res = await app.request(`${PATH}?data_inicio=2010-01-01&data_fim=2010-01-31`, {
+        method: 'POST',
+      });
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
@@ -143,7 +176,9 @@ describe('POST /api/infosimples — Portal Transparência', () => {
 
     it('falha — upstream error → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('connection refused'));
-      const res = await app.request(`${PATH}?data_inicio=2024-01-01&data_fim=2024-01-31`, { method: 'POST' });
+      const res = await app.request(`${PATH}?data_inicio=2024-01-01&data_fim=2024-01-31`, {
+        method: 'POST',
+      });
       expect(res.status).toBe(500);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
     });
@@ -164,10 +199,14 @@ describe('POST /api/infosimples — Portal Transparência', () => {
     it('sucesso — retorna 200 com dados de BPC', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{ cpf: '11144477735', nome: 'Pedro Lima', tipo_beneficio: 'Idoso', valor: 1412 }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                { cpf: '11144477735', nome: 'Pedro Lima', tipo_beneficio: 'Idoso', valor: 1412 },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -178,7 +217,12 @@ describe('POST /api/infosimples — Portal Transparência', () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/portal-transparencia/bpc', tipo_param: 'cpf', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/portal-transparencia/bpc',
+          tipo_param: 'cpf',
+          status: 'success',
+        }),
       );
     });
 
@@ -220,13 +264,23 @@ describe('POST /api/infosimples — Portal Transparência', () => {
     it('sucesso — retorna 200 com resultados de busca', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 2,
-            data: [
-              { titulo: 'Resultado 1', url: 'https://portaltransparencia.gov.br/r1', orgao: 'TCU' },
-              { titulo: 'Resultado 2', url: 'https://portaltransparencia.gov.br/r2', orgao: 'CGU' },
-            ],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 2,
+              data: [
+                {
+                  titulo: 'Resultado 1',
+                  url: 'https://portaltransparencia.gov.br/r1',
+                  orgao: 'TCU',
+                },
+                {
+                  titulo: 'Resultado 2',
+                  url: 'https://portaltransparencia.gov.br/r2',
+                  orgao: 'CGU',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -237,7 +291,11 @@ describe('POST /api/infosimples — Portal Transparência', () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.data_count).toBe(2);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/portal-transparencia/busca', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/portal-transparencia/busca',
+          status: 'success',
+        }),
       );
     });
 
@@ -279,10 +337,14 @@ describe('POST /api/infosimples — Portal Transparência', () => {
     it('sucesso — retorna 200 com dados de CEAF', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{ cpf: '11144477735', nome: 'Ana Costa', medicamento: 'Adalimumabe', cid: 'M06' }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                { cpf: '11144477735', nome: 'Ana Costa', medicamento: 'Adalimumabe', cid: 'M06' },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -293,7 +355,12 @@ describe('POST /api/infosimples — Portal Transparência', () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/portal-transparencia/ceaf', tipo_param: 'cpf', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/portal-transparencia/ceaf',
+          tipo_param: 'cpf',
+          status: 'success',
+        }),
       );
     });
 
@@ -335,10 +402,19 @@ describe('POST /api/infosimples — Portal Transparência', () => {
     it('sucesso — retorna 200 com sanções por CNPJ', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{ cnpj: '33200056000149', razao_social: 'Empresa XYZ', tipo_sancao: 'Suspensão', data_inicio: '2022-03-01' }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  cnpj: '33200056000149',
+                  razao_social: 'Empresa XYZ',
+                  tipo_sancao: 'Suspensão',
+                  data_inicio: '2022-03-01',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -349,7 +425,11 @@ describe('POST /api/infosimples — Portal Transparência', () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/portal-transparencia/ceis', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/portal-transparencia/ceis',
+          status: 'success',
+        }),
       );
     });
 
@@ -393,10 +473,18 @@ describe('POST /api/infosimples — Portal Transparência', () => {
     it('sucesso — retorna 200 com entidades impedidas por CNPJ', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{ cnpj: '33200056000149', razao_social: 'ONG Exemplo', motivo_impedimento: 'Irregularidade prestação contas' }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  cnpj: '33200056000149',
+                  razao_social: 'ONG Exemplo',
+                  motivo_impedimento: 'Irregularidade prestação contas',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -407,7 +495,11 @@ describe('POST /api/infosimples — Portal Transparência', () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/portal-transparencia/cepim', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/portal-transparencia/cepim',
+          status: 'success',
+        }),
       );
     });
 
@@ -449,10 +541,19 @@ describe('POST /api/infosimples — Portal Transparência', () => {
     it('sucesso — retorna 200 com punições por CNPJ', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{ cnpj: '33200056000149', razao_social: 'Construtora ABC', tipo_sancao: 'Multa', valor_multa: 50000 }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  cnpj: '33200056000149',
+                  razao_social: 'Construtora ABC',
+                  tipo_sancao: 'Multa',
+                  valor_multa: 50000,
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -463,7 +564,11 @@ describe('POST /api/infosimples — Portal Transparência', () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/portal-transparencia/cnep', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/portal-transparencia/cnep',
+          status: 'success',
+        }),
       );
     });
 
@@ -507,10 +612,19 @@ describe('POST /api/infosimples — Portal Transparência', () => {
     it('sucesso — retorna 200 com convênios por convenente', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{ numero_convenio: '123456/2023', convenente: 'Prefeitura de SP', valor_global: 500000, situacao: 'Vigente' }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  numero_convenio: '123456/2023',
+                  convenente: 'Prefeitura de SP',
+                  valor_global: 500000,
+                  situacao: 'Vigente',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -521,7 +635,11 @@ describe('POST /api/infosimples — Portal Transparência', () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/portal-transparencia/convenios', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/portal-transparencia/convenios',
+          status: 'success',
+        }),
       );
     });
 
@@ -563,10 +681,19 @@ describe('POST /api/infosimples — Portal Transparência', () => {
     it('sucesso — retorna 200 com acordos de leniência por CNPJ', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{ cnpj: '33200056000149', razao_social: 'Empreiteira Delta', numero_acordo: 'LA-001/2019', situacao: 'Em vigor' }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  cnpj: '33200056000149',
+                  razao_social: 'Empreiteira Delta',
+                  numero_acordo: 'LA-001/2019',
+                  situacao: 'Em vigor',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -577,7 +704,11 @@ describe('POST /api/infosimples — Portal Transparência', () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/portal-transparencia/leniencia', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/portal-transparencia/leniencia',
+          status: 'success',
+        }),
       );
     });
 
@@ -619,10 +750,21 @@ describe('POST /api/infosimples — Portal Transparência', () => {
     it('sucesso — retorna 200 com dados de PETI por CPF', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{ cpf: '11144477735', nome: 'Lucas Ferreira', valor: 200, competencia: '2024-01', municipio: 'Recife', uf: 'PE' }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  cpf: '11144477735',
+                  nome: 'Lucas Ferreira',
+                  valor: 200,
+                  competencia: '2024-01',
+                  municipio: 'Recife',
+                  uf: 'PE',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -633,7 +775,12 @@ describe('POST /api/infosimples — Portal Transparência', () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/portal-transparencia/peti', tipo_param: 'cpf', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/portal-transparencia/peti',
+          tipo_param: 'cpf',
+          status: 'success',
+        }),
       );
     });
 
@@ -675,10 +822,20 @@ describe('POST /api/infosimples — Portal Transparência', () => {
     it('sucesso — retorna 200 com dados de repasse por ano e localidade', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{ ano: '2024', localidade: '3550308', municipio: 'São Paulo', uf: 'SP', valor: 1000000 }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  ano: '2024',
+                  localidade: '3550308',
+                  municipio: 'São Paulo',
+                  uf: 'SP',
+                  valor: 1000000,
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -689,7 +846,11 @@ describe('POST /api/infosimples — Portal Transparência', () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/portal-transparencia/repasse', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/portal-transparencia/repasse',
+          status: 'success',
+        }),
       );
     });
 
@@ -731,10 +892,21 @@ describe('POST /api/infosimples — Portal Transparência', () => {
     it('sucesso — retorna 200 com dados de Garantia Safra por CPF', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{ cpf: '11144477735', nome: 'José Pereira', valor: 850, ano_safra: '2023/2024', municipio: 'Juazeiro', uf: 'BA' }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  cpf: '11144477735',
+                  nome: 'José Pereira',
+                  valor: 850,
+                  ano_safra: '2023/2024',
+                  municipio: 'Juazeiro',
+                  uf: 'BA',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -745,7 +917,12 @@ describe('POST /api/infosimples — Portal Transparência', () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/portal-transparencia/safra', tipo_param: 'cpf', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/portal-transparencia/safra',
+          tipo_param: 'cpf',
+          status: 'success',
+        }),
       );
     });
 
@@ -787,10 +964,21 @@ describe('POST /api/infosimples — Portal Transparência', () => {
     it('sucesso — retorna 200 com registros de seguro defeso', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{ cpf: '11144477735', nome: 'Carlos Pescador', valor: 1412, parcela: '1/5', municipio: 'Belém', uf: 'PA' }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  cpf: '11144477735',
+                  nome: 'Carlos Pescador',
+                  valor: 1412,
+                  parcela: '1/5',
+                  municipio: 'Belém',
+                  uf: 'PA',
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -801,7 +989,11 @@ describe('POST /api/infosimples — Portal Transparência', () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/portal-transparencia/seguro', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/portal-transparencia/seguro',
+          status: 'success',
+        }),
       );
     });
 
@@ -837,17 +1029,21 @@ describe('POST /api/infosimples — Portal Transparência', () => {
     it('sucesso — retorna 200 com dados do servidor federal por CPF', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({
-            data_count: 1,
-            data: [{
-              cpf: '11144477735',
-              nome: 'Fernanda Oliveira',
-              matricula: '1234567',
-              cargo: 'Analista',
-              orgao: 'Ministério da Fazenda',
-              remuneracao_bruta: 15000,
-            }],
-          })),
+          JSON.stringify(
+            envelope({
+              data_count: 1,
+              data: [
+                {
+                  cpf: '11144477735',
+                  nome: 'Fernanda Oliveira',
+                  matricula: '1234567',
+                  cargo: 'Analista',
+                  orgao: 'Ministério da Fazenda',
+                  remuneracao_bruta: 15000,
+                },
+              ],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -858,7 +1054,12 @@ describe('POST /api/infosimples — Portal Transparência', () => {
       const body = (await res.json()) as Record<string, unknown>;
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ gateway: 'infosimples', fonte: 'consultas/portal-transparencia/servidor', tipo_param: 'cpf', status: 'success' }),
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/portal-transparencia/servidor',
+          tipo_param: 'cpf',
+          status: 'success',
+        }),
       );
     });
 

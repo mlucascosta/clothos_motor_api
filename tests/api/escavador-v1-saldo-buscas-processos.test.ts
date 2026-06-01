@@ -21,10 +21,17 @@ describe('Escavador V1 — Saldo, Buscas, Processos (E2E)', () => {
   describe('GET /api/escavador/v1/quantidade-creditos', () => {
     it('✅ sucesso: retorna 200 com saldo de créditos', async () => {
       fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ quantidade_creditos: 1000, saldo: 1000.0, saldo_descricao: 'R$ 1.000,00' }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+        new Response(
+          JSON.stringify({
+            quantidade_creditos: 1000,
+            saldo: 1000.0,
+            saldo_descricao: 'R$ 1.000,00',
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        ),
       );
 
       const res = await app.request('/api/escavador/v1/quantidade-creditos', { headers });

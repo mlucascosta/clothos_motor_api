@@ -6,16 +6,18 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const DataprevFapItemSchema = z.object({
-  cnpj_estabelecimento: z.string().optional(),
-  razao_social: z.string().optional(),
-  ano_vigencia: z.string().optional(),
-  fap: z.number().optional(),
-  fap_descricao: z.string().optional(),
-  resultado: z.string().optional(),
-  bonus_malus: z.string().optional(),
-  data_consulta: z.string().optional(),
-}).passthrough();
+export const DataprevFapItemSchema = z
+  .object({
+    cnpj_estabelecimento: z.string().optional(),
+    razao_social: z.string().optional(),
+    ano_vigencia: z.string().optional(),
+    fap: z.number().optional(),
+    fap_descricao: z.string().optional(),
+    resultado: z.string().optional(),
+    bonus_malus: z.string().optional(),
+    data_consulta: z.string().optional(),
+  })
+  .passthrough();
 
 export const DataprevFapResponseSchema = z.object({
   code: z.number(),

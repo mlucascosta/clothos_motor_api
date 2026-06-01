@@ -10,7 +10,9 @@ export const CARFConselhoAdministrativodeRecursosFiscaisRetornoSchema = z.object
   nomeEntidade: z.string().nullable().optional(),
   observacoes: z.string().nullable().optional(),
   processos: z.array(z.record(z.unknown())).nullable().optional(),
-  totalProcessos: z.number().int().nullable().optional()
+  totalProcessos: z.number().int().nullable().optional(),
 });
 
-export type CARFConselhoAdministrativodeRecursosFiscaisRetornoDto = z.infer<typeof CARFConselhoAdministrativodeRecursosFiscaisRetornoSchema>;
+export type CARFConselhoAdministrativodeRecursosFiscaisRetornoDto = z.infer<
+  typeof CARFConselhoAdministrativodeRecursosFiscaisRetornoSchema
+>;

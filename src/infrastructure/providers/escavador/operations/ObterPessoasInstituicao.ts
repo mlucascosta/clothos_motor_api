@@ -1,6 +1,7 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
-import { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import {
   type InstituicaoPessoasResponse,
@@ -10,7 +11,6 @@ import type {
   IObterPessoasInstituicao,
   ObterPessoasInstituicaoInput,
 } from '../ports/IObterPessoasInstituicao.js';
-import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 
 export class ObterPessoasInstituicao implements IObterPessoasInstituicao {
   constructor(private readonly http: IHttpClient) {}

@@ -44,7 +44,9 @@ export const BoaVistaDefineLimitePositivoPJRetornoSchema = z.object({
   situacao: z.string().nullable().optional(),
   situacaoSintegra: z.string().nullable().optional(),
   telefones: z.array(z.record(z.unknown())).nullable().optional(),
-  tipoSociedade: z.string().nullable().optional()
+  tipoSociedade: z.string().nullable().optional(),
 });
 
-export type BoaVistaDefineLimitePositivoPJRetornoDto = z.infer<typeof BoaVistaDefineLimitePositivoPJRetornoSchema>;
+export type BoaVistaDefineLimitePositivoPJRetornoDto = z.infer<
+  typeof BoaVistaDefineLimitePositivoPJRetornoSchema
+>;

@@ -6,23 +6,37 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import {
+  type PortalTransparenciaConveniosItem,
+  PortalTransparenciaConveniosResponseSchema,
+} from '../dtos/PortalTransparenciaConveniosDto.js';
 import type { IInfosimplesOperation } from '../ports/IInfosimplesOperation.js';
-import { PortalTransparenciaConveniosResponseSchema, type PortalTransparenciaConveniosItem } from '../dtos/PortalTransparenciaConveniosDto.js';
 
-export class PortalTransparenciaConvenios implements IInfosimplesOperation<PortalTransparenciaConveniosItem> {
+export class PortalTransparenciaConvenios
+  implements IInfosimplesOperation<PortalTransparenciaConveniosItem>
+{
   readonly path = 'consultas/portal-transparencia/convenios';
 
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(params: Record<string, string | undefined>): Promise<Either<SourceError, PortalTransparenciaConveniosItem>> {
+  async execute(
+    params: Record<string, string | undefined>,
+  ): Promise<Either<SourceError, PortalTransparenciaConveniosItem>> {
     const cleanParams: Record<string, string> = {};
     for (const [k, v] of Object.entries(params)) {
       if (v !== undefined && v !== '') cleanParams[k] = v;
     }
-    const result = await this.http.request<unknown>(this.path, { method: 'POST', params: cleanParams });
+    const result = await this.http.request<unknown>(this.path, {
+      method: 'POST',
+      params: cleanParams,
+    });
     if (isLeft(result)) return result;
-    return parseOrSchemaError(PortalTransparenciaConveniosResponseSchema, result.value, 'infosimples');
+    return parseOrSchemaError(
+      PortalTransparenciaConveniosResponseSchema,
+      result.value,
+      'infosimples',
+    );
   }
 }

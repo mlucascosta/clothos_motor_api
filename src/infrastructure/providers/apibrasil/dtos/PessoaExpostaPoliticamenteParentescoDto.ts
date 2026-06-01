@@ -7,4 +7,6 @@ import { z } from 'zod';
 
 export const PessoaExpostaPoliticamenteParentescoSchema = z.unknown();
 
-export type PessoaExpostaPoliticamenteParentescoDto = z.infer<typeof PessoaExpostaPoliticamenteParentescoSchema>;
+export type PessoaExpostaPoliticamenteParentescoDto = z.infer<
+  typeof PessoaExpostaPoliticamenteParentescoSchema
+>;

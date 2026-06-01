@@ -16,14 +16,12 @@ const CPF = '12345678900';
 function makeDeps(overrides: Partial<EscavadorExecutorDeps> = {}): EscavadorExecutorDeps {
   return {
     buscarGeral: {
-      execute: jest
-        .fn()
-        .mockResolvedValue(
-          right({
-            items: [{ id: 1, nome: 'Acme Ltda', tipo: 'instituicao', cnpj: CNPJ }],
-            total: 1,
-          }),
-        ),
+      execute: jest.fn().mockResolvedValue(
+        right({
+          items: [{ id: 1, nome: 'Acme Ltda', tipo: 'instituicao', cnpj: CNPJ }],
+          total: 1,
+        }),
+      ),
     } as unknown as IBuscarGeral,
     obterPessoa: { execute: jest.fn().mockResolvedValue(right({ id: 1, nome: 'João' })) } as never,
     obterProcessosPessoa: {
@@ -68,7 +66,7 @@ describe('EscavadorExecutor', () => {
       expect(isRight(result)).toBe(true);
       if (isRight(result)) {
         expect(result.value.source).toBe('escavador');
-        expect(result.value.data['tipo']).toBe('instituicao');
+        expect(result.value.data.tipo).toBe('instituicao');
       }
     });
 
@@ -119,8 +117,8 @@ describe('EscavadorExecutor', () => {
       expect(isRight(result)).toBe(true);
       if (isRight(result)) {
         expect(result.value.source).toBe('escavador');
-        expect(result.value.data['tipo']).toBe('pessoa');
-        expect(result.value.data['busca_assincrona_ids']).toEqual([42]);
+        expect(result.value.data.tipo).toBe('pessoa');
+        expect(result.value.data.busca_assincrona_ids).toEqual([42]);
       }
     });
 

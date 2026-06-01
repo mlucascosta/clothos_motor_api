@@ -6,21 +6,29 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const AntecedenteCriminaisMgItemSchema = z.object({
-  cpf: z.string().optional(),
-  rg: z.string().optional(),
-  nome: z.string().optional(),
-  data_nascimento: z.string().optional(),
-  sexo: z.string().optional(),
-  situacao: z.string().optional(),
-  antecedentes: z.array(z.object({
-    numero_processo: z.string().optional(),
-    crime: z.string().optional(),
-    data_fato: z.string().optional(),
-    comarca: z.string().optional(),
+export const AntecedenteCriminaisMgItemSchema = z
+  .object({
+    cpf: z.string().optional(),
+    rg: z.string().optional(),
+    nome: z.string().optional(),
+    data_nascimento: z.string().optional(),
+    sexo: z.string().optional(),
     situacao: z.string().optional(),
-  }).passthrough()).optional(),
-}).passthrough();
+    antecedentes: z
+      .array(
+        z
+          .object({
+            numero_processo: z.string().optional(),
+            crime: z.string().optional(),
+            data_fato: z.string().optional(),
+            comarca: z.string().optional(),
+            situacao: z.string().optional(),
+          })
+          .passthrough(),
+      )
+      .optional(),
+  })
+  .passthrough();
 
 export const AntecedenteCriminaisMgResponseSchema = z.object({
   code: z.number(),

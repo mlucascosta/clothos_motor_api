@@ -1,12 +1,12 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
-import { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import {
   type MovimentacoesV2Response,
   MovimentacoesV2ResponseSchema,
 } from '../../dtos/v2/ProcessoV2Dto.js';
-import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IObterMovimentacoesV2 } from '../../ports/IObterMovimentacoesV2.js';
 
 export class ObterMovimentacoesV2 implements IObterMovimentacoesV2 {

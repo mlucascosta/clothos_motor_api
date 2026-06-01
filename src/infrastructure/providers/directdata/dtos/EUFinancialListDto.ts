@@ -9,7 +9,7 @@ export const EUFinancialListRetornoSchema = z.object({
   nomeConsultado: z.string().nullable().optional(),
   observacoes: z.string().nullable().optional(),
   resultadosEncontrados: z.number().int().optional(),
-  sancoes: z.array(z.record(z.unknown())).nullable().optional()
+  sancoes: z.array(z.record(z.unknown())).nullable().optional(),
 });
 
 export type EUFinancialListRetornoDto = z.infer<typeof EUFinancialListRetornoSchema>;

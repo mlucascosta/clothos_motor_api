@@ -10,5 +10,7 @@ export interface IniciarBuscaProcessosOabInput {
 }
 
 export interface IIniciarBuscaProcessosOab {
-  execute(input: IniciarBuscaProcessosOabInput): Promise<Either<SourceError, IniciarBuscaLoteResponse>>;
+  execute(
+    input: IniciarBuscaProcessosOabInput,
+  ): Promise<Either<SourceError, IniciarBuscaLoteResponse>>;
 }

@@ -8,12 +8,16 @@
  * Autenticação: query param `token` via InfosimplesHttpClient (env INFOSIMPLES_TOKEN).
  */
 
-import { Hono } from 'hono';
-import { handleOp } from '../handleOp.js';
 import { InfosimplesHttpClient } from '@infrastructure/providers/infosimples/InfosimplesHttpClient.js';
 import { resolveOperation } from '@infrastructure/providers/infosimples/operations/registry.js';
-import type { OneOfGroup, ValidationRule } from '@infrastructure/providers/infosimples/operations/validation-map.js';
+import type {
+  OneOfGroup,
+  ValidationRule,
+} from '@infrastructure/providers/infosimples/operations/validation-map.js';
 import { infosimplesRequiredParams } from '@infrastructure/providers/infosimples/operations/validation-map.js';
+import type { IInfosimplesOperation } from '@infrastructure/providers/infosimples/ports/IInfosimplesOperation.js';
+import { Hono } from 'hono';
+import { handleOp } from '../handleOp.js';
 
 const GW = 'infosimples';
 const BASE_URL = 'https://api.infosimples.com/api/v2/';
@@ -31,10 +35,7 @@ function isOneOfGroup(rule: string | OneOfGroup): rule is OneOfGroup {
  * Valida params de query contra as regras do validation-map.
  * Retorna mensagem de erro ou null se válido.
  */
-function validateParams(
-  rules: ValidationRule,
-  query: Record<string, string>,
-): string | null {
+function validateParams(rules: ValidationRule, query: Record<string, string>): string | null {
   for (const rule of rules) {
     if (isOneOfGroup(rule)) {
       const present = rule.oneOf.some((p) => query[p]);
@@ -72,7 +73,7 @@ infosimples.post('/:endpoint{.+}', async (c) => {
   }
 
   // ─── Resolve operation ───
-  let operation;
+  let operation: IInfosimplesOperation;
   try {
     operation = resolveOperation(registryKey, buildHttp());
   } catch {

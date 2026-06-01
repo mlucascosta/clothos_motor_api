@@ -6,22 +6,30 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import {
+  type PrefSpSaoPauloIptu2viaItem,
+  PrefSpSaoPauloIptu2viaResponseSchema,
+} from '../dtos/PrefSpSaoPauloIptu2viaDto.js';
 import type { IInfosimplesOperation } from '../ports/IInfosimplesOperation.js';
-import { PrefSpSaoPauloIptu2viaResponseSchema, type PrefSpSaoPauloIptu2viaItem } from '../dtos/PrefSpSaoPauloIptu2viaDto.js';
 
 export class PrefSpSaoPauloIptu2via implements IInfosimplesOperation<PrefSpSaoPauloIptu2viaItem> {
   readonly path = 'consultas/pref/sp/sao-paulo/iptu2via';
 
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(params: Record<string, string | undefined>): Promise<Either<SourceError, PrefSpSaoPauloIptu2viaItem>> {
+  async execute(
+    params: Record<string, string | undefined>,
+  ): Promise<Either<SourceError, PrefSpSaoPauloIptu2viaItem>> {
     const cleanParams: Record<string, string> = {};
     for (const [k, v] of Object.entries(params)) {
       if (v !== undefined && v !== '') cleanParams[k] = v;
     }
-    const result = await this.http.request<unknown>(this.path, { method: 'POST', params: cleanParams });
+    const result = await this.http.request<unknown>(this.path, {
+      method: 'POST',
+      params: cleanParams,
+    });
     if (isLeft(result)) return result;
     return parseOrSchemaError(PrefSpSaoPauloIptu2viaResponseSchema, result.value, 'infosimples');
   }

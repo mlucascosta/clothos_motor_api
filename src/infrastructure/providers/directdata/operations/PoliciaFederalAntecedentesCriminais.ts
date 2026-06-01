@@ -7,12 +7,12 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
-import { PoliciaFederalAntecedentesCriminaisRetornoSchema } from '../dtos/PoliciaFederalAntecedentesCriminaisDto.js';
-import { DirectDataMetaDadosSchema } from '../dtos/DirectDataResponseDto.js';
-import type { IPoliciaFederalAntecedentesCriminais } from '../ports/IPoliciaFederalAntecedentesCriminais.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { z } from 'zod';
+import { DirectDataMetaDadosSchema } from '../dtos/DirectDataResponseDto.js';
+import { PoliciaFederalAntecedentesCriminaisRetornoSchema } from '../dtos/PoliciaFederalAntecedentesCriminaisDto.js';
+import type { IPoliciaFederalAntecedentesCriminais } from '../ports/IPoliciaFederalAntecedentesCriminais.js';
 
 const ResponseSchema = z.object({
   metaDados: DirectDataMetaDadosSchema,
@@ -30,7 +30,9 @@ export class PoliciaFederalAntecedentesCriminais implements IPoliciaFederalAntec
 
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(params: Record<string, string | undefined>): Promise<Either<SourceError, ReturnType<typeof ResponseSchema.parse>>> {
+  async execute(
+    params: Record<string, string | undefined>,
+  ): Promise<Either<SourceError, ReturnType<typeof ResponseSchema.parse>>> {
     const cleanParams: Record<string, string> = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') {

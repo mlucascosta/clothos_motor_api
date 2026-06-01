@@ -7,11 +7,11 @@
 
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
-import { SourceError } from '@shared/domain/errors/SourceError.js';
+import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { type BuscaGeralResponse, BuscaGeralResponseSchema } from '../dtos/BuscaGeralDto.js';
 import type { BuscarGeralInput, IBuscarGeral } from '../ports/IBuscarGeral.js';
-import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 
 /**
  * Operação de busca genérica no Escavador (GET /api/v1/busca).

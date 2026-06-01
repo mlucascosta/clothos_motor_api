@@ -15,8 +15,13 @@ import type { NivelSocioeconomicoRetornoDto } from '../dtos/NivelSocioeconomicoD
  */
 export interface INivelSocioeconomico {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: NivelSocioeconomicoRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: NivelSocioeconomicoRetornoDto | null;
+      }
+    >
+  >;
 }

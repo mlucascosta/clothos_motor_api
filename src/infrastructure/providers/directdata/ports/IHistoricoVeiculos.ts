@@ -15,8 +15,13 @@ import type { HistoricoVeiculosRetornoDto } from '../dtos/HistoricoVeiculosDto.j
  */
 export interface IHistoricoVeiculos {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: HistoricoVeiculosRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: HistoricoVeiculosRetornoDto | null;
+      }
+    >
+  >;
 }

@@ -47,10 +47,12 @@ describe('POST /api/infosimples — RFB (CPF / CNPJ)', () => {
     it('sucesso — retorna 200 com dados do CPF', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(mockEnvelope({
-            data_count: 1,
-            data: [{ cpf: '11144477735', nome: 'João Silva', situacao: 'Ativa' }],
-          })),
+          JSON.stringify(
+            mockEnvelope({
+              data_count: 1,
+              data: [{ cpf: '11144477735', nome: 'João Silva', situacao: 'Ativa' }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -132,10 +134,12 @@ describe('POST /api/infosimples — RFB (CPF / CNPJ)', () => {
     it('sucesso — retorna 200 com dados do CNPJ', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(mockEnvelope({
-            data_count: 1,
-            data: [{ cnpj: '33200056000149', razao_social: 'Empresa LTDA', situacao: 'Ativa' }],
-          })),
+          JSON.stringify(
+            mockEnvelope({
+              data_count: 1,
+              data: [{ cnpj: '33200056000149', razao_social: 'Empresa LTDA', situacao: 'Ativa' }],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
@@ -179,9 +183,7 @@ describe('POST /api/infosimples — RFB (CPF / CNPJ)', () => {
       const res = await app.request(`${PATH}?cnpj=33200056000149`, { method: 'POST' });
 
       expect(res.status).toBe(500);
-      expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ status: 'error' }),
-      );
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
     });
 
     it('retorna 400 quando cnpj está ausente', async () => {
@@ -204,7 +206,9 @@ describe('POST /api/infosimples — RFB (CPF / CNPJ)', () => {
     });
 
     it('cnpj → resolve CadastroPessoaJuridica', async () => {
-      const res = await app.request('/api/infosimples/cnpj?cnpj=33200056000149', { method: 'POST' });
+      const res = await app.request('/api/infosimples/cnpj?cnpj=33200056000149', {
+        method: 'POST',
+      });
       expect(res.status).toBe(200);
     });
   });

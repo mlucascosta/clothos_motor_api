@@ -15,8 +15,13 @@ import type { ProtestosOnlineRetornoDto } from '../dtos/ProtestosOnlineDto.js';
  */
 export interface IProtestosOnline {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: ProtestosOnlineRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: ProtestosOnlineRetornoDto | null;
+      }
+    >
+  >;
 }

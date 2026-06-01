@@ -14,7 +14,9 @@ export const PoliciaFederalAntecedentesCriminaisRetornoSchema = z.object({
   nomeMae: z.string().nullable().optional(),
   numeroCertidao: z.string().nullable().optional(),
   possuiAntecedentesCriminais: z.boolean().nullable().optional(),
-  status: z.string().nullable().optional()
+  status: z.string().nullable().optional(),
 });
 
-export type PoliciaFederalAntecedentesCriminaisRetornoDto = z.infer<typeof PoliciaFederalAntecedentesCriminaisRetornoSchema>;
+export type PoliciaFederalAntecedentesCriminaisRetornoDto = z.infer<
+  typeof PoliciaFederalAntecedentesCriminaisRetornoSchema
+>;

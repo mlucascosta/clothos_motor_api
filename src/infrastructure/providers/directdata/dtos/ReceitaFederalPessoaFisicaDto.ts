@@ -18,7 +18,9 @@ export const ReceitaFederalPessoaFisicaRetornoSchema = z.object({
   nomeSocial: z.string().nullable().optional(),
   numeroCPF: z.string().nullable().optional(),
   possuiObito: z.boolean().nullable().optional(),
-  situacaoCadastral: z.string().nullable().optional()
+  situacaoCadastral: z.string().nullable().optional(),
 });
 
-export type ReceitaFederalPessoaFisicaRetornoDto = z.infer<typeof ReceitaFederalPessoaFisicaRetornoSchema>;
+export type ReceitaFederalPessoaFisicaRetornoDto = z.infer<
+  typeof ReceitaFederalPessoaFisicaRetornoSchema
+>;

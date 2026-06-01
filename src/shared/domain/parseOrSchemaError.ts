@@ -6,9 +6,9 @@ import { SourceError } from './errors/SourceError.js';
  * Evita depender da hierarquia de classes interna do Zod.
  */
 interface SafeParseSchema<T> {
-  safeParse(data: unknown):
-    | { success: true; data: T }
-    | { success: false; error: { message: string } };
+  safeParse(
+    data: unknown,
+  ): { success: true; data: T } | { success: false; error: { message: string } };
 }
 
 /**

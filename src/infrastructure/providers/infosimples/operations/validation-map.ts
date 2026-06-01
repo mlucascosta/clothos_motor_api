@@ -102,12 +102,24 @@ export const infosimplesRequiredParams: Record<string, ValidationRule> = {
 
   // Lote 8 — Registradores
   // 'consultas/registradores/certid/download' — sem parâmetros obrigatórios
-  'consultas/registradores/certid/pedido': ['uf', 'municipio', 'cartorio', 'tipo_certidao', 'matricula'],
+  'consultas/registradores/certid/pedido': [
+    'uf',
+    'municipio',
+    'cartorio',
+    'tipo_certidao',
+    'matricula',
+  ],
   // 'consultas/registradores/certid/recibo' — sem parâmetros obrigatórios
   // 'consultas/registradores/info-conta' — sem parâmetros obrigatórios
   // 'consultas/registradores/matric/download' — sem parâmetros obrigatórios
   // 'consultas/registradores/matric/lista' — sem parâmetros obrigatórios
-  'consultas/registradores/matric/pedido': ['matricula', 'uf', 'municipio', 'cartorio', 'finalidade'],
+  'consultas/registradores/matric/pedido': [
+    'matricula',
+    'uf',
+    'municipio',
+    'cartorio',
+    'finalidade',
+  ],
   // 'consultas/registradores/matric/recibo' — sem parâmetros obrigatórios
 
   // Aliases curtos (backward-compat)

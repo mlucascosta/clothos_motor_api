@@ -14,7 +14,9 @@ export const IBAMACertidaoNegativaDebitosRetornoSchema = z.object({
   nome: z.string().nullable().optional(),
   numero: z.number().int().nullable().optional(),
   possuiDebito: z.boolean().nullable().optional(),
-  status: z.string().nullable().optional()
+  status: z.string().nullable().optional(),
 });
 
-export type IBAMACertidaoNegativaDebitosRetornoDto = z.infer<typeof IBAMACertidaoNegativaDebitosRetornoSchema>;
+export type IBAMACertidaoNegativaDebitosRetornoDto = z.infer<
+  typeof IBAMACertidaoNegativaDebitosRetornoSchema
+>;

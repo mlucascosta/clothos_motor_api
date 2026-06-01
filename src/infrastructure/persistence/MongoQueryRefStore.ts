@@ -5,10 +5,10 @@
  * @module infrastructure/persistence/MongoQueryRefStore
  */
 
+import { logger } from '@shared/infrastructure/logger.js';
 import { type Collection, MongoClient } from 'mongodb';
 import type { IQueryRefStore } from './IQueryRefStore.js';
 import type { QueryRefDoc } from './QueryRefDoc.js';
-import { logger } from '@shared/infrastructure/logger.js';
 
 /**
  * Store de referências de pesquisa em MongoDB.
@@ -64,7 +64,10 @@ export class MongoQueryRefStore implements IQueryRefStore {
       .then((col) => {
         if (!col) return;
         col.insertOne(ref).catch((err) => {
-          logger.error({ err, correlationId: ref.correlationId }, 'MongoQueryRefStore: insertOne failed');
+          logger.error(
+            { err, correlationId: ref.correlationId },
+            'MongoQueryRefStore: insertOne failed',
+          );
         });
       })
       .catch((err) => {

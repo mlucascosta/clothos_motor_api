@@ -10,7 +10,7 @@ export const BancoCentralProibidosRetornoSchema = z.object({
   documento: z.string().nullable().optional(),
   nomeEntidade: z.string().nullable().optional(),
   observacoes: z.string().nullable().optional(),
-  penalidades: z.array(z.record(z.unknown())).nullable().optional()
+  penalidades: z.array(z.record(z.unknown())).nullable().optional(),
 });
 
 export type BancoCentralProibidosRetornoDto = z.infer<typeof BancoCentralProibidosRetornoSchema>;

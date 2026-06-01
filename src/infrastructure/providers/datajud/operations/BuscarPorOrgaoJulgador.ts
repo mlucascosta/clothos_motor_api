@@ -29,7 +29,9 @@ export class BuscarPorOrgaoJulgador {
     this.buscar = new BuscarGenericoDataJud(http);
   }
 
-  async execute(input: BuscarPorOrgaoJulgadorInput): Promise<Either<SourceError, DataJudSearchResponseDto>> {
+  async execute(
+    input: BuscarPorOrgaoJulgadorInput,
+  ): Promise<Either<SourceError, DataJudSearchResponseDto>> {
     return this.buscar.execute({
       sigla: input.sigla,
       body: {

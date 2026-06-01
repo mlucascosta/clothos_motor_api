@@ -13,7 +13,7 @@ export const MPFCertidaoNegativaRetornoSchema = z.object({
   nomeEntidade: z.string().nullable().optional(),
   possuiProcedimentoExtrajudicial: z.boolean().nullable().optional(),
   procedimentosExtrajudiciais: z.array(z.record(z.unknown())).nullable().optional(),
-  status: z.string().nullable().optional()
+  status: z.string().nullable().optional(),
 });
 
 export type MPFCertidaoNegativaRetornoDto = z.infer<typeof MPFCertidaoNegativaRetornoSchema>;

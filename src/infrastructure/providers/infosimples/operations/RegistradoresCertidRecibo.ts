@@ -6,22 +6,32 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import {
+  type RegistradoresCertidReciboItem,
+  RegistradoresCertidReciboResponseSchema,
+} from '../dtos/RegistradoresCertidReciboDto.js';
 import type { IInfosimplesOperation } from '../ports/IInfosimplesOperation.js';
-import { RegistradoresCertidReciboResponseSchema, type RegistradoresCertidReciboItem } from '../dtos/RegistradoresCertidReciboDto.js';
 
-export class RegistradoresCertidRecibo implements IInfosimplesOperation<RegistradoresCertidReciboItem> {
+export class RegistradoresCertidRecibo
+  implements IInfosimplesOperation<RegistradoresCertidReciboItem>
+{
   readonly path = 'consultas/registradores/certid/recibo';
 
   constructor(private readonly http: IHttpClient) {}
 
-  async execute(params: Record<string, string | undefined>): Promise<Either<SourceError, RegistradoresCertidReciboItem>> {
+  async execute(
+    params: Record<string, string | undefined>,
+  ): Promise<Either<SourceError, RegistradoresCertidReciboItem>> {
     const cleanParams: Record<string, string> = {};
     for (const [k, v] of Object.entries(params)) {
       if (v !== undefined && v !== '') cleanParams[k] = v;
     }
-    const result = await this.http.request<unknown>(this.path, { method: 'POST', params: cleanParams });
+    const result = await this.http.request<unknown>(this.path, {
+      method: 'POST',
+      params: cleanParams,
+    });
     if (isLeft(result)) return result;
     return parseOrSchemaError(RegistradoresCertidReciboResponseSchema, result.value, 'infosimples');
   }

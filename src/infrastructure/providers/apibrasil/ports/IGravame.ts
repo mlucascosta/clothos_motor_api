@@ -11,7 +11,5 @@ export interface IGravame {
   readonly path: string;
   readonly creditValue: number;
   readonly type: string;
-  execute(
-    params: Record<string, string | undefined>,
-  ): Promise<Either<SourceError, GravameDto>>;
+  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, GravameDto>>;
 }

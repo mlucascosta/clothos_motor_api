@@ -10,7 +10,9 @@ export const CadastroEntidadesPrivadasImpedidasRetornoSchema = z.object({
   constamSancoes: z.boolean().nullable().optional(),
   observacoes: z.string().nullable().optional(),
   razaoSocial: z.string().nullable().optional(),
-  sancoes: z.array(z.record(z.unknown())).nullable().optional()
+  sancoes: z.array(z.record(z.unknown())).nullable().optional(),
 });
 
-export type CadastroEntidadesPrivadasImpedidasRetornoDto = z.infer<typeof CadastroEntidadesPrivadasImpedidasRetornoSchema>;
+export type CadastroEntidadesPrivadasImpedidasRetornoDto = z.infer<
+  typeof CadastroEntidadesPrivadasImpedidasRetornoSchema
+>;

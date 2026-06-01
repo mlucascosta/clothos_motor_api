@@ -6,15 +6,17 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const OnrMapaRegistroImoveisItemSchema = z.object({
-  camada: z.string().optional(),
-  municipio: z.string().optional(),
-  uf: z.string().optional(),
-  cartorio: z.string().optional(),
-  cns: z.string().optional(),
-  endereco: z.string().optional(),
-  responsavel: z.string().optional(),
-}).passthrough();
+export const OnrMapaRegistroImoveisItemSchema = z
+  .object({
+    camada: z.string().optional(),
+    municipio: z.string().optional(),
+    uf: z.string().optional(),
+    cartorio: z.string().optional(),
+    cns: z.string().optional(),
+    endereco: z.string().optional(),
+    responsavel: z.string().optional(),
+  })
+  .passthrough();
 
 export const OnrMapaRegistroImoveisResponseSchema = z.object({
   code: z.number(),

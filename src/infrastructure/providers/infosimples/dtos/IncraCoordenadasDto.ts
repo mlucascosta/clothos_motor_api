@@ -6,14 +6,16 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const IncraCoordenadasItemSchema = z.object({
-  numero_certificacao: z.string().optional(),
-  municipio: z.string().optional(),
-  uf: z.string().optional(),
-  area: z.number().optional(),
-  coordenadas: z.array(z.unknown()).optional(),
-  status: z.string().optional(),
-}).passthrough();
+export const IncraCoordenadasItemSchema = z
+  .object({
+    numero_certificacao: z.string().optional(),
+    municipio: z.string().optional(),
+    uf: z.string().optional(),
+    area: z.number().optional(),
+    coordenadas: z.array(z.unknown()).optional(),
+    status: z.string().optional(),
+  })
+  .passthrough();
 
 export const IncraCoordenadasResponseSchema = z.object({
   code: z.number(),

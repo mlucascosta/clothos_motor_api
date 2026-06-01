@@ -34,7 +34,9 @@ export const ReceitaFederalPessoaJuridicaRetornoSchema = z.object({
   situacaoEspecial: z.string().nullable().optional(),
   socios: z.array(z.record(z.unknown())).nullable().optional(),
   telefone: z.string().nullable().optional(),
-  uf: z.string().nullable().optional()
+  uf: z.string().nullable().optional(),
 });
 
-export type ReceitaFederalPessoaJuridicaRetornoDto = z.infer<typeof ReceitaFederalPessoaJuridicaRetornoSchema>;
+export type ReceitaFederalPessoaJuridicaRetornoDto = z.infer<
+  typeof ReceitaFederalPessoaJuridicaRetornoSchema
+>;

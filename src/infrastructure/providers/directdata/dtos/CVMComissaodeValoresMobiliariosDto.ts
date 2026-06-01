@@ -26,7 +26,9 @@ export const CVMComissaodeValoresMobiliariosRetornoSchema = z.object({
   telefone: z.string().nullable().optional(),
   tiposParticipante: z.array(z.record(z.unknown())).nullable().optional(),
   uf: z.string().nullable().optional(),
-  website: z.string().nullable().optional()
+  website: z.string().nullable().optional(),
 });
 
-export type CVMComissaodeValoresMobiliariosRetornoDto = z.infer<typeof CVMComissaodeValoresMobiliariosRetornoSchema>;
+export type CVMComissaodeValoresMobiliariosRetornoDto = z.infer<
+  typeof CVMComissaodeValoresMobiliariosRetornoSchema
+>;

@@ -5,8 +5,8 @@
 
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 import type { AuxilioEmergencialRetornoDto } from '../dtos/AuxilioEmergencialDto.js';
+import type { DirectDataMetaDados } from '../dtos/DirectDataResponseDto.js';
 
 /**
  * Interface para consulta de AuxilioEmergencial.
@@ -15,8 +15,13 @@ import type { AuxilioEmergencialRetornoDto } from '../dtos/AuxilioEmergencialDto
  */
 export interface IAuxilioEmergencial {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: AuxilioEmergencialRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: AuxilioEmergencialRetornoDto | null;
+      }
+    >
+  >;
 }

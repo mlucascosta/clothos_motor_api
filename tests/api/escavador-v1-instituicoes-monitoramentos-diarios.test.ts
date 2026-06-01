@@ -183,7 +183,11 @@ describe('Escavador V1 — Instituições, Monitoramentos Diários (E2E)', () =>
 
       const res = await app.request('/api/escavador/v1/monitoramentos', {
         method: 'POST',
-        body: JSON.stringify({ nome: 'Monitoramento Teste', tipo: 'numero', identificador: 'valor' }),
+        body: JSON.stringify({
+          nome: 'Monitoramento Teste',
+          tipo: 'numero',
+          identificador: 'valor',
+        }),
         headers: { ...headers, 'Content-Type': 'application/json' },
       });
 

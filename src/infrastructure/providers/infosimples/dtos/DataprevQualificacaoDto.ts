@@ -6,15 +6,17 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const DataprevQualificacaoItemSchema = z.object({
-  nis: z.string().optional(),
-  cpf: z.string().optional(),
-  nome: z.string().optional(),
-  data_nascimento: z.string().optional(),
-  resultado: z.string().optional(),
-  resultado_descricao: z.string().optional(),
-  data_consulta: z.string().optional(),
-}).passthrough();
+export const DataprevQualificacaoItemSchema = z
+  .object({
+    nis: z.string().optional(),
+    cpf: z.string().optional(),
+    nome: z.string().optional(),
+    data_nascimento: z.string().optional(),
+    resultado: z.string().optional(),
+    resultado_descricao: z.string().optional(),
+    data_consulta: z.string().optional(),
+  })
+  .passthrough();
 
 export const DataprevQualificacaoResponseSchema = z.object({
   code: z.number(),

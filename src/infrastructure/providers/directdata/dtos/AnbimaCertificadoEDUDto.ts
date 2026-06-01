@@ -10,7 +10,7 @@ export const AnbimaCertificadoEDURetornoSchema = z.object({
   cpf: z.string().nullable().optional(),
   nomeEntidade: z.string().nullable().optional(),
   observacoes: z.string().nullable().optional(),
-  possuiCertificacoes: z.boolean().optional()
+  possuiCertificacoes: z.boolean().optional(),
 });
 
 export type AnbimaCertificadoEDURetornoDto = z.infer<typeof AnbimaCertificadoEDURetornoSchema>;

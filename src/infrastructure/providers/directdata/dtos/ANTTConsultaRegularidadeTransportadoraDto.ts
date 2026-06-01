@@ -17,7 +17,9 @@ export const ANTTConsultaRegularidadeTransportadoraRetornoSchema = z.object({
   rntrc: z.number().int().nullable().optional(),
   situacao: z.string().nullable().optional(),
   status: z.string().nullable().optional(),
-  transportador: z.string().nullable().optional()
+  transportador: z.string().nullable().optional(),
 });
 
-export type ANTTConsultaRegularidadeTransportadoraRetornoDto = z.infer<typeof ANTTConsultaRegularidadeTransportadoraRetornoSchema>;
+export type ANTTConsultaRegularidadeTransportadoraRetornoDto = z.infer<
+  typeof ANTTConsultaRegularidadeTransportadoraRetornoSchema
+>;

@@ -16,7 +16,9 @@ export const RegistrationDataArgentinaRetornoSchema = z.object({
   name: z.string().nullable().optional(),
   nationality: z.string().nullable().optional(),
   phones: z.array(z.record(z.unknown())).nullable().optional(),
-  salaryRange: z.string().nullable().optional()
+  salaryRange: z.string().nullable().optional(),
 });
 
-export type RegistrationDataArgentinaRetornoDto = z.infer<typeof RegistrationDataArgentinaRetornoSchema>;
+export type RegistrationDataArgentinaRetornoDto = z.infer<
+  typeof RegistrationDataArgentinaRetornoSchema
+>;

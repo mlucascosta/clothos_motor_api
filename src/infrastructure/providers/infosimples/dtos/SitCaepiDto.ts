@@ -6,17 +6,19 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const SitCaepiItemSchema = z.object({
-  ca: z.string().optional(),
-  equipamento: z.string().optional(),
-  fabricante: z.string().optional(),
-  cnpj_fabricante: z.string().optional(),
-  tipo: z.string().optional(),
-  situacao: z.string().optional(),
-  data_validade: z.string().optional(),
-  data_aprovacao: z.string().optional(),
-  normas: z.array(z.string()).optional(),
-}).passthrough();
+export const SitCaepiItemSchema = z
+  .object({
+    ca: z.string().optional(),
+    equipamento: z.string().optional(),
+    fabricante: z.string().optional(),
+    cnpj_fabricante: z.string().optional(),
+    tipo: z.string().optional(),
+    situacao: z.string().optional(),
+    data_validade: z.string().optional(),
+    data_aprovacao: z.string().optional(),
+    normas: z.array(z.string()).optional(),
+  })
+  .passthrough();
 
 export const SitCaepiResponseSchema = z.object({
   code: z.number(),

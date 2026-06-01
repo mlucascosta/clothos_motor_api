@@ -23,7 +23,7 @@ export const DAPPessoaFisicaRetornoSchema = z.object({
   titulares: z.array(z.record(z.unknown())).nullable().optional(),
   uf: z.string().nullable().optional(),
   usoTerra: z.array(z.record(z.unknown())).nullable().optional(),
-  versao: z.string().nullable().optional()
+  versao: z.string().nullable().optional(),
 });
 
 export type DAPPessoaFisicaRetornoDto = z.infer<typeof DAPPessoaFisicaRetornoSchema>;

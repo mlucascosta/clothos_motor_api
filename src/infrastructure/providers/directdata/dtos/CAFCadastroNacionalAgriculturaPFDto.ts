@@ -27,7 +27,9 @@ export const CAFCadastroNacionalAgriculturaPFRetornoSchema = z.object({
   totalEstabelecimentoHA: z.number().nullable().optional(),
   totalEstabelecimentoM2: z.number().nullable().optional(),
   uf: z.string().nullable().optional(),
-  ultimaAtualizacao: z.string().nullable().optional()
+  ultimaAtualizacao: z.string().nullable().optional(),
 });
 
-export type CAFCadastroNacionalAgriculturaPFRetornoDto = z.infer<typeof CAFCadastroNacionalAgriculturaPFRetornoSchema>;
+export type CAFCadastroNacionalAgriculturaPFRetornoDto = z.infer<
+  typeof CAFCadastroNacionalAgriculturaPFRetornoSchema
+>;

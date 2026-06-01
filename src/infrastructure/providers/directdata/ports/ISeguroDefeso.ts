@@ -15,8 +15,13 @@ import type { SeguroDefesoRetornoDto } from '../dtos/SeguroDefesoDto.js';
  */
 export interface ISeguroDefeso {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: SeguroDefesoRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: SeguroDefesoRetornoDto | null;
+      }
+    >
+  >;
 }

@@ -15,8 +15,13 @@ import type { VinculosSocietariosRetornoDto } from '../dtos/VinculosSocietariosD
  */
 export interface IVinculosSocietarios {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: VinculosSocietariosRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: VinculosSocietariosRetornoDto | null;
+      }
+    >
+  >;
 }

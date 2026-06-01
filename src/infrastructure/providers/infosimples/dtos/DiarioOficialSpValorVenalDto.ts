@@ -6,15 +6,17 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const DiarioOficialSpValorVenalItemSchema = z.object({
-  codigo_ipva: z.string().optional(),
-  ano_fabricacao: z.string().optional(),
-  placa: z.string().optional(),
-  marca_modelo: z.string().optional(),
-  valor_venal: z.number().optional(),
-  ano_exercicio: z.string().optional(),
-  data_publicacao: z.string().optional(),
-}).passthrough();
+export const DiarioOficialSpValorVenalItemSchema = z
+  .object({
+    codigo_ipva: z.string().optional(),
+    ano_fabricacao: z.string().optional(),
+    placa: z.string().optional(),
+    marca_modelo: z.string().optional(),
+    valor_venal: z.number().optional(),
+    ano_exercicio: z.string().optional(),
+    data_publicacao: z.string().optional(),
+  })
+  .passthrough();
 
 export const DiarioOficialSpValorVenalResponseSchema = z.object({
   code: z.number(),

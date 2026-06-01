@@ -6,14 +6,16 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const AntecedenteCriminaisPfValItemSchema = z.object({
-  certidao_codigo: z.string().optional(),
-  data_nascimento: z.string().optional(),
-  nome: z.string().optional(),
-  resultado: z.string().optional(),
-  valida: z.boolean().optional(),
-  mensagem: z.string().optional(),
-}).passthrough();
+export const AntecedenteCriminaisPfValItemSchema = z
+  .object({
+    certidao_codigo: z.string().optional(),
+    data_nascimento: z.string().optional(),
+    nome: z.string().optional(),
+    resultado: z.string().optional(),
+    valida: z.boolean().optional(),
+    mensagem: z.string().optional(),
+  })
+  .passthrough();
 
 export const AntecedenteCriminaisPfValResponseSchema = z.object({
   code: z.number(),

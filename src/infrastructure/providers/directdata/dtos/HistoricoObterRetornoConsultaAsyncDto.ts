@@ -7,4 +7,6 @@ import { z } from 'zod';
 
 export const HistoricoObterRetornoConsultaAsyncRetornoSchema = z.object({}).passthrough();
 
-export type HistoricoObterRetornoConsultaAsyncRetornoDto = z.infer<typeof HistoricoObterRetornoConsultaAsyncRetornoSchema>;
+export type HistoricoObterRetornoConsultaAsyncRetornoDto = z.infer<
+  typeof HistoricoObterRetornoConsultaAsyncRetornoSchema
+>;

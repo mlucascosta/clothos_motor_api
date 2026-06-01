@@ -14,7 +14,7 @@ export const TribunalJusticaRetornoSchema = z.object({
   primeiroGrau: z.record(z.unknown()),
   segundoGrau: z.record(z.unknown()),
   status: z.string().nullable().optional(),
-  uf: z.string().nullable().optional()
+  uf: z.string().nullable().optional(),
 });
 
 export type TribunalJusticaRetornoDto = z.infer<typeof TribunalJusticaRetornoSchema>;

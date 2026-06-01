@@ -6,15 +6,17 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const PortalTransparenciaBuscaItemSchema = z.object({
-  titulo: z.string().optional(),
-  descricao: z.string().optional(),
-  url: z.string().optional(),
-  tipo: z.string().optional(),
-  data: z.string().optional(),
-  orgao: z.string().optional(),
-  categoria: z.string().optional(),
-}).passthrough();
+export const PortalTransparenciaBuscaItemSchema = z
+  .object({
+    titulo: z.string().optional(),
+    descricao: z.string().optional(),
+    url: z.string().optional(),
+    tipo: z.string().optional(),
+    data: z.string().optional(),
+    orgao: z.string().optional(),
+    categoria: z.string().optional(),
+  })
+  .passthrough();
 
 export const PortalTransparenciaBuscaResponseSchema = z.object({
   code: z.number(),
@@ -27,4 +29,6 @@ export const PortalTransparenciaBuscaResponseSchema = z.object({
 });
 
 export type PortalTransparenciaBuscaItem = z.infer<typeof PortalTransparenciaBuscaItemSchema>;
-export type PortalTransparenciaBuscaResponse = z.infer<typeof PortalTransparenciaBuscaResponseSchema>;
+export type PortalTransparenciaBuscaResponse = z.infer<
+  typeof PortalTransparenciaBuscaResponseSchema
+>;

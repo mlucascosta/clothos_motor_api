@@ -14,7 +14,7 @@ export const AMLRetornoSchema = z.object({
   obito: z.boolean().nullable().optional(),
   parentescos: z.array(z.record(z.unknown())).nullable().optional(),
   pep: z.boolean().nullable().optional(),
-  sociedades: z.array(z.record(z.unknown())).nullable().optional()
+  sociedades: z.array(z.record(z.unknown())).nullable().optional(),
 });
 
 export type AMLRetornoDto = z.infer<typeof AMLRetornoSchema>;

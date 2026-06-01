@@ -16,7 +16,7 @@ export const NivelSocioeconomicoRetornoSchema = z.object({
   rendaIBGE: z.string().nullable().optional(),
   rendaMaximaCBO: z.string().nullable().optional(),
   rendaMediaCBO: z.string().nullable().optional(),
-  rendaMinimaCBO: z.string().nullable().optional()
+  rendaMinimaCBO: z.string().nullable().optional(),
 });
 
 export type NivelSocioeconomicoRetornoDto = z.infer<typeof NivelSocioeconomicoRetornoSchema>;

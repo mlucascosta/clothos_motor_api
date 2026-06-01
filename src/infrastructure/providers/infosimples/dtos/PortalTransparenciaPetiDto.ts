@@ -6,17 +6,19 @@
 import { z } from 'zod';
 import { InfosimplesResponseHeaderSchema } from './InfosimplesResponseDto.js';
 
-export const PortalTransparenciaPetiItemSchema = z.object({
-  cpf: z.string().optional(),
-  nis: z.string().optional(),
-  nome: z.string().optional(),
-  valor: z.number().optional(),
-  data: z.string().optional(),
-  competencia: z.string().optional(),
-  municipio: z.string().optional(),
-  uf: z.string().optional(),
-  situacao: z.string().optional(),
-}).passthrough();
+export const PortalTransparenciaPetiItemSchema = z
+  .object({
+    cpf: z.string().optional(),
+    nis: z.string().optional(),
+    nome: z.string().optional(),
+    valor: z.number().optional(),
+    data: z.string().optional(),
+    competencia: z.string().optional(),
+    municipio: z.string().optional(),
+    uf: z.string().optional(),
+    situacao: z.string().optional(),
+  })
+  .passthrough();
 
 export const PortalTransparenciaPetiResponseSchema = z.object({
   code: z.number(),

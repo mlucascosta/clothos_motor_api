@@ -11,7 +11,9 @@ export const CVMProcessosAdministrativosSancionadoresRetornoSchema = z.object({
   observacoes: z.string().nullable().optional(),
   possuiProcesso: z.boolean().nullable().optional(),
   processos: z.array(z.record(z.unknown())).nullable().optional(),
-  totalProcessos: z.number().int().nullable().optional()
+  totalProcessos: z.number().int().nullable().optional(),
 });
 
-export type CVMProcessosAdministrativosSancionadoresRetornoDto = z.infer<typeof CVMProcessosAdministrativosSancionadoresRetornoSchema>;
+export type CVMProcessosAdministrativosSancionadoresRetornoDto = z.infer<
+  typeof CVMProcessosAdministrativosSancionadoresRetornoSchema
+>;

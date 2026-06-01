@@ -21,7 +21,9 @@ export const PGFNListaDevedoresUniaoRetornoSchema = z.object({
   totalPrevidenciario: z.number().nullable().optional(),
   totalTributario: z.number().nullable().optional(),
   uf: z.string().nullable().optional(),
-  unidadeResponsavel: z.string().nullable().optional()
+  unidadeResponsavel: z.string().nullable().optional(),
 });
 
-export type PGFNListaDevedoresUniaoRetornoDto = z.infer<typeof PGFNListaDevedoresUniaoRetornoSchema>;
+export type PGFNListaDevedoresUniaoRetornoDto = z.infer<
+  typeof PGFNListaDevedoresUniaoRetornoSchema
+>;

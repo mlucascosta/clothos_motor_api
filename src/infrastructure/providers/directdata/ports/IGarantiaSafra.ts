@@ -15,8 +15,13 @@ import type { GarantiaSafraRetornoDto } from '../dtos/GarantiaSafraDto.js';
  */
 export interface IGarantiaSafra {
   readonly path: string;
-  execute(params: Record<string, string | undefined>): Promise<Either<SourceError, {
-    metaDados: DirectDataMetaDados;
-    retorno: GarantiaSafraRetornoDto | null;
-  }>>;
+  execute(params: Record<string, string | undefined>): Promise<
+    Either<
+      SourceError,
+      {
+        metaDados: DirectDataMetaDados;
+        retorno: GarantiaSafraRetornoDto | null;
+      }
+    >
+  >;
 }

@@ -6,8 +6,8 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
+import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { LimitePositivoPjSchema } from '../dtos/LimitePositivoPjDto.js';
 import type { LimitePositivoPjDto } from '../dtos/LimitePositivoPjDto.js';
 import type { ILimitePositivoPj } from '../ports/ILimitePositivoPj.js';

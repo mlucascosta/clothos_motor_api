@@ -16,7 +16,9 @@ export const TribunalRegionalTrabalhoRetornoSchema = z.object({
   possuiProcesso: z.boolean().nullable().optional(),
   processos: z.array(z.record(z.unknown())).nullable().optional(),
   regiao: z.string().nullable().optional(),
-  status: z.string().nullable().optional()
+  status: z.string().nullable().optional(),
 });
 
-export type TribunalRegionalTrabalhoRetornoDto = z.infer<typeof TribunalRegionalTrabalhoRetornoSchema>;
+export type TribunalRegionalTrabalhoRetornoDto = z.infer<
+  typeof TribunalRegionalTrabalhoRetornoSchema
+>;

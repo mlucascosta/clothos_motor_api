@@ -11,7 +11,7 @@ export const BeneficiarioFinalRetornoSchema = z.object({
   documentoConsultado: z.string().nullable().optional(),
   nomeRazaoSocial: z.string().nullable().optional(),
   pepMatriz: z.boolean().nullable().optional(),
-  sociedades: z.array(z.record(z.unknown())).nullable().optional()
+  sociedades: z.array(z.record(z.unknown())).nullable().optional(),
 });
 
 export type BeneficiarioFinalRetornoDto = z.infer<typeof BeneficiarioFinalRetornoSchema>;
