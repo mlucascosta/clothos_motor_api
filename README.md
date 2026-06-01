@@ -1,17 +1,21 @@
 # Clothos Motor API
 
-**Pipeline de Consultas Node.js/TypeScript para Reduto Finder**
+**Serviço de Consultas Node.js/TypeScript para Reduto Finder**
 
-Motor de processamento e orquestração de requisições ao Escavador (provedor de dados judiciais brasileiros) com suporte a múltiplos endpoints V1 e V2, monitoramentos, callbacks e geração de resumos por IA.
+Serviço interno responsável por **duas tarefas**: (1) executar consultas em provedores externos de dados e (2) persistir os resultados brutos. O app Laravel busca esses resultados posteriormente e os entrega ao cliente final.
+
+> **O motor não é multi-tenant.** Ele não isola dados por tenant nem orquestra cotas/billing — isso é responsabilidade do app (PostgreSQL multi-tenant). O motor apenas consulta e salva; o campo `tenantId` gravado em `query_refs` é só rótulo de correlação para auditoria, não isolamento.
+
+Provedores suportados: **Escavador** (V1+V2, judicial), **DataJud/CNJ**, **DirectData**, **ApiBrasil**, **Infosimples** e **BrasilAPI**.
 
 ---
 
 ## 📋 Requisitos
 
 - **Node.js**: ≥ 22.0.0
-- **npm/pnpm**: Gerenciador de pacotes
-- **MongoDB**: Para persistência de auditoria (rawStore)
-- **Variáveis de Ambiente**: `ESCAVADOR_API_KEY`, `ESCAVADOR_BASE_URL`, `DATAJUD_APIKEY`, `MONGODB_URI`
+- **pnpm**: Gerenciador de pacotes (ver `pnpm-lock.yaml`)
+- **MongoDB**: Para persistência dos resultados (`raw_results`) e referências de consulta (`query_refs`)
+- **Variáveis de Ambiente**: ver `.env.example` (segredo interno, credenciais por provedor e string do MongoDB)
 
 ---
 
@@ -21,51 +25,39 @@ Motor de processamento e orquestração de requisições ao Escavador (provedor 
 
 ```bash
 cd clothos_motor_api
-npm install  # ou pnpm install
+pnpm install
 ```
 
 ### 2. Configure variáveis de ambiente
 
-Crie um arquivo `.env.local`:
+Copie `.env.example` para `.env` e preencha os valores:
 
 ```bash
-# Escavador API
-ESCAVADOR_API_KEY=seu_token_aqui
-ESCAVADOR_BASE_URL=https://api.escavador.com
-
-# DataJud (CNJ) — API Pública
-DATAJUD_APIKEY=cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==
-
-# MongoDB para auditoria
-MONGODB_URI=mongodb://localhost:27017/clothos_motor
-
-# Servidor
-NODE_ENV=development
-PORT=3000
+cp .env.example .env
 ```
+
+Variáveis principais:
+
+- `MOTOR_INTERNAL_SECRET` — token exigido em todas as rotas `/api/*` (auth interna)
+- `MONGODB_CLOUD_STRING` — conexão MongoDB (resultados + referências de consulta)
+- Credenciais por provedor: `ESCAVADOR_API_KEY`, `DATAJUD_APIKEY`, `DIRECTDATA_TOKEN`, `APIBRASIL_API_KEY` + `APIBRASIL_DEVICE_TOKEN`, `INFOSIMPLES_TOKEN`
+- `PORT` (padrão 3001), `NODE_ENV`, `LOG_LEVEL`
+
+> BrasilAPI não exige autenticação (`BRASILAPI_BASE_URL` só para staging/testes).
 
 ### 3. Desenvolvimento
 
 ```bash
-# Iniciar servidor em modo watch
-npm run dev
-
-# Compilar TypeScript
-npm run typecheck
-
-# Formatar e lint
-npm run lint:fix
-npm run format
+pnpm dev          # servidor em modo watch
+pnpm typecheck    # checagem de tipos
+pnpm lint:fix     # lint + format (Biome)
 ```
 
 ### 4. Produção
 
 ```bash
-# Build
-npm run build
-
-# Start
-npm start
+pnpm build        # swc + tsc-alias → dist/
+pnpm start        # node dist/presentation/server.js
 ```
 
 ---
@@ -74,35 +66,35 @@ npm start
 
 ```
 src/
-├── application/              # Lógica de aplicação (queries, use cases)
-│   └── queries/ports/        # Interfaces de execução
-├── domain/                   # Regras de negócio (entidades, agregados)
-│   └── queries/              # Domínio de queries
-├── infrastructure/           # Implementação técnica
-│   ├── blocks/               # Processamento em blocos
-│   ├── bullmq/               # Fila de jobs (BullMQ)
-│   ├── database/             # Conexão MongoDB
-│   ├── http/                 # Cliente HTTP abstrato
-│   ├── persistence/          # Armazenamento (rawStore)
-│   ├── providers/            # Provedores (Escavador)
-│   │   ├── escavador/        # Integração Escavador
-│   │   │   ├── dtos/         # Data Transfer Objects
-│   │   │   ├── operations/   # Operações (ObterSaldo, BuscarProcessos, etc)
-│   │   │   ├── mappers/      # Mapeadores de domínio
-│   │   │   └── EscavadorHttpClient.ts
-│   │   └── ...               # Outros provedores
-│   ├── redis/                # Cache e pub/sub (Redis)
-│   └── workers/              # Workers de background
-├── presentation/             # Camada de apresentação
+├── application/
+│   └── queries/ports/            # ISourceExecutor (porta de execução de fonte)
+├── infrastructure/
+│   ├── persistence/              # MongoRawResultStore, MongoQueryRefStore + interfaces
+│   └── providers/                # Integrações (cada um: dtos/ operations/ ports/ + HttpClient)
+│       ├── apibrasil/
+│       ├── brasilapi/
+│       ├── datajud/
+│       ├── directdata/
+│       ├── escavador/
+│       └── infosimples/
+├── presentation/
 │   ├── api/
-│   │   └── routes/           # Rotas HTTP (Hono)
-│   │       └── escavador.ts  # Router Escavador (92 endpoints V1+V2)
-│   └── server.ts             # Configuração do servidor
-├── shared/                   # Código compartilhado
-│   ├── domain/               # Either, Errors, tipos
-│   └── infrastructure/       # HTTP client abstrato, utilitários
-└── main.ts                   # Entry point
+│   │   ├── routes/               # Rotas HTTP (Hono): escavador, datajud, directdata,
+│   │   │                         #   apibrasil, infosimples, brasilapi
+│   │   ├── middlewares/          # bearerAuth (auth interna)
+│   │   └── handleOp.ts           # Wrapper genérico: executa, salva resultado e responde
+│   └── server.ts                 # Entry point
+└── shared/
+    ├── domain/                   # Either, SourceError, hashCpf
+    └── infrastructure/           # FetchHttpClient, logger
 ```
+
+> **Scaffolding reservado (ainda vazio — só `.gitkeep`):** `domain/queries/`,
+> `infrastructure/{blocks,bullmq,redis,workers,database,http}/` e
+> `application/queries/use-cases/`. São diretórios preparados para o **motor
+> assíncrono futuro** (fila BullMQ + workers + pipeline em blocos), descrito em
+> `docs/architecture/MOTOR.md` no repositório raiz. Hoje o motor é um gateway HTTP
+> síncrono — esses diretórios não contêm código.
 
 ---
 
@@ -110,7 +102,7 @@ src/
 
 ### Base Path
 ```
-http://localhost:3000/api/escavador
+http://localhost:3001/api/escavador
 ```
 
 ### V1 Endpoints (42 rotas)
@@ -191,7 +183,7 @@ Para documentação detalhada de cada endpoint (parâmetros, responses, exemplos
 
 ### DataJud Endpoints (6 rotas)
 
-**Base Path:** `http://localhost:3000/api/datajud`
+**Base Path:** `http://localhost:3001/api/datajud`
 
 **Tribunais**
 - `GET /tribunais` — Listar 91 tribunais disponíveis (sigla + nome)
@@ -205,12 +197,25 @@ Para documentação detalhada de cada endpoint (parâmetros, responses, exemplos
 
 **Exemplo:**
 ```bash
-curl -X POST "http://localhost:3000/api/datajud/processo?tribunal=tjsp" \
+curl -X POST "http://localhost:3001/api/datajud/processo?tribunal=tjsp" \
   -H "Content-Type: application/json" \
   -d '{"numeroProcesso": "1002297-51.2024.8.26.0576"}'
 ```
 
 Para documentação detalhada, veja `src/presentation/api/routes/datajud.ts`.
+
+### Demais provedores
+
+Montados em `src/presentation/api/app.ts` (todos sob `/api`, protegidos por `bearerAuth`):
+
+| Provedor | Base Path | Rota (detalhe) |
+|---|---|---|
+| ApiBrasil | `/api/apibrasil` | `routes/apibrasil.ts` |
+| BrasilAPI | `/api/brasilapi` | `routes/brasilapi.ts` |
+| DirectData | `/api/directdata` | `routes/directdata.ts` |
+| Infosimples | `/api/infosimples/:endpoint` (dinâmica) | `routes/infosimples.ts` |
+
+Health check (sem auth): `GET /health`.
 
 ---
 
@@ -249,47 +254,44 @@ if (isLeft(result)) {
 
 ### Fluxo de Requisição
 
-1. Cliente HTTP bate em `/api/escavador/v1/{endpoint}`
+1. O app bate em `/api/{provedor}/{endpoint}` com o header de auth interna (`bearerAuth`)
 2. Handler Hono extrai parâmetros e valida com Zod
-3. Instancia Operation apropriada (ex: `new ObterSaldo(buildHttpV1())`)
-4. Operation executa chamada para Escavador (com bearer token)
-5. Resposta mapeada para DTO e retornada
-6. Resultado salvo em `rawStore` (MongoDB) para auditoria
-7. JSON retornado ao cliente com status HTTP apropriado
+3. Instancia a Operation apropriada (ex.: `new ObterSaldo(buildHttp())`)
+4. A Operation executa a chamada ao provedor externo (credencial via env) e mapeia para DTO
+5. `handleOp` persiste o resultado bruto em `raw_results` e a referência em `query_refs` (MongoDB)
+6. JSON retornado com status HTTP apropriado
+
+O app consome esses resultados depois (busca por `correlationId`/referência) e os entrega ao cliente final.
 
 ---
 
 ## 🧪 Testes
 
 ```bash
-# Rodar suite de testes
-npm test
-
-# Modo watch
-npm test:watch
-
-# Coverage
-npm test:coverage
+pnpm test            # rodar suite de testes
+pnpm test:watch      # modo watch
+pnpm test:coverage   # coverage
 ```
 
 ---
 
 ## 🔧 Troubleshooting
 
-### "ESCAVADOR_API_KEY not found"
-Verifique se `.env.local` (ou `.env`) contém a variável.
+### "MOTOR_INTERNAL_SECRET / credencial não configurada"
+Verifique se `.env` contém o segredo interno e a credencial do provedor usado.
 
 ### "MongoDB connection failed"
-Certifique-se de que MongoDB está rodando:
+Confira `MONGODB_CLOUD_STRING` no `.env`. Para rodar local:
 ```bash
 docker run -d -p 27017:27017 mongo:latest
+# MONGODB_CLOUD_STRING=mongodb://localhost:27017/clothos_motor
 ```
 
 ### "swc: not found"
 Reinstale dependências:
 ```bash
-rm -rf node_modules package-lock.json
-npm install
+rm -rf node_modules
+pnpm install
 ```
 
 ---
@@ -318,9 +320,9 @@ npm install
 
 Antes de submeter:
 ```bash
-npm run typecheck    # TypeScript
-npm run lint:fix     # Biome
-npm test             # Jest
+pnpm typecheck    # TypeScript
+pnpm lint:fix     # Biome
+pnpm test         # Jest
 ```
 
 ---
