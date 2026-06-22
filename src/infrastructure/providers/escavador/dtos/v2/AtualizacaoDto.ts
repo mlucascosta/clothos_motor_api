@@ -7,10 +7,23 @@
 import { z } from 'zod';
 
 /**
- * Status possível de uma atualização.
+ * Valores de status conhecidos de uma atualização (apenas referência/doc).
+ * @type {readonly string[]}
+ */
+export const ATUALIZACAO_KNOWN_STATUSES = [
+  'pendente',
+  'em_andamento',
+  'concluido',
+  'erro',
+] as const;
+
+/**
+ * Status de uma atualização. Tolerante (`z.string()`) para não rejeitar
+ * (SCHEMA_MISMATCH) um resultado já pago cujo status venha com casing/valor
+ * inesperado — a classificação de desfecho é feita por `classifyEscavadorStatus`.
  * @type {ZodSchema}
  */
-export const AtualizacaoStatusSchema = z.enum(['pendente', 'em_andamento', 'concluido', 'erro']);
+export const AtualizacaoStatusSchema = z.string();
 
 /**
  * Schema de atualização em lote.

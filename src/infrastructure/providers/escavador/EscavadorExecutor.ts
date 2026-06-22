@@ -13,6 +13,7 @@ import type {
 import { type Either, isLeft, left, right } from '@shared/domain/Either.js';
 import { SourceError } from '@shared/domain/errors/SourceError.js';
 import { cleanDocument } from '@shared/domain/identifiers.js';
+import { classifyEscavadorStatus } from './EscavadorAsyncStatus.js';
 import type { BuscaResultItem } from './dtos/BuscaGeralDto.js';
 import type { ProcessoResumido } from './dtos/PessoaDto.js';
 import type { IBuscarGeral } from './ports/IBuscarGeral.js';
@@ -229,18 +230,16 @@ export class EscavadorExecutor implements ISourceExecutor {
 
       if (isLeft(result)) return result;
 
-      const rawStatus = result.value.status ?? '';
-      const status = rawStatus
-        .toUpperCase()
-        .normalize('NFD')
-        // biome-ignore lint/suspicious/noMisleadingCharacterClass: remo\u00E7\u00E3o intencional de marcas diacr\u00EDticas combinantes p\u00F3s-NFD (strip de acentos)
-        .replace(/[\u0300-\u036F]/g, '');
+      const outcome = classifyEscavadorStatus(result.value.status ?? '');
 
-      if (status === 'SUCESSO' || status === 'CONCLUIDO') {
+      if (outcome === 'success') {
         return right({ resultado: result.value.resposta ?? result.value.resultado });
       }
 
-      if (status === 'ERRO' || status === 'NAO_ENCONTRADO') {
+      // `not_found` (nada consta) é preservado como falha de upstream para manter
+      // o comportamento histórico do executor; `unknown` segue em polling até o
+      // deadline (conservador — nunca tratado como sucesso).
+      if (outcome === 'failed' || outcome === 'not_found') {
         return left(
           new SourceError(
             'UPSTREAM_ERROR',
