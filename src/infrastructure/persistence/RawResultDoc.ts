@@ -1,11 +1,11 @@
 /**
- * @fileoverview Documento de resultado bruto armazenado em MongoDB.
+ * @fileoverview Documento de resultado bruto armazenado em PostgreSQL (single-store, ADR-0019).
  * Representa um resultado não-processado de uma requisição a um provedor externo.
  * @module infrastructure/persistence/RawResultDoc
  */
 
 /**
- * Documento de resultado bruto armazenado na coleção MongoDB `raw_results`.
+ * Documento de resultado bruto armazenado na tabela PostgreSQL `raw_results`.
  * Usado para auditoria, debugging e cálculo de custos.
  *
  * CPF é armazenado em hash SHA-256 se `tipo_param === 'cpf_cnpj'`.

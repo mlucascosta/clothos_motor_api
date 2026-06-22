@@ -24,7 +24,7 @@ Adicionar o **DataJud** (API Pública do CNJ — Conselho Nacional de Justiça) 
 - Router `/api/datajud/*` exposto no Hono com rotas para consulta em qualquer tribunal brasileiro cadastrado no DataJud.
 - Cliente HTTP autenticado via Basic Auth com a chave pública do CNJ.
 - Suporte à Query DSL do Elasticsearch para buscas flexíveis.
-- Auditoria via `rawStore` (MongoDB) para todas as consultas, igual ao Escavador.
+- Auditoria via `rawStore` (PostgreSQL) para todas as consultas, igual ao Escavador.
 - Type-safety com Zod schemas para request/response.
 
 ---
@@ -37,7 +37,7 @@ Adicionar o **DataJud** (API Pública do CNJ — Conselho Nacional de Justiça) 
 - **Framework HTTP**: Hono (já usado)
 - **Validação**: Zod (já usado)
 - **HTTP Client**: `FetchHttpClient` custom (já usado)
-- **Persistência**: MongoDB via `MongoRawResultStore` (já usado)
+- **Persistência**: PostgreSQL via `PgRawResultStore` (single-store, ADR-0019)
 - **Linguagem**: TypeScript (ESM, `.js` extensions)
 
 ### Integrações necessárias
@@ -81,7 +81,7 @@ Adicionar o **DataJud** (API Pública do CNJ — Conselho Nacional de Justiça) 
 │                    ▼                                   ▼     │
 │         ┌─────────────────┐                 ┌──────────────┐ │
 │         │  DataJud API    │                 │  rawStore    │ │
-│         │  (CNJ)          │                 │  (MongoDB)   │ │
+│         │  (CNJ)          │                 │  (Postgres)   │ │
 │         └─────────────────┘                 └──────────────┘ │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -348,7 +348,7 @@ export const DATAJUD_TRIBUNAIS = [
 ### Integração
 
 - Testar chamada real para `api_publica_tst/_search` com a API key pública (dados são públicos)
-- Verificar persistência no rawStore (mock Mongo ou container de teste)
+- Verificar persistência no rawStore (container PostgreSQL de teste)
 
 ### Fixtures
 

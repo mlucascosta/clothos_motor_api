@@ -39,7 +39,7 @@ describe('GET /api/directdata/:endpoint (DDD/SOLID)', () => {
     fetchSpy.mockRestore();
   });
 
-  it('CadastroPessoaFisica: resolve operation via registry, retorna 200 e persiste no MongoDB', async () => {
+  it('CadastroPessoaFisica: resolve operation via registry, retorna 200 e persiste no PostgreSQL', async () => {
     const res = await app.request('/api/directdata/CadastroPessoaFisica?CPF=11144477735');
 
     expect(res.status).toBe(200);
@@ -62,7 +62,7 @@ describe('GET /api/directdata/:endpoint (DDD/SOLID)', () => {
     expect(url).toContain('CPF=11144477735');
   });
 
-  it('CadastroPessoaJuridica: resolve operation via registry e persiste no MongoDB', async () => {
+  it('CadastroPessoaJuridica: resolve operation via registry e persiste no PostgreSQL', async () => {
     const res = await app.request('/api/directdata/CadastroPessoaJuridica?CNPJ=33200056000149');
 
     expect(res.status).toBe(200);
@@ -77,7 +77,7 @@ describe('GET /api/directdata/:endpoint (DDD/SOLID)', () => {
     );
   });
 
-  it('OFAC: resolve operation via registry e persiste no MongoDB', async () => {
+  it('OFAC: resolve operation via registry e persiste no PostgreSQL', async () => {
     const res = await app.request('/api/directdata/OFAC?NOME=JOSE');
 
     expect(res.status).toBe(200);

@@ -14,8 +14,8 @@ Provedores suportados: **Escavador** (V1+V2, judicial), **DataJud/CNJ**, **Direc
 
 - **Node.js**: ≥ 22.0.0
 - **pnpm**: Gerenciador de pacotes (ver `pnpm-lock.yaml`)
-- **MongoDB**: Para persistência dos resultados (`raw_results`) e referências de consulta (`query_refs`)
-- **Variáveis de Ambiente**: ver `.env.example` (segredo interno, credenciais por provedor e string do MongoDB)
+- **PostgreSQL 16**: Persistência single-store (ADR-0019) — resultados (`raw_results`) e referências de consulta (`query_refs`) no database `clothos_core`
+- **Variáveis de Ambiente**: ver `.env.example` (segredo interno, credenciais por provedor e `DATABASE_URL`)
 
 ---
 
@@ -39,7 +39,7 @@ cp .env.example .env
 Variáveis principais:
 
 - `MOTOR_INTERNAL_SECRET` — token exigido em todas as rotas `/api/*` (auth interna)
-- `MONGODB_CLOUD_STRING` — conexão MongoDB (resultados + referências de consulta)
+- `DATABASE_URL` — conexão PostgreSQL single-store (`clothos_core`); aceita `MOTOR_DATABASE_URL` como alias
 - Credenciais por provedor: `ESCAVADOR_API_KEY`, `DATAJUD_APIKEY`, `DIRECTDATA_TOKEN`, `APIBRASIL_API_KEY` + `APIBRASIL_DEVICE_TOKEN`, `INFOSIMPLES_TOKEN`
 - `PORT` (padrão 3001), `NODE_ENV`, `LOG_LEVEL`
 
@@ -69,7 +69,7 @@ src/
 ├── application/
 │   └── queries/ports/            # ISourceExecutor (porta de execução de fonte)
 ├── infrastructure/
-│   ├── persistence/              # MongoRawResultStore, MongoQueryRefStore + interfaces
+│   ├── persistence/              # PgRawResultStore, PgQueryRefStore + interfaces
 │   └── providers/                # Integrações (cada um: dtos/ operations/ ports/ + HttpClient)
 │       ├── apibrasil/
 │       ├── brasilapi/
@@ -258,7 +258,7 @@ if (isLeft(result)) {
 2. Handler Hono extrai parâmetros e valida com Zod
 3. Instancia a Operation apropriada (ex.: `new ObterSaldo(buildHttp())`)
 4. A Operation executa a chamada ao provedor externo (credencial via env) e mapeia para DTO
-5. `handleOp` persiste o resultado bruto em `raw_results` e a referência em `query_refs` (MongoDB)
+5. `handleOp` persiste o resultado bruto em `raw_results` e a referência em `query_refs` (PostgreSQL, JSONB)
 6. JSON retornado com status HTTP apropriado
 
 O app consome esses resultados depois (busca por `correlationId`/referência) e os entrega ao cliente final.
@@ -268,9 +268,14 @@ O app consome esses resultados depois (busca por `correlationId`/referência) e 
 ## 🧪 Testes
 
 ```bash
-pnpm test            # rodar suite de testes
-pnpm test:watch      # modo watch
-pnpm test:coverage   # coverage
+pnpm test              # suíte unitária (sem banco)
+pnpm test:watch        # modo watch
+pnpm test:coverage     # coverage (gate unitário)
+
+# Integração — EXIGE PostgreSQL real (política: nunca mockar o banco).
+# O globalSetup aplica o schema (db/migrations + seeds) automaticamente.
+# Defina DATABASE_URL (ver .env.example) e rode:
+DATABASE_URL="$MOTOR_DATABASE_URL" pnpm test:integration
 ```
 
 ---
@@ -280,11 +285,12 @@ pnpm test:coverage   # coverage
 ### "MOTOR_INTERNAL_SECRET / credencial não configurada"
 Verifique se `.env` contém o segredo interno e a credencial do provedor usado.
 
-### "MongoDB connection failed"
-Confira `MONGODB_CLOUD_STRING` no `.env`. Para rodar local:
+### "PostgreSQL connection failed"
+Confira `DATABASE_URL` no `.env`. Para rodar local (na raiz do repo):
 ```bash
-docker run -d -p 27017:27017 mongo:latest
-# MONGODB_CLOUD_STRING=mongodb://localhost:27017/clothos_motor
+docker compose up -d          # sobe clothos_postgres (PG 16)
+# Aplica schema + seeds do motor:
+DATABASE_URL="$MOTOR_DATABASE_URL" ./db/apply.sh
 ```
 
 ### "swc: not found"

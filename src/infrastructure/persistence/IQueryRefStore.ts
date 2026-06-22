@@ -7,7 +7,7 @@ import type { QueryRefDoc } from './QueryRefDoc.js';
 
 /**
  * Interface para store de referências de pesquisa.
- * Permite substituição e mock em testes sem dependência de MongoDB.
+ * Permite substituição e mock em testes sem dependência direta de PostgreSQL.
  *
  * @interface IQueryRefStore
  */

@@ -12,7 +12,7 @@
  * 2. Valida params obrigatórios contra `apibrasilRequiredParams`
  * 3. Valida formato de CPF (11 dígitos) ou CNPJ (14 caracteres alfanuméricos) quando presentes
  * 4. Resolve operation via `resolveOperation(endpoint, buildHttp())`
- * 5. Executa `operation.execute(mergedParams)` e persiste resultado em MongoDB
+ * 5. Executa `operation.execute(mergedParams)` e persiste resultado em PostgreSQL
  *
  * ### Auditoria
  * O campo `tipo_param` é determinado por prioridade de chaves:

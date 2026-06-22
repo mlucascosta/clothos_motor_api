@@ -16,7 +16,7 @@ import type { Context } from 'hono';
 
 /**
  * Handler para operações que retornam um corpo (200, 201, 202, etc.).
- * Pré-configurado com rawStore e queryRefStore MongoDB singleton.
+ * Pré-configurado com rawStore e queryRefStore PostgreSQL singleton.
  *
  * Lê `X-Tenant-Id` e `X-Correlation-Id` automaticamente dos headers.
  * Quando `X-Tenant-Id` está presente salva referência em `query_refs`.
@@ -37,7 +37,7 @@ export function handleOp<T>(
 
 /**
  * Handler para operações que retornam sem corpo (204 No Content).
- * Pré-configurado com rawStore e queryRefStore MongoDB singleton.
+ * Pré-configurado com rawStore e queryRefStore PostgreSQL singleton.
  */
 export function handleOpVoid(
   c: Context,

@@ -7,7 +7,7 @@ import type { RawResultDoc } from './RawResultDoc.js';
 
 /**
  * Interface para store de resultados brutos.
- * Permite substituição e mock em testes sem dependência de MongoDB.
+ * Permite substituição e mock em testes sem dependência direta de PostgreSQL.
  *
  * @interface IRawResultStore
  */

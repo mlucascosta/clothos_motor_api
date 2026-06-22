@@ -25,7 +25,7 @@
  * 1. `/:endpoint` resolve a operation via `resolveOperation()`
  * 2. Valida params obrigatórios contra `directDataRequiredParams`
  * 3. Executa `operation.execute()` (HTTP + validação Zod)
- * 4. Persiste em `rawStore` (MongoDB) para auditoria
+ * 4. Persiste em `rawStore` (PostgreSQL) para auditoria
  *
  * ## Autenticação
  * - Query param `TOKEN` via `DirectDataHttpClient`
@@ -55,7 +55,7 @@ const directdata = new Hono();
  *
  * Rota dinâmica que resolve qualquer endpoint do marketplace DirectData
  * via registry de operations. Valida parâmetros obrigatórios e persiste
- * resultado em MongoDB.
+ * resultado em PostgreSQL.
  */
 directdata.get('/:endpoint{.+}', async (c) => {
   const endpoint = c.req.param('endpoint');
