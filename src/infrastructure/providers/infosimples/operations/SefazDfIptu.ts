@@ -6,8 +6,8 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import { parseInfosimplesResponse } from '../InfosimplesCodeHandler.js';
 import { type SefazDfIptuItem, SefazDfIptuResponseSchema } from '../dtos/SefazDfIptuDto.js';
 import type { IInfosimplesOperation } from '../ports/IInfosimplesOperation.js';
 
@@ -28,6 +28,6 @@ export class SefazDfIptu implements IInfosimplesOperation<SefazDfIptuItem> {
       params: cleanParams,
     });
     if (isLeft(result)) return result;
-    return parseOrSchemaError(SefazDfIptuResponseSchema, result.value, 'infosimples');
+    return parseInfosimplesResponse(SefazDfIptuResponseSchema, result.value);
   }
 }

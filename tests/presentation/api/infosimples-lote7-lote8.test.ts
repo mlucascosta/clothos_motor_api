@@ -1,7 +1,7 @@
 /**
  * @fileoverview Testes e2e — Infosimples / Prefeituras IPTU + Sefaz + Registradores (Lote 7 + 8)
- * 3 casos por endpoint: sucesso (code 0, data com item), sucesso-sem-resultado (code 603, data null),
- * falha upstream (throw → 500). Endpoints com required: caso 400 também.
+ * 3 casos por endpoint: sucesso (code 200, data com item), nada-consta (code 612, data []),
+ * erro de sistema (code 616 → 500). Endpoints com required: caso 400 também.
  * @module tests/presentation/api/infosimples-lote7-lote8.test
  */
 
@@ -13,7 +13,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
   let fetchSpy: jest.SpyInstance;
 
   const envelope = (overrides: object) => ({
-    code: 0,
+    code: 200,
     code_message: 'OK',
     header: { api_version: '2', billable: true, price: 0.5, elapsed_time_in_milliseconds: 800 },
     data_count: 0,
@@ -76,7 +76,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -87,12 +87,44 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(
+        `${PATH}?identificador=4100123456&data_inicio=2024-01-01&data_fim=2024-12-31`,
+        { method: 'POST' },
+      );
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(
@@ -101,9 +133,13 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/pref/mg/belo-horizonte/cndiptu',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream timeout → 500', async () => {
@@ -156,7 +192,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -167,20 +203,53 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?identificador=4100123456`, { method: 'POST' });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?identificador=9999999`, { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/pref/mg/belo-horizonte/iptu',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream error → 500', async () => {
@@ -229,7 +298,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -240,20 +309,53 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?inscricao=0.1234.5678.00001`, { method: 'POST' });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?inscricao=9999999`, { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/pref/rj/rio-janeiro/iptu',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream error → 500', async () => {
@@ -306,7 +408,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -317,12 +419,44 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(
+        `${PATH}?codigo_cartografico=3234567890123456&nome_devedor=TESTE`,
+        { method: 'POST' },
+      );
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?codigo_cartografico=9999&nome_devedor=INEXISTENTE`, {
@@ -330,9 +464,13 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/pref/sp/campinas/iptu',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream error → 500', async () => {
@@ -388,7 +526,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -399,12 +537,43 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?cadastro_imovel=123456789&ano_exercicio=2024`, {
+        method: 'POST',
+      });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?cadastro_imovel=9999&ano_exercicio=2024`, {
@@ -412,9 +581,13 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/pref/sp/sao-paulo/dados-imovel',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream error → 500', async () => {
@@ -478,7 +651,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -489,20 +662,53 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?cadastro_imovel=123456789`, { method: 'POST' });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?cadastro_imovel=9999`, { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/pref/sp/sao-paulo/debitos-iptu',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream error → 500', async () => {
@@ -556,7 +762,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -567,20 +773,55 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?sql=001.001.0001.0001.00001&parcela=1&ano=2024`, {
+        method: 'POST',
+      });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?sql=9999&parcela=1&ano=2024`, { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/pref/sp/sao-paulo/iptu2via',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream error → 500', async () => {
@@ -632,7 +873,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -643,20 +884,53 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?sql=001.001.0001.0001.00001`, { method: 'POST' });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?sql=9999999`, { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/pref/sp/sao-paulo/iptu',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream error → 500', async () => {
@@ -706,7 +980,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -717,20 +991,53 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?inscricao_imovel=DF-0001234567`, { method: 'POST' });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?inscricao_imovel=DF-9999999`, { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/sefaz/df/iptu',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream error → 500', async () => {
@@ -780,7 +1087,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -791,20 +1098,53 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?tipo_certidao=negativa`, { method: 'POST' });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?tipo_certidao=positiva`, { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/sefaz/spu/certidao-imoveis',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream error → 500', async () => {
@@ -861,7 +1201,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(2);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -872,20 +1212,53 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
 
       const res = await app.request(PATH, { method: 'POST' });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(500);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+      const res = await app.request(PATH, { method: 'POST' });
+
+      expect(res.status).toBe(200);
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/sefaz/spu/dados-imoveis',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream error → 500', async () => {
@@ -934,7 +1307,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -945,20 +1318,53 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Nenhum download disponível' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
 
       const res = await app.request(PATH, { method: 'POST' });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(500);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+      const res = await app.request(PATH, { method: 'POST' });
+
+      expect(res.status).toBe(200);
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/registradores/certid/download',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream error → 500', async () => {
@@ -1010,7 +1416,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1021,12 +1427,44 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(
+        `${PATH}?uf=SP&municipio=SaoPaulo&cartorio=1Cartorio&tipo_certidao=tipo&matricula=12345`,
+        { method: 'POST' },
+      );
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(
@@ -1035,9 +1473,13 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/registradores/certid/pedido',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream error → 500', async () => {
@@ -1092,7 +1534,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1103,20 +1545,53 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Nenhum recibo encontrado' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
 
       const res = await app.request(PATH, { method: 'POST' });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(500);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+      const res = await app.request(PATH, { method: 'POST' });
+
+      expect(res.status).toBe(200);
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/registradores/certid/recibo',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream error → 500', async () => {
@@ -1161,7 +1636,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1172,20 +1647,53 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Conta não encontrada' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
 
       const res = await app.request(PATH, { method: 'POST' });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(500);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+      const res = await app.request(PATH, { method: 'POST' });
+
+      expect(res.status).toBe(200);
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/registradores/info-conta',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream error → 500', async () => {
@@ -1230,7 +1738,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1241,20 +1749,53 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Nenhum download disponível' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
 
       const res = await app.request(PATH, { method: 'POST' });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(500);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+      const res = await app.request(PATH, { method: 'POST' });
+
+      expect(res.status).toBe(200);
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/registradores/matric/download',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream error → 500', async () => {
@@ -1305,7 +1846,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(2);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1316,20 +1857,53 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Nenhuma matrícula encontrada' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
 
       const res = await app.request(PATH, { method: 'POST' });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(500);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+      const res = await app.request(PATH, { method: 'POST' });
+
+      expect(res.status).toBe(200);
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/registradores/matric/lista',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream error → 500', async () => {
@@ -1381,7 +1955,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1392,12 +1966,44 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(
+        `${PATH}?matricula=12345&uf=SP&municipio=SaoPaulo&cartorio=1RI&finalidade=fins_judiciais`,
+        { method: 'POST' },
+      );
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(
@@ -1406,9 +2012,13 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/registradores/matric/pedido',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream error → 500', async () => {
@@ -1463,7 +2073,7 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1474,20 +2084,53 @@ describe('POST /api/infosimples — Prefeituras + Sefaz + Registradores', () => 
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616 → 500 UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Nenhum recibo encontrado' })),
+          JSON.stringify(
+            envelope({
+              code: 616,
+              code_message: 'fonte indisponível',
+              data: null,
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
 
       const res = await app.request(PATH, { method: 'POST' });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(500);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('nada consta — code 612 → 200 (crédito-safe)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(envelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+      const res = await app.request(PATH, { method: 'POST' });
+
+      expect(res.status).toBe(200);
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          fonte: 'consultas/registradores/matric/recibo',
+          status: 'success',
+        }),
+      );
     });
 
     it('falha — upstream error → 500', async () => {

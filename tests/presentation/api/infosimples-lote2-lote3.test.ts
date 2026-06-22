@@ -1,7 +1,8 @@
 /**
  * @fileoverview Testes e2e — Infosimples / Lote 2 (Antecedentes Criminais) + Lote 3 (BCB, B3, CADE, CVM, MPF, MP-SP)
- * 3 casos por endpoint: sucesso (com dados), sucesso sem resultado (code 603, data null), falha upstream (500).
- * Endpoints com params required: adicional caso 400.
+ * 3 casos por endpoint: sucesso (code 200), erro de sistema (code 616 → HTTP 500),
+ * nada consta (code 612 → HTTP 200, credit-safety invariant).
+ * Endpoints com params required/oneOf: adicional caso 400.
  * @module tests/presentation/api/infosimples-lote2-lote3.test
  */
 
@@ -12,9 +13,9 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
   let saveSpy: jest.SpyInstance;
   let fetchSpy: jest.SpyInstance;
 
-  const envelope = (overrides: object) => ({
-    code: 0,
-    code_message: 'OK',
+  const mockEnvelope = (overrides: object) => ({
+    code: 200,
+    code_message: 'Consulta realizada com sucesso',
     header: { api_version: '2', billable: true, price: 0.5, elapsed_time_in_milliseconds: 800 },
     data_count: 0,
     data: null,
@@ -26,7 +27,7 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     process.env.INFOSIMPLES_TOKEN = 'test-token-12345';
     saveSpy = jest.spyOn(rawStore, 'save').mockImplementation(() => {});
     fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify(envelope({})), {
+      new Response(JSON.stringify(mockEnvelope({})), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       }),
@@ -43,14 +44,16 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
   // LOTE 2 — ANTECEDENTES CRIMINAIS
   // ──────────────────────────────────────────────
 
+  // MG — sem parâmetros obrigatórios (rg e cpf opcionais)
   describe('consultas/antecedentes-criminais/mg', () => {
     const PATH = '/api/infosimples/consultas/antecedentes-criminais/mg';
 
-    it('sucesso — retorna 200 com dados de antecedentes MG', async () => {
+    it('sucesso — code 200, retorna HTTP 200 com dados de antecedentes MG', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify(
-            envelope({
+            mockEnvelope({
+              code: 200,
               data_count: 1,
               data: [
                 {
@@ -69,7 +72,7 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -80,26 +83,49 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616, retorna HTTP 500 com kind UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            mockEnvelope({
+              code: 616,
+              code_message: 'Erro na fonte',
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?cpf=11144477735`, { method: 'POST' });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.error).toBeDefined();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error', error_kind: 'UPSTREAM_ERROR' }),
+      );
+    });
+
+    it('nada consta — code 612, retorna HTTP 200 (credit-safety)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockEnvelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?cpf=99999999999`, { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream timeout → 500', async () => {
+    it('falha de transporte — fetch rejeita → HTTP 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
-      const res = await app.request(`${PATH}?rg=123456789`, { method: 'POST' });
+      const res = await app.request(`${PATH}?cpf=11144477735`, { method: 'POST' });
 
       expect(res.status).toBe(500);
       expect(saveSpy).toHaveBeenCalledWith(
@@ -108,14 +134,16 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     });
   });
 
+  // PF/EMIT — required: nome + birthdate
   describe('consultas/antecedentes-criminais/pf/emit', () => {
     const PATH = '/api/infosimples/consultas/antecedentes-criminais/pf/emit';
 
-    it('sucesso — retorna 200 com certidão emitida', async () => {
+    it('sucesso — code 200, retorna HTTP 200 com certidão emitida', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify(
-            envelope({
+            mockEnvelope({
+              code: 200,
               data_count: 1,
               data: [
                 {
@@ -136,7 +164,7 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -147,12 +175,39 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616, retorna HTTP 500 com kind UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            mockEnvelope({
+              code: 616,
+              code_message: 'Erro na fonte',
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?nome=Maria+Souza&birthdate=1990-05-15`, {
+        method: 'POST',
+      });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.error).toBeDefined();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error', error_kind: 'UPSTREAM_ERROR' }),
+      );
+    });
+
+    it('nada consta — code 612, retorna HTTP 200 (credit-safety)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockEnvelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?nome=Pessoa+Inexistente&birthdate=1800-01-01`, {
@@ -160,12 +215,10 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream error → 500', async () => {
+    it('falha de transporte — fetch rejeita → HTTP 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('connection refused'));
 
       const res = await app.request(`${PATH}?nome=Teste&birthdate=1990-01-01`, { method: 'POST' });
@@ -189,14 +242,16 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     });
   });
 
+  // PF/VAL — required: certidao_codigo + birthdate
   describe('consultas/antecedentes-criminais/pf/val', () => {
     const PATH = '/api/infosimples/consultas/antecedentes-criminais/pf/val';
 
-    it('sucesso — retorna 200 com validação da certidão', async () => {
+    it('sucesso — code 200, retorna HTTP 200 com validação da certidão', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify(
-            envelope({
+            mockEnvelope({
+              code: 200,
               data_count: 1,
               data: [
                 {
@@ -217,7 +272,7 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -228,12 +283,39 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616, retorna HTTP 500 com kind UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Certidão não encontrada' })),
+          JSON.stringify(
+            mockEnvelope({
+              code: 616,
+              code_message: 'Erro na fonte',
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?certidao_codigo=CERT-001&birthdate=1990-01-01`, {
+        method: 'POST',
+      });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.error).toBeDefined();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error', error_kind: 'UPSTREAM_ERROR' }),
+      );
+    });
+
+    it('nada consta — code 612, retorna HTTP 200 (credit-safety)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockEnvelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?certidao_codigo=INVALIDO&birthdate=2000-01-01`, {
@@ -241,12 +323,10 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream error → 500', async () => {
+    it('falha de transporte — fetch rejeita → HTTP 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
       const res = await app.request(`${PATH}?certidao_codigo=CERT-001&birthdate=1990-01-01`, {
@@ -266,14 +346,16 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     });
   });
 
+  // SP — required: nome + birthdate + genero
   describe('consultas/antecedentes-criminais/sp', () => {
     const PATH = '/api/infosimples/consultas/antecedentes-criminais/sp';
 
-    it('sucesso — retorna 200 com dados de antecedentes SP', async () => {
+    it('sucesso — code 200, retorna HTTP 200 com dados de antecedentes SP', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify(
-            envelope({
+            mockEnvelope({
+              code: 200,
               data_count: 1,
               data: [
                 {
@@ -294,7 +376,8 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
+      expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           gateway: 'infosimples',
@@ -304,12 +387,39 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616, retorna HTTP 500 com kind UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            mockEnvelope({
+              code: 616,
+              code_message: 'Erro na fonte',
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?nome=Teste&birthdate=1990-01-01&genero=M`, {
+        method: 'POST',
+      });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.error).toBeDefined();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error', error_kind: 'UPSTREAM_ERROR' }),
+      );
+    });
+
+    it('nada consta — code 612, retorna HTTP 200 (credit-safety)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockEnvelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?nome=Ninguem&birthdate=2100-01-01&genero=F`, {
@@ -317,12 +427,10 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream error → 500', async () => {
+    it('falha de transporte — fetch rejeita → HTTP 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
       const res = await app.request(`${PATH}?nome=Teste&birthdate=1990-01-01&genero=M`, {
@@ -346,14 +454,16 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
   // LOTE 3 — BCB
   // ──────────────────────────────────────────────
 
+  // CHEQUES-SEM-FUNDO — sem parâmetros obrigatórios
   describe('consultas/bcb/cheques-sem-fundo', () => {
     const PATH = '/api/infosimples/consultas/bcb/cheques-sem-fundo';
 
-    it('sucesso — retorna 200 com ocorrências de cheques sem fundo', async () => {
+    it('sucesso — code 200, retorna HTTP 200 com ocorrências de cheques sem fundo', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify(
-            envelope({
+            mockEnvelope({
+              code: 200,
               data_count: 1,
               data: [
                 {
@@ -373,7 +483,7 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -384,23 +494,46 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616, retorna HTTP 500 com kind UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            mockEnvelope({
+              code: 616,
+              code_message: 'Erro na fonte',
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?cpf=11144477735`, { method: 'POST' });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.error).toBeDefined();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error', error_kind: 'UPSTREAM_ERROR' }),
+      );
+    });
+
+    it('nada consta — code 612, retorna HTTP 200 (credit-safety)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockEnvelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?cpf=99999999999`, { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream error → 500', async () => {
+    it('falha de transporte — fetch rejeita → HTTP 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
       const res = await app.request(PATH, { method: 'POST' });
@@ -412,14 +545,16 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     });
   });
 
+  // VALORES-RECEBER — oneOf: cpf ou cnpj
   describe('consultas/bcb/valores-receber', () => {
     const PATH = '/api/infosimples/consultas/bcb/valores-receber';
 
-    it('sucesso — retorna 200 com valores a receber por CPF', async () => {
+    it('sucesso — code 200, retorna HTTP 200 com valores a receber por CPF', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify(
-            envelope({
+            mockEnvelope({
+              code: 200,
               data_count: 1,
               data: [
                 {
@@ -438,7 +573,7 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -449,23 +584,46 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616, retorna HTTP 500 com kind UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            mockEnvelope({
+              code: 616,
+              code_message: 'Erro na fonte',
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?cpf=11144477735`, { method: 'POST' });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.error).toBeDefined();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error', error_kind: 'UPSTREAM_ERROR' }),
+      );
+    });
+
+    it('nada consta — code 612, retorna HTTP 200 (credit-safety)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockEnvelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?cnpj=33200056000149`, { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream error → 500', async () => {
+    it('falha de transporte — fetch rejeita → HTTP 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
       const res = await app.request(`${PATH}?cpf=11144477735`, { method: 'POST' });
@@ -489,14 +647,16 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
   // LOTE 3 — B3
   // ──────────────────────────────────────────────
 
+  // PARTICIPANTES — required: cnpj
   describe('consultas/b3/participantes', () => {
     const PATH = '/api/infosimples/consultas/b3/participantes';
 
-    it('sucesso — retorna 200 com dados do participante B3', async () => {
+    it('sucesso — code 200, retorna HTTP 200 com dados do participante B3', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify(
-            envelope({
+            mockEnvelope({
+              code: 200,
               data_count: 1,
               data: [
                 {
@@ -516,7 +676,7 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -527,23 +687,46 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616, retorna HTTP 500 com kind UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            mockEnvelope({
+              code: 616,
+              code_message: 'Erro na fonte',
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?cnpj=33200056000149`, { method: 'POST' });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.error).toBeDefined();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error', error_kind: 'UPSTREAM_ERROR' }),
+      );
+    });
+
+    it('nada consta — code 612, retorna HTTP 200 (credit-safety)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockEnvelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?cnpj=00000000000000`, { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream error → 500', async () => {
+    it('falha de transporte — fetch rejeita → HTTP 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
       const res = await app.request(`${PATH}?cnpj=33200056000149`, { method: 'POST' });
@@ -565,14 +748,16 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
   // LOTE 3 — CADE
   // ──────────────────────────────────────────────
 
+  // PROCESSOS — sem parâmetros obrigatórios (processo opcional)
   describe('consultas/cade/processos', () => {
     const PATH = '/api/infosimples/consultas/cade/processos';
 
-    it('sucesso — retorna 200 com processos CADE', async () => {
+    it('sucesso — code 200, retorna HTTP 200 com processos CADE', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify(
-            envelope({
+            mockEnvelope({
+              code: 200,
               data_count: 1,
               data: [
                 {
@@ -591,7 +776,7 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -602,23 +787,46 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616, retorna HTTP 500 com kind UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            mockEnvelope({
+              code: 616,
+              code_message: 'Erro na fonte',
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?processo=08700.001234/2020-55`, { method: 'POST' });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.error).toBeDefined();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error', error_kind: 'UPSTREAM_ERROR' }),
+      );
+    });
+
+    it('nada consta — code 612, retorna HTTP 200 (credit-safety)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockEnvelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(PATH, { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream error → 500', async () => {
+    it('falha de transporte — fetch rejeita → HTTP 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
       const res = await app.request(PATH, { method: 'POST' });
@@ -634,14 +842,16 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
   // LOTE 3 — CVM
   // ──────────────────────────────────────────────
 
+  // PARTICIPANTE — sem parâmetros obrigatórios (name/cpf/cnpj opcionais)
   describe('consultas/cvm/participante', () => {
     const PATH = '/api/infosimples/consultas/cvm/participante';
 
-    it('sucesso — retorna 200 com dados do participante CVM', async () => {
+    it('sucesso — code 200, retorna HTTP 200 com dados do participante CVM', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify(
-            envelope({
+            mockEnvelope({
+              code: 200,
               data_count: 1,
               data: [
                 {
@@ -660,7 +870,8 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
+      expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           gateway: 'infosimples',
@@ -670,23 +881,46 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616, retorna HTTP 500 com kind UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            mockEnvelope({
+              code: 616,
+              code_message: 'Erro na fonte',
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?name=Fundo+XYZ`, { method: 'POST' });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.error).toBeDefined();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error', error_kind: 'UPSTREAM_ERROR' }),
+      );
+    });
+
+    it('nada consta — code 612, retorna HTTP 200 (credit-safety)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockEnvelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(PATH, { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream error → 500', async () => {
+    it('falha de transporte — fetch rejeita → HTTP 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
       const res = await app.request(PATH, { method: 'POST' });
@@ -698,14 +932,16 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     });
   });
 
+  // PROCESSO-ADMINISTRATIVO — sem parâmetros obrigatórios
   describe('consultas/cvm/processo-administrativo', () => {
     const PATH = '/api/infosimples/consultas/cvm/processo-administrativo';
 
-    it('sucesso — retorna 200 com processos administrativos CVM', async () => {
+    it('sucesso — code 200, retorna HTTP 200 com processos administrativos CVM', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify(
-            envelope({
+            mockEnvelope({
+              code: 200,
               data_count: 1,
               data: [
                 {
@@ -724,7 +960,8 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
+      expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           gateway: 'infosimples',
@@ -734,23 +971,46 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616, retorna HTTP 500 com kind UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            mockEnvelope({
+              code: 616,
+              code_message: 'Erro na fonte',
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
 
       const res = await app.request(PATH, { method: 'POST' });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(500);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(body.error).toBeDefined();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error', error_kind: 'UPSTREAM_ERROR' }),
+      );
     });
 
-    it('falha — upstream error → 500', async () => {
+    it('nada consta — code 612, retorna HTTP 200 (credit-safety)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockEnvelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+      const res = await app.request(PATH, { method: 'POST' });
+
+      expect(res.status).toBe(200);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
+    });
+
+    it('falha de transporte — fetch rejeita → HTTP 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
       const res = await app.request(PATH, { method: 'POST' });
@@ -762,14 +1022,16 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     });
   });
 
+  // SANCIONADORES — sem parâmetros obrigatórios
   describe('consultas/cvm/sancionadores', () => {
     const PATH = '/api/infosimples/consultas/cvm/sancionadores';
 
-    it('sucesso — retorna 200 com sancionados CVM', async () => {
+    it('sucesso — code 200, retorna HTTP 200 com sancionados CVM', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify(
-            envelope({
+            mockEnvelope({
+              code: 200,
               data_count: 1,
               data: [
                 {
@@ -788,7 +1050,8 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
+      expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           gateway: 'infosimples',
@@ -798,23 +1061,46 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616, retorna HTTP 500 com kind UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            mockEnvelope({
+              code: 616,
+              code_message: 'Erro na fonte',
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
 
       const res = await app.request(PATH, { method: 'POST' });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(500);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(body.error).toBeDefined();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error', error_kind: 'UPSTREAM_ERROR' }),
+      );
     });
 
-    it('falha — upstream error → 500', async () => {
+    it('nada consta — code 612, retorna HTTP 200 (credit-safety)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockEnvelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+      const res = await app.request(PATH, { method: 'POST' });
+
+      expect(res.status).toBe(200);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
+    });
+
+    it('falha de transporte — fetch rejeita → HTTP 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
       const res = await app.request(PATH, { method: 'POST' });
@@ -830,14 +1116,16 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
   // LOTE 3 — MPF
   // ──────────────────────────────────────────────
 
+  // AMAZONIA-PROTEGE — oneOf: cpf ou cnpj
   describe('consultas/mpf/amazonia-protege', () => {
     const PATH = '/api/infosimples/consultas/mpf/amazonia-protege';
 
-    it('sucesso — retorna 200 com dados Amazônia Protege', async () => {
+    it('sucesso — code 200, retorna HTTP 200 com dados Amazônia Protege', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify(
-            envelope({
+            mockEnvelope({
+              code: 200,
               data_count: 1,
               data: [
                 {
@@ -858,7 +1146,7 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -869,23 +1157,46 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616, retorna HTTP 500 com kind UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            mockEnvelope({
+              code: 616,
+              code_message: 'Erro na fonte',
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?cpf=11144477735`, { method: 'POST' });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.error).toBeDefined();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error', error_kind: 'UPSTREAM_ERROR' }),
+      );
+    });
+
+    it('nada consta — code 612, retorna HTTP 200 (credit-safety)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockEnvelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?cnpj=33200056000149`, { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream error → 500', async () => {
+    it('falha de transporte — fetch rejeita → HTTP 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
       const res = await app.request(`${PATH}?cpf=11144477735`, { method: 'POST' });
@@ -905,14 +1216,16 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     });
   });
 
+  // CERTIDAO-NEGATIVA — oneOf: cpf ou cnpj
   describe('consultas/mpf/certidao-negativa', () => {
     const PATH = '/api/infosimples/consultas/mpf/certidao-negativa';
 
-    it('sucesso — retorna 200 com certidão negativa MPF', async () => {
+    it('sucesso — code 200, retorna HTTP 200 com certidão negativa MPF', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify(
-            envelope({
+            mockEnvelope({
+              code: 200,
               data_count: 1,
               data: [
                 {
@@ -932,7 +1245,7 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -943,23 +1256,46 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616, retorna HTTP 500 com kind UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            mockEnvelope({
+              code: 616,
+              code_message: 'Erro na fonte',
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?cpf=11144477735`, { method: 'POST' });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.error).toBeDefined();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error', error_kind: 'UPSTREAM_ERROR' }),
+      );
+    });
+
+    it('nada consta — code 612, retorna HTTP 200 (credit-safety)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockEnvelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?cnpj=33200056000149`, { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream error → 500', async () => {
+    it('falha de transporte — fetch rejeita → HTTP 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
       const res = await app.request(`${PATH}?cpf=11144477735`, { method: 'POST' });
@@ -977,14 +1313,16 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     });
   });
 
+  // LAVA-JATO — required: termos
   describe('consultas/mpf/lava-jato', () => {
     const PATH = '/api/infosimples/consultas/mpf/lava-jato';
 
-    it('sucesso — retorna 200 com registros Lava Jato', async () => {
+    it('sucesso — code 200, retorna HTTP 200 com registros Lava Jato', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify(
-            envelope({
+            mockEnvelope({
+              code: 200,
               data_count: 1,
               data: [
                 {
@@ -1003,7 +1341,7 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1014,23 +1352,46 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616, retorna HTTP 500 com kind UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            mockEnvelope({
+              code: 616,
+              code_message: 'Erro na fonte',
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?termos=Empreiteira+ABC`, { method: 'POST' });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.error).toBeDefined();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error', error_kind: 'UPSTREAM_ERROR' }),
+      );
+    });
+
+    it('nada consta — code 612, retorna HTTP 200 (credit-safety)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockEnvelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?termos=TermoInexistente`, { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream error → 500', async () => {
+    it('falha de transporte — fetch rejeita → HTTP 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
       const res = await app.request(`${PATH}?termos=teste`, { method: 'POST' });
@@ -1048,14 +1409,16 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
     });
   });
 
+  // PROCESSOS — required: query
   describe('consultas/mpf/processos', () => {
     const PATH = '/api/infosimples/consultas/mpf/processos';
 
-    it('sucesso — retorna 200 com processos MPF', async () => {
+    it('sucesso — code 200, retorna HTTP 200 com processos MPF', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify(
-            envelope({
+            mockEnvelope({
+              code: 200,
               data_count: 2,
               data: [
                 { numero_processo: '5001234-12.2022.4.03.6100', assunto: 'Crime ambiental' },
@@ -1071,7 +1434,7 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(2);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1082,23 +1445,46 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616, retorna HTTP 500 com kind UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            mockEnvelope({
+              code: 616,
+              code_message: 'Erro na fonte',
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?query=João+Silva`, { method: 'POST' });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.error).toBeDefined();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error', error_kind: 'UPSTREAM_ERROR' }),
+      );
+    });
+
+    it('nada consta — code 612, retorna HTTP 200 (credit-safety)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockEnvelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?query=pessoa+inexistente`, { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream error → 500', async () => {
+    it('falha de transporte — fetch rejeita → HTTP 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
       const res = await app.request(`${PATH}?query=teste`, { method: 'POST' });
@@ -1120,14 +1506,16 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
   // LOTE 3 — MP-SP
   // ──────────────────────────────────────────────
 
+  // INQUERITO-CIVIL — sem parâmetros obrigatórios (cpf/cnpj/nome opcionais)
   describe('consultas/mp/sp/inquerito-civil', () => {
     const PATH = '/api/infosimples/consultas/mp/sp/inquerito-civil';
 
-    it('sucesso — retorna 200 com inquéritos civis MP-SP', async () => {
+    it('sucesso — code 200, retorna HTTP 200 com inquéritos civis MP-SP', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
           JSON.stringify(
-            envelope({
+            mockEnvelope({
+              code: 200,
               data_count: 1,
               data: [
                 {
@@ -1147,7 +1535,7 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1158,23 +1546,46 @@ describe('POST /api/infosimples — Lote 2 + Lote 3', () => {
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('erro de sistema — code 616, retorna HTTP 500 com kind UPSTREAM_ERROR', async () => {
       fetchSpy.mockResolvedValueOnce(
         new Response(
-          JSON.stringify(envelope({ code: 603, code_message: 'Dados não encontrados' })),
+          JSON.stringify(
+            mockEnvelope({
+              code: 616,
+              code_message: 'Erro na fonte',
+              errors: ['fonte indisponível'],
+            }),
+          ),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
+      );
+
+      const res = await app.request(`${PATH}?cnpj=33200056000149`, { method: 'POST' });
+
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.error).toBeDefined();
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error', error_kind: 'UPSTREAM_ERROR' }),
+      );
+    });
+
+    it('nada consta — code 612, retorna HTTP 200 (credit-safety)', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockEnvelope({ code: 612, data_count: 0, data: [] })), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const res = await app.request(`${PATH}?cpf=99999999999`, { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
-      expect(body.data).toBeNull();
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream error → 500', async () => {
+    it('falha de transporte — fetch rejeita → HTTP 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
 
       const res = await app.request(PATH, { method: 'POST' });

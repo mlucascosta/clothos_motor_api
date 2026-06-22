@@ -8,9 +8,9 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { z } from 'zod';
+import { parseInfosimplesResponse } from '../InfosimplesCodeHandler.js';
 import type { IInfosimplesOperation } from '../ports/IInfosimplesOperation.js';
 
 /**
@@ -97,6 +97,6 @@ export class CadastroPessoaJuridica
 
     if (isLeft(result)) return result;
 
-    return parseOrSchemaError(ResponseSchema, result.value, 'infosimples');
+    return parseInfosimplesResponse(ResponseSchema, result.value);
   }
 }

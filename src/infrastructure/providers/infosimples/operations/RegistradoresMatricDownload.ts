@@ -6,8 +6,8 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import { parseInfosimplesResponse } from '../InfosimplesCodeHandler.js';
 import {
   type RegistradoresMatricDownloadItem,
   RegistradoresMatricDownloadResponseSchema,
@@ -33,10 +33,6 @@ export class RegistradoresMatricDownload
       params: cleanParams,
     });
     if (isLeft(result)) return result;
-    return parseOrSchemaError(
-      RegistradoresMatricDownloadResponseSchema,
-      result.value,
-      'infosimples',
-    );
+    return parseInfosimplesResponse(RegistradoresMatricDownloadResponseSchema, result.value);
   }
 }

@@ -6,8 +6,8 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import { parseInfosimplesResponse } from '../InfosimplesCodeHandler.js';
 import { type MpfProcessosItem, MpfProcessosResponseSchema } from '../dtos/MpfProcessosDto.js';
 import type { IInfosimplesOperation } from '../ports/IInfosimplesOperation.js';
 
@@ -29,6 +29,6 @@ export class MpfProcessos implements IInfosimplesOperation<MpfProcessosItem> {
       params: cleanParams,
     });
     if (isLeft(result)) return result;
-    return parseOrSchemaError(MpfProcessosResponseSchema, result.value, 'infosimples');
+    return parseInfosimplesResponse(MpfProcessosResponseSchema, result.value);
   }
 }

@@ -6,8 +6,8 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import { parseInfosimplesResponse } from '../InfosimplesCodeHandler.js';
 import {
   type RegistradoresMatricListaItem,
   RegistradoresMatricListaResponseSchema,
@@ -33,6 +33,6 @@ export class RegistradoresMatricLista
       params: cleanParams,
     });
     if (isLeft(result)) return result;
-    return parseOrSchemaError(RegistradoresMatricListaResponseSchema, result.value, 'infosimples');
+    return parseInfosimplesResponse(RegistradoresMatricListaResponseSchema, result.value);
   }
 }

@@ -6,8 +6,8 @@
 import { isLeft } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import { parseInfosimplesResponse } from '../InfosimplesCodeHandler.js';
 import { type FazendaSpedItem, FazendaSpedResponseSchema } from '../dtos/FazendaSpedDto.js';
 import type { IInfosimplesOperation } from '../ports/IInfosimplesOperation.js';
 
@@ -28,6 +28,6 @@ export class FazendaSped implements IInfosimplesOperation<FazendaSpedItem> {
       params: cleanParams,
     });
     if (isLeft(result)) return result;
-    return parseOrSchemaError(FazendaSpedResponseSchema, result.value, 'infosimples');
+    return parseInfosimplesResponse(FazendaSpedResponseSchema, result.value);
   }
 }

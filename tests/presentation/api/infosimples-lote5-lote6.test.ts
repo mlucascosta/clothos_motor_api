@@ -1,7 +1,8 @@
 /**
  * @fileoverview Testes e2e — Infosimples / Social + Imóveis/Rural (Lotes 5 e 6)
  * Cobre todos os 25 endpoints dos lotes 5 e 6.
- * 3 casos por endpoint: sucesso, sucesso-sem-resultado (603), falha upstream.
+ * 3 casos por endpoint: sucesso (code 200), erro upstream (code 616 → HTTP 500),
+ * nada consta (code 612 → HTTP 200, status success — invariante de crédito).
  * Endpoints com required recebem caso 400 adicional.
  * @module tests/presentation/api/infosimples-lote5-lote6.test
  */
@@ -223,8 +224,12 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
   let saveSpy: jest.SpyInstance;
   let fetchSpy: jest.SpyInstance;
 
+  /**
+   * Monta um envelope Infosimples válido.
+   * Base usa code:200 (single_result) — sobrescreva conforme necessário.
+   */
   const envelope = (overrides: object) => ({
-    code: 0,
+    code: 200,
     code_message: 'OK',
     header: { api_version: '2', billable: true, price: 0.5, elapsed_time_in_milliseconds: 800 },
     data_count: 0,
@@ -233,13 +238,31 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
     ...overrides,
   });
 
-  const noResult = {
-    code: 603,
+  /**
+   * Envelope "nada consta" — code 612 (inexistent).
+   * Deve retornar HTTP 200 e status:'success' (invariante de crédito:
+   * nada-consta é resposta legítima, não erro faturável).
+   */
+  const nadaConsta = {
+    code: 612,
     code_message: 'Dados não encontrados',
     header: { api_version: '2', billable: true, price: 0.5 },
     data_count: 0,
     data: null,
     errors: [],
+  };
+
+  /**
+   * Envelope de erro upstream — code 616 (source_error).
+   * Deve retornar HTTP 500, kind:'UPSTREAM_ERROR', status:'error'.
+   */
+  const upstreamError = {
+    code: 616,
+    code_message: 'Erro na fonte',
+    header: { api_version: '2', billable: false, price: 0 },
+    data_count: 0,
+    data: null,
+    errors: ['fonte indisponível'],
   };
 
   beforeEach(() => {
@@ -284,7 +307,7 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       const res = await app.request(`${PATH}?cnpj=33200056000149`, { method: 'POST' });
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(0);
+      expect(body.code).toBe(200);
       expect(body.data_count).toBe(1);
       expect(saveSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -295,9 +318,9 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       );
     });
 
-    it('sucesso sem resultado — code 603, data null', async () => {
+    it('nada consta — code 612, retorna 200 com status success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -305,12 +328,32 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       const res = await app.request(`${PATH}?cnpj=00000000000000`, { method: 'POST' });
       expect(res.status).toBe(200);
       const body = (await res.json()) as Record<string, unknown>;
-      expect(body.code).toBe(603);
+      expect(body.code).toBe(612);
       expect(body.data).toBeNull();
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(`${PATH}?cnpj=33200056000149`, { method: 'POST' });
+      expect(res.status).toBe(500);
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(body.kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gateway: 'infosimples',
+          status: 'error',
+          error_kind: 'UPSTREAM_ERROR',
+        }),
+      );
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(`${PATH}?cnpj=33200056000149`, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -344,19 +387,33 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       );
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(PATH, { method: 'POST' });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('connection refused'));
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -385,19 +442,33 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(PATH, { method: 'POST' });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -430,9 +501,9 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -441,10 +512,28 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
         method: 'POST',
       });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(`${PATH}?cnpj_estabelecimento=33200056000149`, {
+        method: 'POST',
+      });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'error', error_kind: 'UPSTREAM_ERROR' }),
+      );
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(`${PATH}?cnpj_estabelecimento=33200056000149`, {
         method: 'POST',
@@ -484,9 +573,9 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -496,10 +585,27 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
         { method: 'POST' },
       );
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(
+        `${PATH}?nis=12345678901&name=João&birthdate=1990-01-01&cpf=11144477735`,
+        { method: 'POST' },
+      );
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(
         `${PATH}?nis=12345678901&name=João&birthdate=1990-01-01&cpf=11144477735`,
@@ -540,9 +646,9 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -552,10 +658,27 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
         { method: 'POST' },
       );
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(
+        `${PATH}?cpf=11144477735&nome=João&data_nascimento=1990-01-01`,
+        { method: 'POST' },
+      );
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(
         `${PATH}?cpf=11144477735&nome=João&data_nascimento=1990-01-01`,
@@ -590,19 +713,33 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(PATH, { method: 'POST' });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -631,19 +768,33 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(`${PATH}?ca=99999`, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(`${PATH}?ca=12345`, { method: 'POST' });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(`${PATH}?ca=12345`, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -678,19 +829,33 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(PATH, { method: 'POST' });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -723,19 +888,33 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(`${PATH}?car=INVALIDO`, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(`${PATH}?car=SP-3550308-A1B2C3D4`, { method: 'POST' });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(`${PATH}?car=SP-3550308-A1B2C3D4`, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -770,19 +949,33 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(`${PATH}?car=INVALIDO`, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(`${PATH}?car=SP-3550308-A1B2C3D4`, { method: 'POST' });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(`${PATH}?car=SP-3550308-A1B2C3D4`, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -817,19 +1010,33 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(`${PATH}?car=INVALIDO`, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(`${PATH}?car=SP-3550308-A1B2C3D4`, { method: 'POST' });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(`${PATH}?car=SP-3550308-A1B2C3D4`, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -864,19 +1071,33 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(`${PATH}?car=INVALIDO`, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(`${PATH}?car=SP-3550308-A1B2C3D4`, { method: 'POST' });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(`${PATH}?car=SP-3550308-A1B2C3D4`, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -913,19 +1134,35 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(`${PATH}?numero_certificacao=INVALIDO`, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(`${PATH}?numero_certificacao=SP-1234567890`, {
+        method: 'POST',
+      });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(`${PATH}?numero_certificacao=SP-1234567890`, {
         method: 'POST',
@@ -962,19 +1199,33 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(`${PATH}?codigo_parcela=INVALIDO`, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(`${PATH}?codigo_parcela=ABC123`, { method: 'POST' });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(`${PATH}?codigo_parcela=ABC123`, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -1012,19 +1263,33 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(PATH, { method: 'POST' });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -1053,19 +1318,33 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(PATH, { method: 'POST' });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -1099,9 +1378,9 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -1111,10 +1390,27 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
         { method: 'POST' },
       );
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(
+        `${PATH}?codigo_imovel=12345&uf_sede=SP&municipio_sede=SaoPaulo`,
+        { method: 'POST' },
+      );
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(
         `${PATH}?codigo_imovel=12345&uf_sede=SP&municipio_sede=SaoPaulo`,
@@ -1152,19 +1448,33 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(`${PATH}?uf=ZZ&municipio=Inexistente`, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(`${PATH}?uf=SP&municipio=SaoPaulo`, { method: 'POST' });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(`${PATH}?uf=SP&municipio=SaoPaulo`, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -1199,19 +1509,33 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(`${PATH}?camada=ZZ`, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(`${PATH}?camada=SP`, { method: 'POST' });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(`${PATH}?camada=SP`, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -1248,19 +1572,33 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(`${PATH}?ano=1800`, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(`${PATH}?ano=2023`, { method: 'POST' });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(`${PATH}?ano=2023`, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -1295,19 +1633,33 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(PATH, { method: 'POST' });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -1336,19 +1688,33 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(PATH, { method: 'POST' });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -1377,19 +1743,33 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(PATH, { method: 'POST' });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(PATH, { method: 'POST' });
       expect(res.status).toBe(500);
@@ -1420,9 +1800,9 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('sucesso sem resultado — code 603', async () => {
+    it('nada consta — code 612 → 200 success', async () => {
       fetchSpy.mockResolvedValueOnce(
-        new Response(JSON.stringify(noResult), {
+        new Response(JSON.stringify(nadaConsta), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -1431,10 +1811,26 @@ describe('POST /api/infosimples — Social + Imóveis/Rural', () => {
         method: 'POST',
       });
       expect(res.status).toBe(200);
-      expect(((await res.json()) as Record<string, unknown>).code).toBe(603);
+      expect(((await res.json()) as Record<string, unknown>).code).toBe(612);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'success' }));
     });
 
-    it('falha — upstream throw → 500', async () => {
+    it('erro upstream — code 616 → 500 UPSTREAM_ERROR', async () => {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamError), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const res = await app.request(`${PATH}?codigo_ipva=ABC1234&ano_fabricacao=2020`, {
+        method: 'POST',
+      });
+      expect(res.status).toBe(500);
+      expect(((await res.json()) as Record<string, unknown>).kind).toBe('UPSTREAM_ERROR');
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+    });
+
+    it('falha de transporte — fetch rejeita → 500', async () => {
       fetchSpy.mockRejectedValueOnce(new Error('timeout'));
       const res = await app.request(`${PATH}?codigo_ipva=ABC1234&ano_fabricacao=2020`, {
         method: 'POST',
