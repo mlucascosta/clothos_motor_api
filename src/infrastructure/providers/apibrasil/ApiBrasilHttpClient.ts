@@ -5,10 +5,24 @@
  * @module infrastructure/providers/apibrasil/ApiBrasilHttpClient
  */
 
-import type { Either } from '@shared/domain/Either.js';
-import type { SourceError } from '@shared/domain/errors/SourceError.js';
+import { type Either, isRight, left } from '@shared/domain/Either.js';
+import { SourceError } from '@shared/domain/errors/SourceError.js';
 import { FetchHttpClient } from '@shared/infrastructure/FetchHttpClient.js';
 import type { HttpRequestOptions, IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+
+/**
+ * Detecta o envelope de erro da ApiBrasil retornado com HTTP 200.
+ * O gateway sinaliza falha com `error: true` no corpo (confirmado nos SDKs oficiais
+ * `apigratis-*`), mantendo status HTTP 200 — sem este guard, uma consulta paga que
+ * falhou na origem seria tratada como sucesso (crédito gasto à toa).
+ */
+function isApiBrasilErrorEnvelope(value: unknown): value is { error: true; message?: unknown } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    (value as Record<string, unknown>)['error'] === true
+  );
+}
 
 /**
  * Cliente HTTP ApiBrasil v2 com autenticação Bearer + DeviceToken e defaults pré-configurados.
@@ -71,12 +85,21 @@ export class ApiBrasilHttpClient implements IHttpClient {
    * @param {HttpRequestOptions} [options] - Opções adicionais (params, body, headers) — `method` é ignorado
    * @returns {Promise<Either<SourceError, T>>} Resposta tipada ou erro de source
    */
-  request<T>(path: string, options?: HttpRequestOptions): Promise<Either<SourceError, T>> {
+  async request<T>(path: string, options?: HttpRequestOptions): Promise<Either<SourceError, T>> {
     const mergedOptions: HttpRequestOptions = {
       ...options,
       method: 'POST',
     };
-    return this.http.request<T>(path, mergedOptions);
+    const result = await this.http.request<T>(path, mergedOptions);
+    // Guard de falso-sucesso: ApiBrasil sinaliza erro com `error: true` em HTTP 200.
+    if (isRight(result) && isApiBrasilErrorEnvelope(result.value)) {
+      const message =
+        typeof result.value.message === 'string'
+          ? result.value.message
+          : 'ApiBrasil retornou error=true';
+      return left(new SourceError('UPSTREAM_ERROR', 'apibrasil', message));
+    }
+    return result;
   }
 
   /**
