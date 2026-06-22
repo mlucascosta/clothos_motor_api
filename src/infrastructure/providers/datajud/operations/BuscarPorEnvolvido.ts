@@ -1,14 +1,25 @@
 /**
  * @fileoverview Operação de busca por envolvido (parte) no DataJud.
- * Encapsula construção do DSL Elasticsearch para filtro de nome ou CPF/CNPJ.
+ *
+ * ⚠️ LIMITAÇÃO DA API PÚBLICA DO CNJ: o índice Elasticsearch público do DataJud
+ * **não expõe dados das partes** (removidos por privacidade). Os campos reais do
+ * `_source` são: numeroProcesso, classe, orgaoJulgador, assuntos, movimentos,
+ * grau, dataAjuizamento, tribunal, sistema, formato, nivelSigilo — não há
+ * `partes.nome` nem `partes.documento`. Verificado contra resposta real em
+ * 2026-06 (api_publica_tjsp).
+ *
+ * Consequência: buscar por nome/CPF/CNPJ aqui retornaria SEMPRE 0 hits
+ * silenciosamente — o que faria o dossiê tratar "sem resultados" como "sem
+ * processos" e potencialmente PULAR o Escavador (que é a fonte correta para
+ * busca por envolvido). Para evitar esse falso-negativo, a operação retorna um
+ * erro explícito em vez de emitir uma query inútil.
+ *
  * @module infrastructure/providers/datajud/operations/BuscarPorEnvolvido
  */
 
-import type { Either } from '@shared/domain/Either.js';
-import type { SourceError } from '@shared/domain/errors/SourceError.js';
-import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
+import { type Either, left } from '@shared/domain/Either.js';
+import { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { DataJudSearchResponseDto } from '../dtos/DataJudSearchResponseDto.js';
-import { BuscarGenericoDataJud } from './BuscarGenericoDataJud.js';
 
 export interface BuscarPorEnvolvidoInput {
   sigla: string;
@@ -17,36 +28,19 @@ export interface BuscarPorEnvolvidoInput {
   size?: number;
 }
 
+const UNSUPPORTED_MESSAGE =
+  'A API pública do DataJud (CNJ) não expõe dados de partes — busca por nome/CPF/CNPJ não é suportada. Use o Escavador para busca judicial por envolvido.';
+
 /**
- * Busca processos por envolvido (parte) — nome ou CPF/CNPJ.
- * Constrói DSL Elasticsearch com bool.must internamente.
+ * Busca processos por envolvido (parte) — NÃO SUPORTADA pela API pública do CNJ.
+ * Retorna sempre um erro explícito (ver nota do módulo).
  *
  * @class BuscarPorEnvolvido
  */
 export class BuscarPorEnvolvido {
-  private readonly buscar: BuscarGenericoDataJud;
-
-  constructor(http: IHttpClient) {
-    this.buscar = new BuscarGenericoDataJud(http);
-  }
-
   async execute(
-    input: BuscarPorEnvolvidoInput,
+    _input: BuscarPorEnvolvidoInput,
   ): Promise<Either<SourceError, DataJudSearchResponseDto>> {
-    const must: Array<Record<string, unknown>> = [];
-    if (input.nome) {
-      must.push({ match: { 'partes.nome': input.nome } });
-    }
-    if (input.cpfCnpj) {
-      must.push({ match: { 'partes.documento': input.cpfCnpj } });
-    }
-
-    return this.buscar.execute({
-      sigla: input.sigla,
-      body: {
-        query: { bool: { must } },
-        size: input.size,
-      },
-    });
+    return left(new SourceError('UPSTREAM_ERROR', 'datajud', UNSUPPORTED_MESSAGE));
   }
 }

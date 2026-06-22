@@ -209,7 +209,7 @@ datajud.post('/envolvido', async (c) => {
     c,
     { gateway: GW, fonte: 'envolvido', tipo_param: tipoParam, param: paramValue },
     () =>
-      new BuscarPorEnvolvido(buildHttp()).execute({
+      new BuscarPorEnvolvido().execute({
         sigla,
         ...(parsed.data.nome !== undefined ? { nome: parsed.data.nome } : {}),
         ...(parsed.data.cpfCnpj !== undefined ? { cpfCnpj: parsed.data.cpfCnpj } : {}),
