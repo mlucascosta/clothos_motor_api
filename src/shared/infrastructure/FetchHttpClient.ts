@@ -6,6 +6,14 @@ import type { HttpRequestOptions, IHttpClient } from './IHttpClient.js';
 const RETRYABLE_KINDS = new Set(['UPSTREAM_ERROR', 'TIMEOUT']);
 
 /**
+ * User-Agent padrão enviado em toda requisição.
+ * Necessário: o UA default do runtime (`node`) é bloqueado por WAFs como o
+ * Cloudflare da BrasilAPI (HTTP 403). Um UA identificável evita o bloqueio.
+ * Sobrescrevível por provider via `defaultHeaders` ou por requisição via `options.headers`.
+ */
+const DEFAULT_USER_AGENT = 'clothos-motor/0.1 (+https://reduto.finder)';
+
+/**
  * Configuração para cliente HTTP baseado em Fetch API.
  *
  * @interface FetchHttpClientConfig
@@ -193,6 +201,7 @@ export class FetchHttpClient implements IHttpClient {
         method: options.method ?? 'GET',
         signal: AbortSignal.timeout(timeoutMs),
         headers: {
+          'User-Agent': DEFAULT_USER_AGENT,
           'Content-Type': 'application/json',
           Accept: 'application/json',
           ...this.config.defaultHeaders,
@@ -256,6 +265,7 @@ export class FetchHttpClient implements IHttpClient {
         method: options.method ?? 'GET',
         signal: AbortSignal.timeout(timeoutMs),
         headers: {
+          'User-Agent': DEFAULT_USER_AGENT,
           ...this.config.defaultHeaders,
           ...options.headers,
         },
