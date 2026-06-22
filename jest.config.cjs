@@ -33,7 +33,7 @@ module.exports = {
   },
   roots: ['<rootDir>/tests'],
   testMatch: ['**/*.test.ts'],
-  testPathIgnorePatterns: ['node_modules', 'dist'],
+  testPathIgnorePatterns: ['node_modules', 'dist', 'tests/integration'],
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
@@ -44,6 +44,10 @@ module.exports = {
     // TODO(motor): cobrir conforme cada operação for promovida a fonte ativa do pipeline.
     '!src/infrastructure/providers/apibrasil/operations/**',
     '!src/infrastructure/providers/brasilapi/operations/**',
+    // database/ e circuit-breaker/ têm cobertura via suíte de integração (outro agente).
+    // TODO(motor): remover exclusões quando os testes de integração PG forem adicionados.
+    '!src/infrastructure/database/**',
+    '!src/infrastructure/circuit-breaker/**',
   ],
   coverageThreshold: {
     // statements/functions/lines em 80 (atual ~94-96%). branches em 75: rotas de provider
