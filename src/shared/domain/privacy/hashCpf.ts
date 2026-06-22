@@ -6,20 +6,26 @@
  */
 
 import { createHash } from 'node:crypto';
+import { cleanDocument } from '../identifiers.js';
 
 /**
  * Retorna hash SHA-256 do CPF se o param for um CPF válido (11 dígitos numéricos).
- * Para CNPJ (14 dígitos) ou outros valores, retorna o param original sem modificação.
+ * Para CNPJ (numérico ou alfanumérico) ou outros valores, retorna o param original sem modificação.
  *
- * Regra: apenas `tipo_param === 'cpf_cnpj'` + param com 11 dígitos após strip de não-numéricos.
+ * Regra: apenas `tipo_param === 'cpf_cnpj'` + valor que, após remover a máscara, seja exatamente
+ * 11 dígitos numéricos. Um CNPJ **alfanumérico** preserva suas letras em {@link cleanDocument},
+ * então nunca é confundido com CPF (evita hashear dado público como se fosse PII).
  *
  * @param {string | null} tipoParam - Tipo do parâmetro (ex: 'cpf_cnpj', 'cnpj', 'tribunal')
  * @param {string | null} param - Valor a avaliar
  * @returns {string | null} Hash SHA-256 se CPF, original caso contrário, null se null
  */
 export function hashCpfIfNeeded(tipoParam: string | null, param: string | null): string | null {
-  if (tipoParam === 'cpf_cnpj' && param !== null && /^\d{11}$/.test(param.replace(/\D/g, ''))) {
-    return createHash('sha256').update(param.replace(/\D/g, '')).digest('hex');
+  if (tipoParam === 'cpf_cnpj' && param !== null) {
+    const cleaned = cleanDocument(param);
+    if (/^\d{11}$/.test(cleaned)) {
+      return createHash('sha256').update(cleaned).digest('hex');
+    }
   }
   return param;
 }

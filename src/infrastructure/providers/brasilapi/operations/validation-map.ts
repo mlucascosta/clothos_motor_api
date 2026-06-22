@@ -9,7 +9,7 @@
 /**
  * Mapa de validação: nome da operation → lista de parâmetros obrigatórios.
  *
- * - `cnpj` requer `cnpj` (14 dígitos, formatado ou não)
+ * - `cnpj` requer `cnpj` (14 caracteres alfanuméricos, formatado ou não)
  * - `registrobr` requer `domain` (ex.: `'exemplo.com.br'`)
  * - `cvm_corretora` requer `cnpj` (CNPJ da corretora)
  *

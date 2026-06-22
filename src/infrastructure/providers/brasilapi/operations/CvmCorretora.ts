@@ -9,6 +9,7 @@ import { isLeft, left } from '@shared/domain/Either.js';
 import type { Either } from '@shared/domain/Either.js';
 import { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { SourceError as SourceErrorType } from '@shared/domain/errors/SourceError.js';
+import { cleanDocument } from '@shared/domain/identifiers.js';
 import { parseOrSchemaError } from '@shared/domain/parseOrSchemaError.js';
 import type { IHttpClient } from '@shared/infrastructure/IHttpClient.js';
 import { CvmCorretoraSchema } from '../dtos/CvmCorretoraDto.js';
@@ -56,8 +57,8 @@ export class CvmCorretora implements ICvmCorretora {
     if (!cnpjRaw) {
       return left(new SourceError('UPSTREAM_ERROR', 'brasilapi', 'Parâmetro cnpj obrigatório'));
     }
-    const digits = cnpjRaw.replace(/\D/g, '');
-    const resolvedPath = this.path.replace('{cnpj}', digits);
+    const cnpjClean = cleanDocument(cnpjRaw);
+    const resolvedPath = this.path.replace('{cnpj}', cnpjClean);
     const result = await this.http.request<unknown>(resolvedPath);
     if (isLeft(result)) return result;
     return parseOrSchemaError(CvmCorretoraSchema, result.value, 'brasilapi');

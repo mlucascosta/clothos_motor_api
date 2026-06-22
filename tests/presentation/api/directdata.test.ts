@@ -147,4 +147,20 @@ describe('GET /api/directdata/:endpoint (DDD/SOLID)', () => {
 
     expect(res.status).toBe(400);
   });
+
+  it('aceita CNPJ alfanumérico (12 alfanuméricos + 2 DV) sem 422', async () => {
+    const res = await app.request('/api/directdata/CadastroPessoaJuridica?CNPJ=12ABC34501DE35');
+
+    expect(res.status).toBe(200);
+    expect(saveSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ tipo_param: 'cnpj', param: '12ABC34501DE35' }),
+    );
+  });
+
+  it('retorna 422 quando o documento tem formato inválido', async () => {
+    const res = await app.request('/api/directdata/CadastroPessoaJuridica?CNPJ=123');
+
+    expect(res.status).toBe(422);
+    expect(saveSpy).not.toHaveBeenCalled();
+  });
 });

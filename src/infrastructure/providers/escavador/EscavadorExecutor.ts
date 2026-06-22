@@ -12,6 +12,7 @@ import type {
 } from '@application/queries/ports/ISourceExecutor.js';
 import { type Either, isLeft, left, right } from '@shared/domain/Either.js';
 import { SourceError } from '@shared/domain/errors/SourceError.js';
+import { cleanDocument } from '@shared/domain/identifiers.js';
 import type { BuscaResultItem } from './dtos/BuscaGeralDto.js';
 import type { ProcessoResumido } from './dtos/PessoaDto.js';
 import type { IBuscarGeral } from './ports/IBuscarGeral.js';
@@ -268,9 +269,12 @@ export class EscavadorExecutor implements ISourceExecutor {
    * @returns {BuscaResultItem | undefined} Item encontrado ou undefined se lista vazia
    */
   private findBestMatch(items: BuscaResultItem[], cnpj: string): BuscaResultItem | undefined {
-    const clean = cnpj.replace(/\D/g, '');
+    const clean = cleanDocument(cnpj);
     return (
-      items.find((i) => (i['cnpj'] as string | undefined)?.replace(/\D/g, '') === clean) ?? items[0]
+      items.find((i) => {
+        const itemCnpj = i['cnpj'] as string | undefined;
+        return itemCnpj !== undefined && cleanDocument(itemCnpj) === clean;
+      }) ?? items[0]
     );
   }
 

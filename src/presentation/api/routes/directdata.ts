@@ -36,6 +36,7 @@ import { DirectDataHttpClient } from '@infrastructure/providers/directdata/Direc
 import { resolveOperation } from '@infrastructure/providers/directdata/operations/registry.js';
 import { directDataRequiredParams } from '@infrastructure/providers/directdata/operations/validation-map.js';
 import type { IDirectDataOperation } from '@infrastructure/providers/directdata/ports/IDirectDataOperation.js';
+import { isCpfOrCnpj } from '@shared/domain/identifiers.js';
 import { Hono } from 'hono';
 import { handleOp } from '../handleOp.js';
 
@@ -104,11 +105,10 @@ directdata.get('/:endpoint{.+}', async (c) => {
   }
 
   if ((tipoParam === 'cpf' || tipoParam === 'cnpj' || tipoParam === 'cpf_cnpj') && paramValue) {
-    const digits = paramValue.replace(/\D/g, '');
-    if (digits.length !== 11 && digits.length !== 14) {
+    if (!isCpfOrCnpj(paramValue)) {
       return c.json(
         {
-          error: `Formato inválido para ${tipoParam.toUpperCase()}: deve ter 11 (CPF) ou 14 (CNPJ) dígitos`,
+          error: `Formato inválido para ${tipoParam.toUpperCase()}: CPF deve ter 11 dígitos; CNPJ, 14 caracteres (12 alfanuméricos + 2 DV)`,
         },
         422,
       );

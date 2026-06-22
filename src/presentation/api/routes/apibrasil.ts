@@ -10,7 +10,7 @@
  * ### Pipeline de Requisição
  * 1. `POST /api/apibrasil/:endpoint` recebe body JSON + query params
  * 2. Valida params obrigatórios contra `apibrasilRequiredParams`
- * 3. Valida formato de CPF (11 dígitos) ou CNPJ (14 dígitos) quando presentes
+ * 3. Valida formato de CPF (11 dígitos) ou CNPJ (14 caracteres alfanuméricos) quando presentes
  * 4. Resolve operation via `resolveOperation(endpoint, buildHttp())`
  * 5. Executa `operation.execute(mergedParams)` e persiste resultado em MongoDB
  *
@@ -35,6 +35,7 @@ import {
 } from '@infrastructure/providers/apibrasil/operations/registry.js';
 import { apibrasilRequiredParams } from '@infrastructure/providers/apibrasil/operations/validation-map.js';
 import type { IApiBrasilOperation } from '@infrastructure/providers/apibrasil/ports/IApiBrasilOperation.js';
+import { isCpfOrCnpj } from '@shared/domain/identifiers.js';
 import { Hono } from 'hono';
 import { handleOp } from '../handleOp.js';
 
@@ -128,13 +129,12 @@ apibrasil.post('/:endpoint{.+}', async (c) => {
     }
   }
 
-  // ─── Validação de formato CPF/CNPJ ───
+  // ─── Validação de formato CPF/CNPJ (CNPJ alfanumérico — ver shared/domain/identifiers) ───
   if ((tipoParam === 'cpf' || tipoParam === 'cnpj') && paramValue) {
-    const digits = paramValue.replace(/\D/g, '');
-    if (digits.length !== 11 && digits.length !== 14) {
+    if (!isCpfOrCnpj(paramValue)) {
       return c.json(
         {
-          error: `Formato inválido para ${tipoParam.toUpperCase()}: deve ter 11 (CPF) ou 14 (CNPJ) dígitos`,
+          error: `Formato inválido para ${tipoParam.toUpperCase()}: CPF deve ter 11 dígitos; CNPJ, 14 caracteres (12 alfanuméricos + 2 DV)`,
         },
         422,
       );
