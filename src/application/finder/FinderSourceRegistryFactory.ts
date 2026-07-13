@@ -26,6 +26,8 @@ import { ObterProcessosPessoa } from '@infrastructure/providers/escavador/operat
 import { InfosimplesExecutor } from '@infrastructure/providers/infosimples/InfosimplesExecutor.js';
 import { InfosimplesHttpClient } from '@infrastructure/providers/infosimples/InfosimplesHttpClient.js';
 import { CadastroPessoaJuridica as InfosimplesCadastroPessoaJuridica } from '@infrastructure/providers/infosimples/operations/CadastroPessoaJuridica.js';
+import { PortalTransparenciaCeis } from '@infrastructure/providers/infosimples/operations/PortalTransparenciaCeis.js';
+import { PortalTransparenciaCnep } from '@infrastructure/providers/infosimples/operations/PortalTransparenciaCnep.js';
 import type { Pool } from 'pg';
 import { FinderJobProcessor } from './FinderJobProcessor.js';
 import { type RegisteredSource, SourceRegistry } from './SourceRegistry.js';
@@ -135,6 +137,22 @@ export function createCnpjFinderSourceRegistry(
       id: 'infosimples_cnpj',
       stage: 1,
       executor: new InfosimplesExecutor(new InfosimplesCadastroPessoaJuridica(infosimplesHttp)),
+    });
+    sources.push({
+      id: 'infosimples_ceis',
+      stage: 1,
+      executor: new InfosimplesExecutor(
+        new PortalTransparenciaCeis(infosimplesHttp),
+        'infosimples_ceis',
+      ),
+    });
+    sources.push({
+      id: 'infosimples_cnep',
+      stage: 1,
+      executor: new InfosimplesExecutor(
+        new PortalTransparenciaCnep(infosimplesHttp),
+        'infosimples_cnep',
+      ),
     });
   }
   if (apiBrasilApiKey !== undefined && apiBrasilDeviceToken !== undefined) {

@@ -52,4 +52,15 @@ describe('InfosimplesExecutor', () => {
     expect(isLeft(result)).toBe(true);
     if (isLeft(result)) expect(result.value.kind).toBe('RATE_LIMITED');
   });
+
+  it('preserves the configured source code in execution results', async () => {
+    const operation = {
+      execute: jest.fn().mockResolvedValue(right({ data: [] })),
+    } as unknown as IInfosimplesOperation;
+
+    const result = await new InfosimplesExecutor(operation, 'infosimples_ceis').execute(context);
+
+    expect(isRight(result)).toBe(true);
+    if (isRight(result)) expect(result.value.source).toBe('infosimples_ceis');
+  });
 });

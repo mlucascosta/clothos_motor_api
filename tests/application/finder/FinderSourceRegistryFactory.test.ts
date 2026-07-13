@@ -73,6 +73,12 @@ describe('createCnpjFinderSourceRegistry', () => {
     expect(withCredential.plan({ sources: ['infosimples_cnpj'] })).toEqual([
       expect.objectContaining({ id: 'infosimples_cnpj', stage: 1 }),
     ]);
+    expect(withCredential.plan({ sources: ['infosimples_ceis'] })).toEqual([
+      expect.objectContaining({ id: 'infosimples_ceis', stage: 1 }),
+    ]);
+    expect(withCredential.plan({ sources: ['infosimples_cnep'] })).toEqual([
+      expect.objectContaining({ id: 'infosimples_cnep', stage: 1 }),
+    ]);
   });
 
   it('enables ApiBrasil only with both required credentials', () => {
