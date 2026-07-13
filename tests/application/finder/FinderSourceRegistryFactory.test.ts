@@ -45,6 +45,21 @@ describe('createCnpjFinderSourceRegistry', () => {
     ]);
   });
 
+  it('resolves supported Laravel source codes to Motor executors', () => {
+    const registry = createCnpjFinderSourceRegistry(environment);
+
+    expect(registry.plan({ sources: ['directdata_qsa'] }).map((source) => source.id)).toEqual([
+      'directdata',
+    ]);
+    expect(registry.plan({ sources: ['escavador_summary'] }).map((source) => source.id)).toEqual([
+      'escavador',
+    ]);
+    expect(registry.plan({ sources: ['datajud_processos'] }).map((source) => source.id)).toEqual([
+      'escavador',
+      'datajud',
+    ]);
+  });
+
   it('enables Infosimples only when its credential is configured', () => {
     const withoutCredential = createCnpjFinderSourceRegistry(environment);
     const withCredential = createCnpjFinderSourceRegistry({

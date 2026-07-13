@@ -36,6 +36,17 @@ describe('SourceRegistry', () => {
       'datajud',
     ]);
   });
+
+  it('resolves commercial source codes to their canonical executor ids', () => {
+    const registry = new SourceRegistry(
+      [{ id: 'provider', aliases: ['provider_cnpj'], stage: 1, executor: executor('provider') }],
+      {},
+    );
+
+    expect(registry.plan({ sources: ['provider_cnpj'] }).map((source) => source.id)).toEqual([
+      'provider',
+    ]);
+  });
 });
 
 describe('derived Finder artifacts', () => {

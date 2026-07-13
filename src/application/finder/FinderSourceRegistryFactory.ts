@@ -90,6 +90,7 @@ export function createCnpjFinderSourceRegistry(
   const sources: RegisteredSource[] = [
     {
       id: 'directdata',
+      aliases: ['directdata_qsa'],
       stage: 1,
       executor: new DirectDataExecutor({
         cadastroPessoaFisica: new CadastroPessoaFisica(directDataHttp),
@@ -99,6 +100,7 @@ export function createCnpjFinderSourceRegistry(
     },
     {
       id: 'escavador',
+      aliases: ['escavador_summary', 'escavador_detalhes'],
       stage: 1,
       executor: new EscavadorExecutor({
         buscarGeral: new BuscarGeral(escavadorHttp),
@@ -112,6 +114,7 @@ export function createCnpjFinderSourceRegistry(
     },
     {
       id: 'datajud',
+      aliases: ['datajud_processos'],
       stage: 2,
       dependsOn: ['escavador'],
       requiresCandidate: true,

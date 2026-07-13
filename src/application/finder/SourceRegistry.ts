@@ -3,6 +3,7 @@ import type { FinderSourceSelection } from './contracts.js';
 
 export interface RegisteredSource {
   id: string;
+  aliases?: readonly string[];
   stage: number;
   dependsOn?: readonly string[];
   requiresCandidate?: boolean;
@@ -16,8 +17,11 @@ export class SourceRegistry {
     sources: readonly RegisteredSource[],
     private readonly profiles: Readonly<Record<string, readonly string[]>>,
   ) {
-    this.byId = new Map(sources.map((source) => [source.id, source]));
-    if (this.byId.size !== sources.length) throw new Error('duplicate_source_id');
+    const entries = sources.flatMap((source) =>
+      [source.id, ...(source.aliases ?? [])].map((id) => [id, source] as const),
+    );
+    this.byId = new Map(entries);
+    if (this.byId.size !== entries.length) throw new Error('duplicate_source_id');
   }
 
   plan(selection: FinderSourceSelection): RegisteredSource[] {
@@ -41,7 +45,7 @@ export class SourceRegistry {
         include(dependency);
       }
       visiting.delete(sourceId);
-      included.add(sourceId);
+      included.add(source.id);
     };
 
     for (const sourceId of requested) include(sourceId);
