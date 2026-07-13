@@ -58,19 +58,25 @@ echo "  CLOTHOS Motor -- Aplicando schema de banco de dados"
 echo "============================================================"
 echo ""
 
-echo "[1/5] Schema e tabelas base..."
+echo "[1/7] Schema e tabelas base..."
 run_sql "0001_core_schema" "${SCRIPT_DIR}/migrations/0001_core_schema.sql"
 
-echo "[2/5] Indices otimizados..."
+echo "[2/7] Indices otimizados..."
 run_sql "0002_indexes_optimization" "${SCRIPT_DIR}/migrations/0002_indexes_optimization.sql"
 
-echo "[3/5] Afinacao de autovacuum..."
+echo "[3/7] Afinacao de autovacuum..."
 run_sql "0003_autovacuum_tuning" "${SCRIPT_DIR}/migrations/0003_autovacuum_tuning.sql"
 
-echo "[4/5] Funcoes de manutencao e views..."
+echo "[4/7] Funcoes de manutencao e views..."
 run_sql "0004_maintenance" "${SCRIPT_DIR}/migrations/0004_maintenance.sql"
 
-echo "[5/5] Seed de providers..."
+echo "[5/7] Claim tokens e leases..."
+run_sql "0005_job_claim_leases" "${SCRIPT_DIR}/migrations/0005_job_claim_leases.sql"
+
+echo "[6/7] Planejamento progressivo Finder..."
+run_sql "0006_finder_progressive_planning" "${SCRIPT_DIR}/migrations/0006_finder_progressive_planning.sql"
+
+echo "[7/7] Seed de providers..."
 run_sql "seeds/providers" "${SCRIPT_DIR}/seeds/providers.sql"
 
 echo ""

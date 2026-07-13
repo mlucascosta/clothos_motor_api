@@ -11,6 +11,8 @@
     "dev": "node --watch --import @swc-node/register/esm-register src/presentation/server.ts",
     "build": "swc src -d dist --copy-files && tsc-alias",
     "start": "node dist/presentation/server.js",
+    "worker": "node --import @swc-node/register/esm-register src/worker.ts",
+    "start:worker": "node dist/worker.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

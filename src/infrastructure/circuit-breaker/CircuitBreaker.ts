@@ -12,7 +12,7 @@
  * Keying por `providerSlug` (compartilhado) — o motor NÃO é multi-tenant (ADR-0019):
  * o estado do circuito é por provider, não por tenant.
  *
- * @see PHASE_23_SPEC §8.6
+ * @see docs/spec/00-FOUNDATION.md
  * @module infrastructure/circuit-breaker/CircuitBreaker
  */
 

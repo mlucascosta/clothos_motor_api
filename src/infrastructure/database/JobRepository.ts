@@ -1,12 +1,12 @@
 /**
  * @fileoverview Repositório de jobs na tabela clothos_core.jobs (ADR-0019).
- * Implementa claim atômico via FOR UPDATE SKIP LOCKED, complete, fail com retry/backoff
- * exponencial, DLQ por query SQL e operações de administração.
+ * Implementa claim atômico via FOR UPDATE SKIP LOCKED, ownership por token,
+ * lease renovável, recuperação de claim expirada e DLQ por query SQL.
  *
  * Referências:
  *   - ADR-0019 linhas 70-83: query de claim SKIP LOCKED
- *   - PHASE_23_SPEC §8.4: idempotência e invariantes do claim
- *   - PHASE_23_SPEC §9: DLQ sem infra extra
+ *   - docs/spec/00-FOUNDATION.md: idempotência e invariantes do claim
+ *   - docs/spec/00-FOUNDATION.md: DLQ sem infraestrutura extra
  *
  * @module infrastructure/database/JobRepository
  */
@@ -18,21 +18,23 @@ import type { Pool } from 'pg';
 // Constantes de backoff exponencial
 // ---------------------------------------------------------------------------
 
-/** Base de espera em segundos para o primeiro retry (attempts=1 → ~10s). */
+/** Base de espera em segundos para o primeiro retry (attempts=1 -> 10s). */
 const BACKOFF_BASE_SECONDS = 10;
 /** Teto de backoff em segundos — nunca exceder 10 minutos. */
 const BACKOFF_MAX_SECONDS = 600;
+/** Duração padrão da lease de um claim. */
+const DEFAULT_LEASE_DURATION_MS = 30_000;
+/** Máximo de claims expirados recuperados em uma operação. */
+const DEFAULT_RECLAIM_LIMIT = 100;
 
 /**
- * Calcula o offset de backoff exponencial em segundos para `attempts` tentativas.
- * `min(base * 2^(attempts-1), max)` com jitter inteiro simples.
- *
- * @param {number} attempts - Número de tentativas já realizadas (≥1)
- * @returns {number} Segundos de backoff (inteiro, ≥ BACKOFF_BASE_SECONDS)
+ * Valida valores usados em duração de lease e batch de recuperação antes de
+ * interpolá-los como parâmetros numéricos na query.
  */
-function backoffSeconds(attempts: number): number {
-  const exp = BACKOFF_BASE_SECONDS * 2 ** (attempts - 1);
-  return Math.min(exp, BACKOFF_MAX_SECONDS);
+function assertPositiveInteger(value: number, name: string): void {
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new RangeError(`${name} must be a positive integer`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -71,6 +73,10 @@ export interface JobRow {
   available_at: Date;
   claimed_at: Date | null;
   claimed_by: string | null;
+  /** UUID generated for each claim; authorizes heartbeat and terminal writes. */
+  claim_token: string | null;
+  /** Claim becomes invalid at this timestamp unless owner heartbeats. */
+  lease_expires_at: Date | null;
   correlation_id: string;
   requested_by: string;
   created_at: Date;
@@ -81,7 +87,12 @@ export interface JobRow {
 // Worker identity
 // ---------------------------------------------------------------------------
 
-const WORKER_ID = process.env['WORKER_ID'] ?? `worker-${process.pid}`;
+export interface JobRepositoryOptions {
+  /** Stable worker identity for operational tracing. */
+  workerId?: string;
+  /** Duration applied to a new claim or successful heartbeat. */
+  leaseDurationMs?: number;
+}
 
 // ---------------------------------------------------------------------------
 // JobRepository
@@ -94,11 +105,21 @@ const WORKER_ID = process.env['WORKER_ID'] ?? `worker-${process.pid}`;
  * const repo = new JobRepository(pool);
  * const job = await repo.claimNext('full');
  * if (job) {
- *   await repo.complete(job.id, resultPayload, 3);
+ *   await repo.complete(job.id, job.claim_token, resultPayload, 3);
  * }
  */
 export class JobRepository {
-  constructor(private readonly pool: Pool) {}
+  private readonly workerId: string;
+  private readonly leaseDurationMs: number;
+
+  constructor(
+    private readonly pool: Pool,
+    options: JobRepositoryOptions = {},
+  ) {
+    this.workerId = options.workerId ?? process.env['WORKER_ID'] ?? `worker-${process.pid}`;
+    this.leaseDurationMs = options.leaseDurationMs ?? DEFAULT_LEASE_DURATION_MS;
+    assertPositiveInteger(this.leaseDurationMs, 'leaseDurationMs');
+  }
 
   /**
    * Faz claim atômico do próximo job pendente na `queue` especificada.
@@ -120,15 +141,17 @@ export class JobRepository {
          LIMIT 1
        )
        UPDATE clothos_core.jobs j
-          SET status     = 'claimed',
-              claimed_at = now(),
-              claimed_by = $2,
-              attempts   = attempts + 1,
+           SET status     = 'claimed',
+               claimed_at = now(),
+               claimed_by = $2,
+               claim_token = gen_random_uuid(),
+               lease_expires_at = now() + ($3 * interval '1 millisecond'),
+               attempts   = attempts + 1,
               updated_at = now()
          FROM next
         WHERE j.id = next.id
        RETURNING j.*`,
-      [queue, WORKER_ID],
+      [queue, this.workerId, this.leaseDurationMs],
     );
     return rows[0] ?? null;
   }
@@ -136,27 +159,57 @@ export class JobRepository {
   /**
    * Marca o job como concluído, gravando o resultado JSONB e o custo real.
    *
+   * A lease must still be active. An expired owner cannot finalize before or
+   * after another worker recovers the job.
+   *
    * @param {number} id         - PK do job (coluna `id`)
+   * @param {string} claimToken - Token recebido por `claimNext()`
    * @param {Record<string, unknown>} result    - Resultado serializado como JSONB
    * @param {number} costActual - Custo efetivo em créditos
    * @param {'completed' | 'partial'} status   - Status de conclusão
-   * @returns {Promise<void>}
+   * @returns {Promise<boolean>} true when this worker owned and finalized job
    */
   async complete(
     id: number,
+    claimToken: string,
     result: Record<string, unknown>,
     costActual: number,
     status: 'completed' | 'partial' = 'completed',
-  ): Promise<void> {
-    await this.pool.query(
+  ): Promise<boolean> {
+    const { rowCount } = await this.pool.query(
       `UPDATE clothos_core.jobs
-          SET status      = $2,
-              result      = $3,
-              cost_actual = $4,
-              updated_at  = now()
-        WHERE id = $1`,
-      [id, status, JSON.stringify(result), costActual],
+           SET status      = $2,
+               result      = $3,
+               cost_actual = $4,
+               claimed_at = NULL,
+               claimed_by = NULL,
+               claim_token = NULL,
+               lease_expires_at = NULL,
+               updated_at  = now()
+         WHERE id = $1
+           AND status = 'claimed'
+           AND claim_token = $5::uuid
+           AND lease_expires_at > now()`,
+      [id, status, JSON.stringify(result), costActual, claimToken],
     );
+    return rowCount === 1;
+  }
+
+  /**
+   * Renova lease de um job para seu worker dono. Leases expiradas never revive.
+   */
+  async heartbeat(id: number, claimToken: string): Promise<boolean> {
+    const { rowCount } = await this.pool.query(
+      `UPDATE clothos_core.jobs
+          SET lease_expires_at = now() + ($3 * interval '1 millisecond'),
+              updated_at = now()
+        WHERE id = $1
+          AND status = 'claimed'
+          AND claim_token = $2::uuid
+          AND lease_expires_at > now()`,
+      [id, claimToken, this.leaseDurationMs],
+    );
+    return rowCount === 1;
   }
 
   /**
@@ -166,53 +219,101 @@ export class JobRepository {
    *   - Se `attempts < max_attempts`: status='pending', available_at=now()+backoff(attempts)
    *   - Caso contrário: status='failed' (linha vira DLQ — listada por `listDlq()`)
    *
+   * This single guarded UPDATE makes retry/DLQ choice from current row values,
+   * so a stale owner cannot overwrite terminal state or a new claim.
+   *
    * @param {number} id - PK do job
+   * @param {string} claimToken - Token recebido por `claimNext()`
    * @param {{ error?: string }} opts - Opções de falha (mensagem de erro opcional)
-   * @returns {Promise<void>}
+   * @returns {Promise<boolean>} true when this worker owned job
    */
-  async fail(id: number, opts: { error?: string } = {}): Promise<void> {
-    // Primeiro lê attempts + max_attempts para decidir retry vs DLQ.
-    const { rows } = await this.pool.query<Pick<JobRow, 'attempts' | 'max_attempts'>>(
-      'SELECT attempts, max_attempts FROM clothos_core.jobs WHERE id = $1',
-      [id],
+  async fail(id: number, claimToken: string, opts: { error?: string } = {}): Promise<boolean> {
+    const { rowCount } = await this.pool.query(
+      `UPDATE clothos_core.jobs
+          SET status = CASE WHEN attempts < max_attempts THEN 'pending' ELSE 'failed' END,
+              available_at = CASE
+                WHEN attempts < max_attempts THEN now() + (
+                  LEAST(
+                    $3::double precision * power(2::double precision, GREATEST(attempts - 1, 0)),
+                    $4::double precision
+                  ) * interval '1 second'
+                )
+                ELSE available_at
+              END,
+              result = CASE
+                WHEN attempts >= max_attempts THEN COALESCE(result, $5::jsonb)
+                ELSE result
+              END,
+              claimed_at = NULL,
+              claimed_by = NULL,
+              claim_token = NULL,
+              lease_expires_at = NULL,
+              updated_at = now()
+        WHERE id = $1
+          AND status = 'claimed'
+          AND claim_token = $2::uuid
+          AND lease_expires_at > now()`,
+      [
+        id,
+        claimToken,
+        BACKOFF_BASE_SECONDS,
+        BACKOFF_MAX_SECONDS,
+        JSON.stringify({ failure_reason: opts.error ?? 'unknown' }),
+      ],
+    );
+    return rowCount === 1;
+  }
+
+  /**
+   * Recovers expired claims without racing owners or other reapers. A claim is
+   * selected and transitioned in same statement under SKIP LOCKED.
+   */
+  async reclaimExpired(limit = DEFAULT_RECLAIM_LIMIT): Promise<number> {
+    assertPositiveInteger(limit, 'limit');
+
+    const { rowCount } = await this.pool.query(
+      `WITH expired AS (
+         SELECT id
+           FROM clothos_core.jobs
+          WHERE status = 'claimed'
+            AND (lease_expires_at IS NULL OR lease_expires_at <= now())
+          ORDER BY lease_expires_at NULLS FIRST, claimed_at
+          FOR UPDATE SKIP LOCKED
+          LIMIT $1
+       )
+       UPDATE clothos_core.jobs j
+          SET status = CASE WHEN j.attempts < j.max_attempts THEN 'pending' ELSE 'failed' END,
+              available_at = CASE
+                WHEN j.attempts < j.max_attempts THEN now() + (
+                  LEAST(
+                    $2::double precision * power(2::double precision, GREATEST(j.attempts - 1, 0)),
+                    $3::double precision
+                  ) * interval '1 second'
+                )
+                ELSE j.available_at
+              END,
+              result = CASE
+                WHEN j.attempts >= j.max_attempts THEN COALESCE(
+                  j.result,
+                  '{"failure_reason":"lease_expired"}'::jsonb
+                )
+                ELSE j.result
+              END,
+              claimed_at = NULL,
+              claimed_by = NULL,
+              claim_token = NULL,
+              lease_expires_at = NULL,
+              updated_at = now()
+         FROM expired
+        WHERE j.id = expired.id
+       RETURNING j.id`,
+      [limit, BACKOFF_BASE_SECONDS, BACKOFF_MAX_SECONDS],
     );
 
-    const row = rows[0];
-    if (!row) {
-      logger.warn({ jobId: id }, 'JobRepository.fail: job não encontrado');
-      return;
+    if ((rowCount ?? 0) > 0) {
+      logger.warn({ count: rowCount }, 'JobRepository.reclaimExpired: recovered expired claims');
     }
-
-    const { attempts, max_attempts } = row;
-
-    if (attempts < max_attempts) {
-      const delaySec = backoffSeconds(attempts);
-      logger.info(
-        { jobId: id, attempts, delaySec },
-        'JobRepository.fail: agendando retry com backoff',
-      );
-      await this.pool.query(
-        `UPDATE clothos_core.jobs
-            SET status       = 'pending',
-                available_at = now() + ($1 || ' seconds')::interval,
-                updated_at   = now()
-          WHERE id = $2`,
-        [String(delaySec), id],
-      );
-    } else {
-      logger.warn(
-        { jobId: id, attempts, error: opts.error },
-        'JobRepository.fail: max_attempts atingido — movendo para DLQ (status=failed)',
-      );
-      await this.pool.query(
-        `UPDATE clothos_core.jobs
-            SET status     = 'failed',
-                result     = COALESCE(result, $2::jsonb),
-                updated_at = now()
-          WHERE id = $1`,
-        [id, JSON.stringify({ failure_reason: opts.error ?? 'unknown' })],
-      );
-    }
+    return rowCount ?? 0;
   }
 
   /**
@@ -256,11 +357,17 @@ export class JobRepository {
   async reprocess(id: number): Promise<void> {
     await this.pool.query(
       `UPDATE clothos_core.jobs
-          SET status       = 'pending',
-              attempts     = 0,
-              available_at = now(),
-              updated_at   = now()
-        WHERE id = $1`,
+           SET status       = 'pending',
+               attempts     = 0,
+               available_at = now(),
+               claimed_at = NULL,
+               claimed_by = NULL,
+               claim_token = NULL,
+               lease_expires_at = NULL,
+               updated_at   = now()
+         WHERE id = $1
+           AND status = 'failed'
+           AND attempts >= max_attempts`,
       [id],
     );
   }

@@ -10,6 +10,6 @@ if (!process.env['MOTOR_INTERNAL_SECRET']) {
 
 const PORT = Number(process.env['PORT'] ?? 3001);
 
-serve({ fetch: app.fetch, port: PORT }, () => {
-  logger.info({ port: PORT }, 'clothos-motor-api iniciado');
+serve({ fetch: app.fetch, port: PORT, hostname: '127.0.0.1' }, () => {
+  logger.info({ host: '127.0.0.1', port: PORT }, 'clothos-motor-api iniciado');
 });

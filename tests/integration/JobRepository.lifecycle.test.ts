@@ -5,11 +5,18 @@
  * backoff/DLQ, listDlq, reprocess e getWaitingCount contra banco real.
  */
 
-import { JobRepository } from '@infrastructure/database/JobRepository.js';
+import { type JobRow, JobRepository } from '@infrastructure/database/JobRepository.js';
 import { Pool } from 'pg';
 import { truncateTables } from './setup/truncate.js';
 
 const DATABASE_URL = process.env['DATABASE_URL'] ?? process.env['MOTOR_DATABASE_URL'] ?? '';
+
+function requireClaim(job: JobRow | null): JobRow & { claim_token: string } {
+  if (job === null || job.claim_token === null) {
+    throw new Error('expected a claimed job with token');
+  }
+  return job;
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -90,8 +97,7 @@ describe('JobRepository — Ciclo de vida', () => {
   // -------------------------------------------------------------------------
   it('complete() grava result JSONB e status; roundtrip fiel para objeto aninhado', async () => {
     const id = await insertJob(pool);
-    const job = await repo.claimNext('lite');
-    expect(job).not.toBeNull();
+    const job = requireClaim(await repo.claimNext('lite'));
 
     const deepResult = {
       score: 7.5,
@@ -103,7 +109,7 @@ describe('JobRepository — Ciclo de vida', () => {
       tags: ['pep', 'risco_alto'],
     };
 
-    await repo.complete(job?.id, deepResult, 3);
+    await repo.complete(job.id, job.claim_token, deepResult, 3);
 
     const updated = await getJob(pool, id);
     expect(updated.status).toBe('completed');
@@ -120,10 +126,9 @@ describe('JobRepository — Ciclo de vida', () => {
   // -------------------------------------------------------------------------
   it('complete() com status=partial grava corretamente', async () => {
     await insertJob(pool);
-    const job = await repo.claimNext('lite');
-    expect(job).not.toBeNull();
+    const job = requireClaim(await repo.claimNext('lite'));
 
-    await repo.complete(job?.id, { parcial: true }, 1, 'partial');
+    await repo.complete(job.id, job.claim_token, { parcial: true }, 1, 'partial');
 
     const updated = await getJob(pool, job?.id);
     expect(updated.status).toBe('partial');
@@ -135,11 +140,10 @@ describe('JobRepository — Ciclo de vida', () => {
   it('fail() com attempts < max_attempts volta a pending com available_at futuro', async () => {
     // max_attempts=3: após 1 claim (attempts=1), fail → ainda 1 < 3
     await insertJob(pool, { maxAttempts: 3 });
-    const job = await repo.claimNext('lite');
-    expect(job).not.toBeNull();
-    expect(job?.attempts).toBe(1); // incrementado pelo claim
+    const job = requireClaim(await repo.claimNext('lite'));
+    expect(job.attempts).toBe(1); // incrementado pelo claim
 
-    await repo.fail(job?.id, { error: 'upstream_timeout' });
+    await repo.fail(job.id, job.claim_token, { error: 'upstream_timeout' });
 
     const updated = await getJob(pool, job?.id);
     expect(updated.status).toBe('pending');
@@ -153,11 +157,10 @@ describe('JobRepository — Ciclo de vida', () => {
   it('fail() com attempts >= max_attempts manda para DLQ (status=failed)', async () => {
     // max_attempts=1: após 1 claim (attempts=1), fail → 1 >= 1 → DLQ
     await insertJob(pool, { maxAttempts: 1 });
-    const job = await repo.claimNext('lite');
-    expect(job).not.toBeNull();
-    expect(job?.attempts).toBe(1);
+    const job = requireClaim(await repo.claimNext('lite'));
+    expect(job.attempts).toBe(1);
 
-    await repo.fail(job?.id, { error: 'max_retries_exceeded' });
+    await repo.fail(job.id, job.claim_token, { error: 'max_retries_exceeded' });
 
     const updated = await getJob(pool, job?.id);
     expect(updated.status).toBe('failed');
@@ -174,16 +177,15 @@ describe('JobRepository — Ciclo de vida', () => {
 
     // Coloca idA e idB em DLQ
     for (const pendingId of [idA, idB]) {
-      await repo.claimNext('lite');
+      const claimed = requireClaim(await repo.claimNext('lite'));
       const j = await getJob(pool, pendingId);
-      await repo.fail(j.id, { error: 'forced' });
+      await repo.fail(j.id, claimed.claim_token, { error: 'forced' });
     }
 
     // Cria e conclui 1 job (completed — não deve aparecer)
     const idC = await insertJob(pool);
-    const claimedC = await repo.claimNext('lite');
-    expect(claimedC).not.toBeNull();
-    await repo.complete(claimedC?.id, {}, 0);
+    const claimedC = requireClaim(await repo.claimNext('lite'));
+    await repo.complete(claimedC.id, claimedC.claim_token, {}, 0);
 
     const dlq = await repo.listDlq();
     expect(dlq).toHaveLength(2);
@@ -200,9 +202,8 @@ describe('JobRepository — Ciclo de vida', () => {
   // -------------------------------------------------------------------------
   it('reprocess() reseta attempts para 0 e status para pending', async () => {
     await insertJob(pool, { maxAttempts: 1 });
-    const job = await repo.claimNext('lite');
-    expect(job).not.toBeNull();
-    await repo.fail(job?.id, { error: 'forced' });
+    const job = requireClaim(await repo.claimNext('lite'));
+    await repo.fail(job.id, job.claim_token, { error: 'forced' });
 
     const dlqBefore = await repo.listDlq();
     expect(dlqBefore).toHaveLength(1);
@@ -243,9 +244,11 @@ describe('JobRepository — Ciclo de vida', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Teste 9: fail() em job inexistente não lança (early return)
+  // Teste 9: fail() em job inexistente retorna false sem lançar
   // -------------------------------------------------------------------------
-  it('fail() em job inexistente não lança erro', async () => {
-    await expect(repo.fail(999999, { error: 'ghost' })).resolves.toBeUndefined();
+  it('fail() em job inexistente retorna false sem lançar erro', async () => {
+    await expect(
+      repo.fail(999999, '00000000-0000-0000-0000-000000000000', { error: 'ghost' }),
+    ).resolves.toBe(false);
   });
 });

@@ -15,6 +15,9 @@ import type { Pool } from 'pg';
 export async function truncateTables(pool: Pool): Promise<void> {
   await pool.query(`
     TRUNCATE TABLE
+      clothos_core.derived_artifacts,
+      clothos_core.job_source_executions,
+      clothos_core.job_events,
       clothos_core.jobs,
       clothos_core.jobs_history,
       clothos_core.raw_results,

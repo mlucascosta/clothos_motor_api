@@ -8,7 +8,7 @@
  * Para logs de operação de query propagar correlationId:
  *   logger.child({ correlationId, tenantSlug }).info('evento')
  *
- * @see docs/architecture/OBSERVABILITY_CONTRACTS.md
+ * @see docs/spec/00-FOUNDATION.md
  * @module shared/infrastructure/logger
  */
 
