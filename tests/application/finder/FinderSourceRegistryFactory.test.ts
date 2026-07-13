@@ -60,6 +60,25 @@ describe('createCnpjFinderSourceRegistry', () => {
     ]);
   });
 
+  it('enables ApiBrasil only with both required credentials', () => {
+    const withoutDeviceToken = createCnpjFinderSourceRegistry({
+      ...environment,
+      APIBRASIL_API_KEY: 'api-key',
+    });
+    const withCredentials = createCnpjFinderSourceRegistry({
+      ...environment,
+      APIBRASIL_API_KEY: 'api-key',
+      APIBRASIL_DEVICE_TOKEN: 'device-token',
+    });
+
+    expect(() => withoutDeviceToken.plan({ sources: ['apibrasil_cadastro_pj'] })).toThrow(
+      'unknown_source',
+    );
+    expect(withCredentials.plan({ sources: ['apibrasil_cadastro_pj'] })).toEqual([
+      expect.objectContaining({ id: 'apibrasil_cadastro_pj', stage: 1 }),
+    ]);
+  });
+
   it('fails closed without every configured provider dependency and never exposes token values', () => {
     const token = 'must-not-appear';
 

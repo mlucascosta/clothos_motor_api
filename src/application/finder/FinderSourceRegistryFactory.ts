@@ -1,5 +1,8 @@
 import type { JobProcessor } from '@application/jobs/JobWorker.js';
 import { FinderJobRepository } from '@infrastructure/database/FinderJobRepository.js';
+import { ApiBrasilExecutor } from '@infrastructure/providers/apibrasil/ApiBrasilExecutor.js';
+import { ApiBrasilHttpClient } from '@infrastructure/providers/apibrasil/ApiBrasilHttpClient.js';
+import { Cnpj as ApiBrasilCnpj } from '@infrastructure/providers/apibrasil/operations/Cnpj.js';
 import { BrasilApiExecutor } from '@infrastructure/providers/brasilapi/BrasilApiExecutor.js';
 import { BrasilApiHttpClient } from '@infrastructure/providers/brasilapi/BrasilApiHttpClient.js';
 import { Cnpj } from '@infrastructure/providers/brasilapi/operations/Cnpj.js';
@@ -81,6 +84,8 @@ export function createCnpjFinderSourceRegistry(
     environment['BRASILAPI_BASE_URL']?.trim() || undefined,
   );
   const infosimplesApiKey = optionalConfiguration(environment, 'INFOSIMPLES_API_KEY');
+  const apiBrasilApiKey = optionalConfiguration(environment, 'APIBRASIL_API_KEY');
+  const apiBrasilDeviceToken = optionalConfiguration(environment, 'APIBRASIL_DEVICE_TOKEN');
 
   const sources: RegisteredSource[] = [
     {
@@ -127,6 +132,18 @@ export function createCnpjFinderSourceRegistry(
       id: 'infosimples_cnpj',
       stage: 1,
       executor: new InfosimplesExecutor(new InfosimplesCadastroPessoaJuridica(infosimplesHttp)),
+    });
+  }
+  if (apiBrasilApiKey !== undefined && apiBrasilDeviceToken !== undefined) {
+    const apiBrasilHttp = new ApiBrasilHttpClient(
+      apiBrasilApiKey,
+      apiBrasilDeviceToken,
+      environment['APIBRASIL_BASE_URL']?.trim() || undefined,
+    );
+    sources.push({
+      id: 'apibrasil_cadastro_pj',
+      stage: 1,
+      executor: new ApiBrasilExecutor(new ApiBrasilCnpj(apiBrasilHttp)),
     });
   }
 
