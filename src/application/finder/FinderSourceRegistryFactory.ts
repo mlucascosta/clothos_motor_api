@@ -20,9 +20,12 @@ import { ObterInstituicao } from '@infrastructure/providers/escavador/operations
 import { ObterPessoa } from '@infrastructure/providers/escavador/operations/ObterPessoa.js';
 import { ObterProcessosInstituicao } from '@infrastructure/providers/escavador/operations/ObterProcessosInstituicao.js';
 import { ObterProcessosPessoa } from '@infrastructure/providers/escavador/operations/ObterProcessosPessoa.js';
+import { InfosimplesExecutor } from '@infrastructure/providers/infosimples/InfosimplesExecutor.js';
+import { InfosimplesHttpClient } from '@infrastructure/providers/infosimples/InfosimplesHttpClient.js';
+import { CadastroPessoaJuridica as InfosimplesCadastroPessoaJuridica } from '@infrastructure/providers/infosimples/operations/CadastroPessoaJuridica.js';
 import type { Pool } from 'pg';
 import { FinderJobProcessor } from './FinderJobProcessor.js';
-import { SourceRegistry } from './SourceRegistry.js';
+import { type RegisteredSource, SourceRegistry } from './SourceRegistry.js';
 
 export interface FinderSourceEnvironment {
   readonly [key: string]: string | undefined;
@@ -48,6 +51,14 @@ function directDataToken(environment: FinderSourceEnvironment): string {
   );
 }
 
+function optionalConfiguration(
+  environment: FinderSourceEnvironment,
+  name: string,
+): string | undefined {
+  const value = environment[name]?.trim();
+  return value && value.length > 0 ? value : undefined;
+}
+
 export function createCnpjFinderSourceRegistry(
   environment: FinderSourceEnvironment = process.env,
 ): SourceRegistry {
@@ -69,51 +80,62 @@ export function createCnpjFinderSourceRegistry(
   const brasilApiHttp = new BrasilApiHttpClient(
     environment['BRASILAPI_BASE_URL']?.trim() || undefined,
   );
+  const infosimplesApiKey = optionalConfiguration(environment, 'INFOSIMPLES_API_KEY');
 
-  return new SourceRegistry(
-    [
-      {
-        id: 'directdata',
-        stage: 1,
-        executor: new DirectDataExecutor({
-          cadastroPessoaFisica: new CadastroPessoaFisica(directDataHttp),
-          cadastroPessoaJuridica: new CadastroPessoaJuridica(directDataHttp),
-          processosJudiciaisCompleta: new ProcessosJudiciaisCompleta(directDataHttp),
-        }),
-      },
-      {
-        id: 'escavador',
-        stage: 1,
-        executor: new EscavadorExecutor({
-          buscarGeral: new BuscarGeral(escavadorHttp),
-          obterPessoa: new ObterPessoa(escavadorHttp),
-          obterProcessosPessoa: new ObterProcessosPessoa(escavadorHttp),
-          obterInstituicao: new ObterInstituicao(escavadorHttp),
-          obterProcessosInstituicao: new ObterProcessosInstituicao(escavadorHttp),
-          iniciarBuscaLote: new IniciarBuscaLote(escavadorHttp),
-          obterBuscaAssincrona: new ObterBuscaAssincrona(escavadorHttp),
-        }),
-      },
-      {
-        id: 'datajud',
-        stage: 2,
-        dependsOn: ['escavador'],
-        requiresCandidate: true,
-        executor: new DataJudExecutor(new BuscarProcessoPorNumero(dataJudHttp)),
-      },
-      {
-        id: 'brasilapi_cnpj',
-        stage: 1,
-        executor: new BrasilApiExecutor(new Cnpj(brasilApiHttp)),
-      },
-    ],
+  const sources: RegisteredSource[] = [
     {
-      identity: ['directdata', 'escavador'],
-      judicial: ['datajud'],
-      full: ['directdata', 'escavador', 'datajud'],
-      public_cnpj: ['brasilapi_cnpj'],
+      id: 'directdata',
+      stage: 1,
+      executor: new DirectDataExecutor({
+        cadastroPessoaFisica: new CadastroPessoaFisica(directDataHttp),
+        cadastroPessoaJuridica: new CadastroPessoaJuridica(directDataHttp),
+        processosJudiciaisCompleta: new ProcessosJudiciaisCompleta(directDataHttp),
+      }),
     },
-  );
+    {
+      id: 'escavador',
+      stage: 1,
+      executor: new EscavadorExecutor({
+        buscarGeral: new BuscarGeral(escavadorHttp),
+        obterPessoa: new ObterPessoa(escavadorHttp),
+        obterProcessosPessoa: new ObterProcessosPessoa(escavadorHttp),
+        obterInstituicao: new ObterInstituicao(escavadorHttp),
+        obterProcessosInstituicao: new ObterProcessosInstituicao(escavadorHttp),
+        iniciarBuscaLote: new IniciarBuscaLote(escavadorHttp),
+        obterBuscaAssincrona: new ObterBuscaAssincrona(escavadorHttp),
+      }),
+    },
+    {
+      id: 'datajud',
+      stage: 2,
+      dependsOn: ['escavador'],
+      requiresCandidate: true,
+      executor: new DataJudExecutor(new BuscarProcessoPorNumero(dataJudHttp)),
+    },
+    {
+      id: 'brasilapi_cnpj',
+      stage: 1,
+      executor: new BrasilApiExecutor(new Cnpj(brasilApiHttp)),
+    },
+  ];
+  if (infosimplesApiKey !== undefined) {
+    const infosimplesHttp = new InfosimplesHttpClient(
+      infosimplesApiKey,
+      environment['INFOSIMPLES_BASE_URL']?.trim() || undefined,
+    );
+    sources.push({
+      id: 'infosimples_cnpj',
+      stage: 1,
+      executor: new InfosimplesExecutor(new InfosimplesCadastroPessoaJuridica(infosimplesHttp)),
+    });
+  }
+
+  return new SourceRegistry(sources, {
+    identity: ['directdata', 'escavador'],
+    judicial: ['datajud'],
+    full: ['directdata', 'escavador', 'datajud'],
+    public_cnpj: ['brasilapi_cnpj'],
+  });
 }
 
 export function createFinderJobProcessorFromEnvironment(

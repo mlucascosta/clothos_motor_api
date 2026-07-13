@@ -45,6 +45,21 @@ describe('createCnpjFinderSourceRegistry', () => {
     ]);
   });
 
+  it('enables Infosimples only when its credential is configured', () => {
+    const withoutCredential = createCnpjFinderSourceRegistry(environment);
+    const withCredential = createCnpjFinderSourceRegistry({
+      ...environment,
+      INFOSIMPLES_API_KEY: 'infosimples-token',
+    });
+
+    expect(() => withoutCredential.plan({ sources: ['infosimples_cnpj'] })).toThrow(
+      'unknown_source',
+    );
+    expect(withCredential.plan({ sources: ['infosimples_cnpj'] })).toEqual([
+      expect.objectContaining({ id: 'infosimples_cnpj', stage: 1 }),
+    ]);
+  });
+
   it('fails closed without every configured provider dependency and never exposes token values', () => {
     const token = 'must-not-appear';
 
