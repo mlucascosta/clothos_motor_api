@@ -5,7 +5,7 @@
  * backoff/DLQ, listDlq, reprocess e getWaitingCount contra banco real.
  */
 
-import { type JobRow, JobRepository } from '@infrastructure/database/JobRepository.js';
+import { JobRepository, type JobRow } from '@infrastructure/database/JobRepository.js';
 import { Pool } from 'pg';
 import { truncateTables } from './setup/truncate.js';
 

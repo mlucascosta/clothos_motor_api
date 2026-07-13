@@ -1,5 +1,8 @@
 import type { JobProcessor } from '@application/jobs/JobWorker.js';
 import { FinderJobRepository } from '@infrastructure/database/FinderJobRepository.js';
+import { BrasilApiExecutor } from '@infrastructure/providers/brasilapi/BrasilApiExecutor.js';
+import { BrasilApiHttpClient } from '@infrastructure/providers/brasilapi/BrasilApiHttpClient.js';
+import { Cnpj } from '@infrastructure/providers/brasilapi/operations/Cnpj.js';
 import { DataJudExecutor } from '@infrastructure/providers/datajud/DataJudExecutor.js';
 import { DataJudHttpClient } from '@infrastructure/providers/datajud/DataJudHttpClient.js';
 import { BuscarProcessoPorNumero } from '@infrastructure/providers/datajud/operations/BuscarProcessoPorNumero.js';
@@ -63,6 +66,9 @@ export function createCnpjFinderSourceRegistry(
     directDataApiKey,
     environment['DIRECTDATA_BASE_URL']?.trim() || DIRECTDATA_BASE_URL,
   );
+  const brasilApiHttp = new BrasilApiHttpClient(
+    environment['BRASILAPI_BASE_URL']?.trim() || undefined,
+  );
 
   return new SourceRegistry(
     [
@@ -95,11 +101,17 @@ export function createCnpjFinderSourceRegistry(
         requiresCandidate: true,
         executor: new DataJudExecutor(new BuscarProcessoPorNumero(dataJudHttp)),
       },
+      {
+        id: 'brasilapi_cnpj',
+        stage: 1,
+        executor: new BrasilApiExecutor(new Cnpj(brasilApiHttp)),
+      },
     ],
     {
       identity: ['directdata', 'escavador'],
       judicial: ['datajud'],
       full: ['directdata', 'escavador', 'datajud'],
+      public_cnpj: ['brasilapi_cnpj'],
     },
   );
 }

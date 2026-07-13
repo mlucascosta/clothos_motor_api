@@ -26,6 +26,9 @@ describe('createCnpjFinderSourceRegistry', () => {
       'escavador',
       'datajud',
     ]);
+    expect(registry.plan({ profile: 'public_cnpj' }).map((source) => source.id)).toEqual([
+      'brasilapi_cnpj',
+    ]);
   });
 
   it('requires Escavador before candidate-driven DataJud execution', () => {
