@@ -2,9 +2,25 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createFinderJobProcessorFromEnvironment } from '@application/finder/FinderSourceRegistryFactory.js';
 import { type JobProcessor, JobWorker } from '@application/jobs/JobWorker.js';
+import { createMonitorJobProcessorFromEnvironment } from '@application/monitor/MonitorProcessorFactory.js';
 import { JobRepository } from '@infrastructure/database/JobRepository.js';
 import { closePool, getPool } from '@infrastructure/database/pool.js';
 import { logger } from '@shared/infrastructure/logger.js';
+
+/** Fila dos polls de monitoramento processual (04-MONITOR §6). */
+export const MONITOR_QUEUE = 'monitor';
+
+/**
+ * O payload de cada fila é um contrato diferente: a fila `monitor` carrega um
+ * `monitor_check` e as demais (`full`/`lite`) carregam um job de Finder. Processar uma
+ * com o processador da outra falharia o parse de payload em todo job — por isso o
+ * processador default é escolhido pela fila que o worker consome.
+ */
+export function buildDefaultProcessor(queue: string): JobProcessor {
+  return queue === MONITOR_QUEUE
+    ? createMonitorJobProcessorFromEnvironment()
+    : createFinderJobProcessorFromEnvironment(getPool());
+}
 
 async function loadProcessor(modulePath: string): Promise<JobProcessor> {
   const moduleUrl = pathToFileURL(resolve(modulePath)).href;
@@ -56,10 +72,11 @@ export async function runWorker(processor: JobProcessor, queue: string): Promise
 }
 
 async function main(): Promise<void> {
+  const queue = process.env['WORKER_QUEUE'] ?? 'full';
   const processor = await resolveWorkerProcessor(process.env['WORKER_PROCESSOR_MODULE'], () =>
-    createFinderJobProcessorFromEnvironment(getPool()),
+    buildDefaultProcessor(queue),
   );
-  await runWorker(processor, process.env['WORKER_QUEUE'] ?? 'full');
+  await runWorker(processor, queue);
 }
 
 const entrypoint = process.argv[1];

@@ -29,25 +29,20 @@ import { InfosimplesHttpClient } from '@infrastructure/providers/infosimples/Inf
 import { CadastroPessoaJuridica as InfosimplesCadastroPessoaJuridica } from '@infrastructure/providers/infosimples/operations/CadastroPessoaJuridica.js';
 import { PortalTransparenciaCeis } from '@infrastructure/providers/infosimples/operations/PortalTransparenciaCeis.js';
 import { PortalTransparenciaCnep } from '@infrastructure/providers/infosimples/operations/PortalTransparenciaCnep.js';
+import {
+  type ProviderEnvironment,
+  optionalConfiguration,
+  requiredConfiguration,
+} from '@shared/infrastructure/configuration.js';
 import type { Pool } from 'pg';
 import { FinderJobProcessor } from './FinderJobProcessor.js';
 import { type RegisteredSource, SourceRegistry } from './SourceRegistry.js';
 
-export interface FinderSourceEnvironment {
-  readonly [key: string]: string | undefined;
-}
+export type FinderSourceEnvironment = ProviderEnvironment;
 
 const ESCAVADOR_BASE_URL = 'https://api.escavador.com';
 const DATAJUD_BASE_URL = 'https://api-publica.datajud.cnj.jus.br';
 const DIRECTDATA_BASE_URL = 'https://apiv3.directd.com.br';
-
-function requiredConfiguration(environment: FinderSourceEnvironment, name: string): string {
-  const value = environment[name]?.trim();
-  if (value === undefined || value.length === 0) {
-    throw new Error(`missing_provider_configuration:${name}`);
-  }
-  return value;
-}
 
 function directDataToken(environment: FinderSourceEnvironment): string {
   return (
@@ -55,14 +50,6 @@ function directDataToken(environment: FinderSourceEnvironment): string {
     environment['DIRECTDATA_APIKEY']?.trim() ||
     requiredConfiguration(environment, 'DIRECTDATA_TOKEN')
   );
-}
-
-function optionalConfiguration(
-  environment: FinderSourceEnvironment,
-  name: string,
-): string | undefined {
-  const value = environment[name]?.trim();
-  return value && value.length > 0 ? value : undefined;
 }
 
 export function createCnpjFinderSourceRegistry(
