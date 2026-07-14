@@ -8,6 +8,11 @@ export interface RegisteredSource {
   dependsOn?: readonly string[];
   requiresCandidate?: boolean;
   executor: ISourceExecutor;
+  /**
+   * TTL do cache compartilhado desta fonte, em segundos. O pipeline aplica o teto
+   * de 7 dias (`min(cacheTtlSeconds, 604800)`). Ausente = 7 dias.
+   */
+  cacheTtlSeconds?: number;
 }
 
 export class SourceRegistry {

@@ -37,6 +37,7 @@ export default async function globalSetup(): Promise<void> {
       'migrations/0004_maintenance.sql',
       'migrations/0005_job_claim_leases.sql',
       'migrations/0006_finder_progressive_planning.sql',
+      'migrations/0007_finder_cache_alignment.sql',
       'seeds/providers.sql',
     ];
 

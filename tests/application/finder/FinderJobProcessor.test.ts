@@ -1,4 +1,4 @@
-import { FinderJobProcessor } from '@application/finder/FinderJobProcessor.js';
+import { FinderJobProcessor, SEVEN_DAYS_SECONDS } from '@application/finder/FinderJobProcessor.js';
 import { SourceRegistry } from '@application/finder/SourceRegistry.js';
 import type { ISourceExecutor } from '@application/queries/ports/ISourceExecutor.js';
 import type { FinderJobRepository } from '@infrastructure/database/FinderJobRepository.js';
@@ -42,6 +42,9 @@ function persistence(): jest.Mocked<FinderJobRepository> {
     completeSourceExecution: jest.fn(),
     failSourceExecution: jest.fn(),
     saveArtifact: jest.fn(),
+    lookupCache: jest.fn().mockResolvedValue(null),
+    saveRawResult: jest.fn().mockResolvedValue(101),
+    saveCache: jest.fn(),
   } as unknown as jest.Mocked<FinderJobRepository>;
 }
 
@@ -89,6 +92,66 @@ describe('FinderJobProcessor', () => {
       expect.objectContaining({ protocol_version: 2, status: 'completed' }),
     );
     expect(JSON.stringify(outcome.result)).not.toContain('cost');
+  });
+
+  it('reuses a cache hit without calling the provider or charging cost', async () => {
+    const execute = jest.fn();
+    const source: ISourceExecutor = { sourceName: 'escavador', execute };
+    const repo = persistence();
+    repo.lookupCache.mockResolvedValue({ data: { nome: 'Acme Ltda' }, cost: 7 });
+    const processor = new FinderJobProcessor(
+      new SourceRegistry([{ id: 'escavador', stage: 1, executor: source }], {}),
+      repo,
+    );
+
+    const outcome = await processor.process(job(payload), new AbortController().signal);
+
+    expect(execute).not.toHaveBeenCalled();
+    expect(repo.saveRawResult).not.toHaveBeenCalled();
+    expect(repo.saveCache).not.toHaveBeenCalled();
+    expect(repo.completeSourceExecution).toHaveBeenCalledWith(
+      11,
+      expect.objectContaining({ cacheHit: true }),
+    );
+    expect(repo.appendEvent).toHaveBeenLastCalledWith(
+      '00000000-0000-0000-0000-000000000007',
+      'source_completed',
+      expect.objectContaining({ cache_hit: true }),
+    );
+    expect(outcome.costActual).toBe(0);
+    expect(outcome.status).toBe('completed');
+  });
+
+  it('persists raw result and cache entry on a cache miss', async () => {
+    const source: ISourceExecutor = {
+      sourceName: 'escavador',
+      execute: jest
+        .fn()
+        .mockResolvedValue(
+          right({ source: 'escavador', data: { nome: 'Acme Ltda' }, cost: 7, latency_ms: 10 }),
+        ),
+    };
+    const repo = persistence();
+    const processor = new FinderJobProcessor(
+      new SourceRegistry([{ id: 'escavador', stage: 1, executor: source }], {}),
+      repo,
+    );
+
+    const outcome = await processor.process(job(payload), new AbortController().signal);
+
+    expect(repo.saveRawResult).toHaveBeenCalledWith(
+      expect.objectContaining({ gateway: 'escavador', tipoParam: 'cnpj', status: 'ok' }),
+    );
+    expect(repo.saveCache).toHaveBeenCalledWith(
+      expect.any(String),
+      { data: { nome: 'Acme Ltda' }, cost: 7 },
+      SEVEN_DAYS_SECONDS,
+    );
+    expect(repo.completeSourceExecution).toHaveBeenCalledWith(
+      11,
+      expect.objectContaining({ cacheHit: false, rawResultId: 101 }),
+    );
+    expect(outcome.costActual).toBe(7);
   });
 
   it('requires bounded candidate selection before DataJud expansion', async () => {

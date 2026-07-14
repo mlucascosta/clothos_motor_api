@@ -3,6 +3,7 @@ import type { SourceContext } from '@application/queries/ports/ISourceExecutor.j
 import type { FinderJobRepository } from '@infrastructure/database/FinderJobRepository.js';
 import type { JobRow } from '@infrastructure/database/JobRepository.js';
 import { isLeft } from '@shared/domain/Either.js';
+import { deriveCacheKey } from '@shared/domain/privacy/cacheKey.js';
 import type { RegisteredSource, SourceRegistry } from './SourceRegistry.js';
 import type { FinderArtifact, FinderJobPayload, ProcessCandidate } from './contracts.js';
 import { parseFinderJobPayload } from './contracts.js';
@@ -26,6 +27,8 @@ interface SourceBlock {
 
 const DEFAULT_CANDIDATE_FANOUT_LIMIT = 10;
 const DEFAULT_SOURCE_TIMEOUT_MS = 30_000;
+/** Teto de TTL do cache compartilhado: 7 dias (02-FINDER / 00-FOUNDATION). */
+export const SEVEN_DAYS_SECONDS = 7 * 24 * 60 * 60;
 
 export class FinderJobProcessor {
   private readonly candidateFanoutLimit: number;
@@ -166,6 +169,7 @@ export class FinderJobProcessor {
     signal: AbortSignal,
   ): Promise<{ block: SourceBlock; cost: number; artifacts: FinderArtifact[] }> {
     this.assertNotAborted(signal);
+    const cacheKey = deriveCacheKey(source.id, identifier.identifierKind, identifier.identifier);
     await this.repository.appendEvent(job.job_id, 'progress', {
       source: source.id,
       stage: source.stage,
@@ -174,9 +178,29 @@ export class FinderJobProcessor {
     const executionId = await this.repository.startSourceExecution({
       jobId: job.job_id,
       sourceId: source.id,
+      sourceCode: source.id,
       stage: source.stage,
       ...(candidateId === undefined ? {} : { candidateId }),
     });
+
+    // Cache compartilhado: hit dentro do TTL reutiliza sem chamar provider nem cobrar.
+    const cached = await this.repository.lookupCache(cacheKey);
+    if (cached !== null) {
+      await this.repository.completeSourceExecution(executionId, { cacheHit: true, cacheKey });
+      await this.repository.appendEvent(job.job_id, 'source_completed', {
+        source: source.id,
+        stage: source.stage,
+        cache_hit: true,
+      });
+      const artifacts = this.deriveArtifacts(source, cached.data, executionId);
+      await this.persistArtifacts(job.job_id, artifacts);
+      return {
+        block: { source: source.id, stage: source.stage, status: 'completed' },
+        cost: 0,
+        artifacts,
+      };
+    }
+
     let outcome: Awaited<ReturnType<typeof source.executor.execute>>;
     try {
       outcome = await source.executor.execute({
@@ -213,23 +237,66 @@ export class FinderJobProcessor {
       };
     }
 
-    await this.repository.completeSourceExecution(executionId);
+    // Miss: persiste resultado bruto (auditoria) + entrada de cache com TTL <= 7 dias,
+    // ligados pela chave opaca. CPF e hasheado dentro do repositorio (LGPD).
+    const rawResultId = await this.repository.saveRawResult({
+      gateway: source.id,
+      fonte: source.id,
+      tipoParam: this.deriveTipoParam(identifier.identifierKind),
+      param: identifier.identifier,
+      result: outcome.value.data,
+      status: 'ok',
+      correlationId: job.correlation_id,
+      cacheKey,
+    });
+    const ttlSeconds = Math.min(source.cacheTtlSeconds ?? SEVEN_DAYS_SECONDS, SEVEN_DAYS_SECONDS);
+    await this.repository.saveCache(
+      cacheKey,
+      { data: outcome.value.data, cost: outcome.value.cost },
+      ttlSeconds,
+    );
+
+    await this.repository.completeSourceExecution(executionId, {
+      cacheHit: false,
+      cacheKey,
+      rawResultId,
+    });
     await this.repository.appendEvent(job.job_id, 'source_completed', {
       source: source.id,
       stage: source.stage,
     });
-    const artifacts =
-      source.id === 'escavador'
-        ? deriveEscavadorArtifacts(outcome.value.data, executionId, this.candidateFanoutLimit)
-        : [];
-    await Promise.all(
-      artifacts.map((artifact) => this.repository.saveArtifact({ ...artifact, jobId: job.job_id })),
-    );
+    const artifacts = this.deriveArtifacts(source, outcome.value.data, executionId);
+    await this.persistArtifacts(job.job_id, artifacts);
     return {
       block: { source: source.id, stage: source.stage, status: 'completed' },
       cost: outcome.value.cost,
       artifacts,
     };
+  }
+
+  private deriveArtifacts(
+    source: RegisteredSource,
+    data: Record<string, unknown>,
+    executionId: number,
+  ): FinderArtifact[] {
+    return source.id === 'escavador'
+      ? deriveEscavadorArtifacts(data, executionId, this.candidateFanoutLimit)
+      : [];
+  }
+
+  private async persistArtifacts(
+    jobId: string,
+    artifacts: readonly FinderArtifact[],
+  ): Promise<void> {
+    await Promise.all(
+      artifacts.map((artifact) => this.repository.saveArtifact({ ...artifact, jobId })),
+    );
+  }
+
+  private deriveTipoParam(kind: SourceContext['identifierKind']): string {
+    if (kind === 'CPF') return 'cpf';
+    if (kind === 'CNPJ') return 'cnpj';
+    return 'numero_cnj';
   }
 
   private readCandidates(artifacts: readonly FinderArtifact[]): ProcessCandidate[] {

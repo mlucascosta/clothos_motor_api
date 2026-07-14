@@ -88,4 +88,62 @@ describe('FinderJobRepository', () => {
       },
     ]);
   });
+
+  it('writes source_code, cache_key and raw_result_id on a source execution', async () => {
+    const jobId = await insertJob(pool);
+    const executionId = await repository.startSourceExecution({
+      jobId,
+      sourceId: 'brasilapi',
+      stage: 1,
+    });
+    const rawResultId = await repository.saveRawResult({
+      gateway: 'brasilapi',
+      fonte: 'brasilapi',
+      tipoParam: 'cnpj',
+      param: '11222333000181',
+      result: { razao_social: 'Acme Ltda' },
+      status: 'ok',
+      correlationId: '00000000-0000-0000-0000-000000000098',
+      cacheKey: 'cache-key-1',
+    });
+    await repository.completeSourceExecution(executionId, {
+      cacheHit: false,
+      cacheKey: 'cache-key-1',
+      rawResultId,
+    });
+
+    const { rows } = await pool.query<{
+      source_code: string;
+      cache_hit: boolean;
+      cache_key: string;
+      raw_result_id: string;
+    }>(
+      'SELECT source_code, cache_hit, cache_key, raw_result_id FROM clothos_core.job_source_executions WHERE id = $1',
+      [executionId],
+    );
+    expect(rows[0]).toEqual({
+      source_code: 'brasilapi',
+      cache_hit: false,
+      cache_key: 'cache-key-1',
+      raw_result_id: String(rawResultId),
+    });
+
+    const { rows: raw } = await pool.query<{ cache_key: string }>(
+      'SELECT cache_key FROM clothos_core.raw_results WHERE id = $1',
+      [rawResultId],
+    );
+    expect(raw[0]?.cache_key).toBe('cache-key-1');
+  });
+
+  it('returns a cache value within TTL and null once expired', async () => {
+    const value = { data: { razao_social: 'Acme Ltda' }, cost: 24 };
+    await repository.saveCache('cache-key-live', value, 3600);
+    expect(await repository.lookupCache('cache-key-live')).toEqual(value);
+
+    // TTL negativo => expires_at no passado => miss.
+    await repository.saveCache('cache-key-dead', value, -1);
+    expect(await repository.lookupCache('cache-key-dead')).toBeNull();
+
+    expect(await repository.lookupCache('cache-key-absent')).toBeNull();
+  });
 });
