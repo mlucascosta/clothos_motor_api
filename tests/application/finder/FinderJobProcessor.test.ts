@@ -4,6 +4,7 @@ import type { ISourceExecutor } from '@application/queries/ports/ISourceExecutor
 import type { FinderJobRepository } from '@infrastructure/database/FinderJobRepository.js';
 import type { JobRow } from '@infrastructure/database/JobRepository.js';
 import { left, right } from '@shared/domain/Either.js';
+import { JobEventType, JobStatus } from '@shared/domain/enums/queue.js';
 import { SourceError } from '@shared/domain/errors/SourceError.js';
 
 function job(payload: Record<string, unknown>): JobRow {
@@ -77,8 +78,8 @@ describe('FinderJobProcessor', () => {
     const outcome = await processor.process(job(payload), new AbortController().signal);
 
     expect(repo.appendEvent.mock.calls.map((call) => call[1])).toEqual([
-      'progress',
-      'source_completed',
+      JobEventType.PROGRESS,
+      JobEventType.SOURCE_COMPLETED,
     ]);
     expect(repo.saveArtifact).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -115,11 +116,11 @@ describe('FinderJobProcessor', () => {
     );
     expect(repo.appendEvent).toHaveBeenLastCalledWith(
       '00000000-0000-0000-0000-000000000007',
-      'source_completed',
+      JobEventType.SOURCE_COMPLETED,
       expect.objectContaining({ cache_hit: true }),
     );
     expect(outcome.costActual).toBe(0);
-    expect(outcome.status).toBe('completed');
+    expect(outcome.status).toBe(JobStatus.COMPLETED);
   });
 
   it('persists raw result and cache entry on a cache miss', async () => {
@@ -198,11 +199,11 @@ describe('FinderJobProcessor', () => {
 
     expect(datajud.execute).not.toHaveBeenCalled();
     expect(repo.appendEvent.mock.calls.map((call) => call[1])).toEqual([
-      'progress',
-      'source_completed',
-      'candidate_selection_required',
+      JobEventType.PROGRESS,
+      JobEventType.SOURCE_COMPLETED,
+      JobEventType.CANDIDATE_SELECTION_REQUIRED,
     ]);
-    expect(outcome.status).toBe('partial');
+    expect(outcome.status).toBe(JobStatus.PARTIAL);
     expect(outcome.result).toEqual(
       expect.objectContaining({
         selection_required: {
@@ -260,7 +261,7 @@ describe('FinderJobProcessor', () => {
 
     expect(repo.appendEvent).toHaveBeenCalledWith(
       '00000000-0000-0000-0000-000000000007',
-      'source_failed',
+      JobEventType.SOURCE_FAILED,
       expect.objectContaining({ error_kind: 'CPF_IDENTIFIER_UNAVAILABLE' }),
     );
     expect(JSON.stringify(outcome.result)).not.toContain(cipher);
@@ -284,7 +285,7 @@ describe('FinderJobProcessor', () => {
 
     expect(repo.appendEvent).toHaveBeenLastCalledWith(
       '00000000-0000-0000-0000-000000000007',
-      'source_failed',
+      JobEventType.SOURCE_FAILED,
       { source: 'escavador', stage: 1, error_kind: 'TIMEOUT' },
     );
   });

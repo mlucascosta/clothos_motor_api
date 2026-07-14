@@ -1,10 +1,12 @@
 import type { JobRepository, JobRow } from '@infrastructure/database/JobRepository.js';
+import type { JobQueueValue, JobStatusValue } from '@shared/domain/enums/queue.js';
 import { logger } from '@shared/infrastructure/logger.js';
 
 export interface JobProcessResult {
   result: Record<string, unknown>;
   costActual: number;
-  status?: 'completed' | 'partial';
+  /** JobStatus.COMPLETED | JobStatus.PARTIAL — contrato numerico da fila. */
+  status?: JobStatusValue;
 }
 
 export type JobProcessor = (job: JobRow, signal: AbortSignal) => Promise<JobProcessResult>;
@@ -30,7 +32,7 @@ export class JobWorker {
 
   constructor(
     private readonly repository: JobRepository,
-    private readonly queue: string,
+    private readonly queue: JobQueueValue,
     private readonly processor: JobProcessor,
     options: JobWorkerOptions = {},
   ) {

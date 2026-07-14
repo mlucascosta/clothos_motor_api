@@ -11,6 +11,7 @@
  * @module infrastructure/database/JobRepository
  */
 
+import { type JobQueueValue, JobStatus, type JobStatusValue } from '@shared/domain/enums/queue.js';
 import { logger } from '@shared/infrastructure/logger.js';
 import type { Pool } from 'pg';
 
@@ -131,17 +132,17 @@ export class JobRepository {
    * @param {string} queue - Valor da coluna `queue` (ex: 'lite', 'full')
    * @returns {Promise<JobRow | null>} Job claimado ou null se fila vazia
    */
-  async claimNext(queue: string): Promise<JobRow | null> {
+  async claimNext(queue: JobQueueValue): Promise<JobRow | null> {
     const { rows } = await this.pool.query<JobRow>(
       `WITH next AS (
          SELECT id FROM clothos_core.jobs
-         WHERE status = 'pending' AND queue = $1 AND available_at <= now()
+         WHERE status = ${JobStatus.PENDING} AND queue = $1 AND available_at <= now()
          ORDER BY priority, available_at
          FOR UPDATE SKIP LOCKED
          LIMIT 1
        )
        UPDATE clothos_core.jobs j
-           SET status     = 'claimed',
+           SET status     = ${JobStatus.CLAIMED},
                claimed_at = now(),
                claimed_by = $2,
                claim_token = gen_random_uuid(),
@@ -174,7 +175,7 @@ export class JobRepository {
     claimToken: string,
     result: Record<string, unknown>,
     costActual: number,
-    status: 'completed' | 'partial' = 'completed',
+    status: JobStatusValue = JobStatus.COMPLETED,
   ): Promise<boolean> {
     const { rowCount } = await this.pool.query(
       `UPDATE clothos_core.jobs
@@ -187,7 +188,7 @@ export class JobRepository {
                lease_expires_at = NULL,
                updated_at  = now()
          WHERE id = $1
-           AND status = 'claimed'
+           AND status = ${JobStatus.CLAIMED}
            AND claim_token = $5::uuid
            AND lease_expires_at > now()`,
       [id, status, JSON.stringify(result), costActual, claimToken],
@@ -204,7 +205,7 @@ export class JobRepository {
           SET lease_expires_at = now() + ($3 * interval '1 millisecond'),
               updated_at = now()
         WHERE id = $1
-          AND status = 'claimed'
+          AND status = ${JobStatus.CLAIMED}
           AND claim_token = $2::uuid
           AND lease_expires_at > now()`,
       [id, claimToken, this.leaseDurationMs],
@@ -230,7 +231,7 @@ export class JobRepository {
   async fail(id: number, claimToken: string, opts: { error?: string } = {}): Promise<boolean> {
     const { rowCount } = await this.pool.query(
       `UPDATE clothos_core.jobs
-          SET status = CASE WHEN attempts < max_attempts THEN 'pending' ELSE 'failed' END,
+          SET status = CASE WHEN attempts < max_attempts THEN ${JobStatus.PENDING} ELSE ${JobStatus.FAILED} END,
               available_at = CASE
                 WHEN attempts < max_attempts THEN now() + (
                   LEAST(
@@ -250,7 +251,7 @@ export class JobRepository {
               lease_expires_at = NULL,
               updated_at = now()
         WHERE id = $1
-          AND status = 'claimed'
+          AND status = ${JobStatus.CLAIMED}
           AND claim_token = $2::uuid
           AND lease_expires_at > now()`,
       [
@@ -275,14 +276,14 @@ export class JobRepository {
       `WITH expired AS (
          SELECT id
            FROM clothos_core.jobs
-          WHERE status = 'claimed'
+          WHERE status = ${JobStatus.CLAIMED}
             AND (lease_expires_at IS NULL OR lease_expires_at <= now())
           ORDER BY lease_expires_at NULLS FIRST, claimed_at
           FOR UPDATE SKIP LOCKED
           LIMIT $1
        )
        UPDATE clothos_core.jobs j
-          SET status = CASE WHEN j.attempts < j.max_attempts THEN 'pending' ELSE 'failed' END,
+          SET status = CASE WHEN j.attempts < j.max_attempts THEN ${JobStatus.PENDING} ELSE ${JobStatus.FAILED} END,
               available_at = CASE
                 WHEN j.attempts < j.max_attempts THEN now() + (
                   LEAST(
@@ -326,7 +327,7 @@ export class JobRepository {
   async getWaitingCount(queue: string): Promise<number> {
     const { rows } = await this.pool.query<{ count: string }>(
       `SELECT count(*) AS count FROM clothos_core.jobs
-        WHERE status = 'pending' AND queue = $1`,
+        WHERE status = ${JobStatus.PENDING} AND queue = $1`,
       [queue],
     );
     return Number(rows[0]?.count ?? 0);
@@ -341,7 +342,7 @@ export class JobRepository {
   async listDlq(): Promise<JobRow[]> {
     const { rows } = await this.pool.query<JobRow>(
       `SELECT * FROM clothos_core.jobs
-        WHERE status = 'failed' AND attempts >= max_attempts
+        WHERE status = ${JobStatus.FAILED} AND attempts >= max_attempts
         ORDER BY updated_at DESC`,
     );
     return rows;
@@ -357,7 +358,7 @@ export class JobRepository {
   async reprocess(id: number): Promise<void> {
     await this.pool.query(
       `UPDATE clothos_core.jobs
-           SET status       = 'pending',
+           SET status       = ${JobStatus.PENDING},
                attempts     = 0,
                available_at = now(),
                claimed_at = NULL,
@@ -366,7 +367,7 @@ export class JobRepository {
                lease_expires_at = NULL,
                updated_at   = now()
          WHERE id = $1
-           AND status = 'failed'
+           AND status = ${JobStatus.FAILED}
            AND attempts >= max_attempts`,
       [id],
     );

@@ -1,4 +1,5 @@
 import { JobRepository, type JobRow } from '@infrastructure/database/JobRepository.js';
+import { JobQueue, JobStatus } from '@shared/domain/enums/queue.js';
 import { Pool } from 'pg';
 import { truncateTables } from './setup/truncate.js';
 
@@ -24,7 +25,7 @@ async function insertJob(pool: Pool, maxAttempts = 2): Promise<number> {
        (job_id, queue, priority, status, tenant_slug, query_type, identifier, plan,
         payload, cost_reserved, max_attempts, available_at, correlation_id, requested_by)
      VALUES
-       (gen_random_uuid(), 'lite', 5, 'pending', 'acme', 'cnpj', '55760212000169', 'finder_team',
+       (gen_random_uuid(), ${JobQueue.LITE}, 5, ${JobStatus.PENDING}, 'acme', 'cnpj', '55760212000169', 'finder_team',
         '{}', 1, $1, now(), gen_random_uuid(), gen_random_uuid())
      RETURNING id`,
     [maxAttempts],
@@ -61,7 +62,7 @@ describe('JobRepository - ownership and lease lifecycle', () => {
 
   it('rejects heartbeat, completion and failure from a different claim token', async () => {
     const id = await insertJob(pool);
-    const job = await owner.claimNext('lite');
+    const job = await owner.claimNext(JobQueue.LITE);
     const claimed = requireClaim(job);
 
     expect(claimed.claim_token).toMatch(/^[0-9a-f-]{36}$/i);
@@ -77,13 +78,13 @@ describe('JobRepository - ownership and lease lifecycle', () => {
     );
 
     const unchanged = await getJob(pool, id);
-    expect(unchanged.status).toBe('claimed');
+    expect(unchanged.status).toBe(JobStatus.CLAIMED);
     expect(unchanged.claim_token).toBe(claimed.claim_token);
   });
 
   it('extends an active lease only for its owner', async () => {
     const id = await insertJob(pool);
-    const job = await owner.claimNext('lite');
+    const job = await owner.claimNext(JobQueue.LITE);
     const claimed = requireClaim(job);
     const previousLease = claimed.lease_expires_at.getTime();
 
@@ -95,7 +96,7 @@ describe('JobRepository - ownership and lease lifecycle', () => {
 
   it('atomically recovers expired claims with bounded backoff and clears ownership', async () => {
     const id = await insertJob(pool, 2);
-    const job = await owner.claimNext('lite');
+    const job = await owner.claimNext(JobQueue.LITE);
     const claimed = requireClaim(job);
 
     await pool.query(
@@ -109,21 +110,21 @@ describe('JobRepository - ownership and lease lifecycle', () => {
     await expect(otherWorker.reclaimExpired()).resolves.toBe(1);
 
     const recovered = await getJob(pool, id);
-    expect(recovered.status).toBe('pending');
+    expect(recovered.status).toBe(JobStatus.PENDING);
     expect(recovered.claim_token).toBeNull();
     expect(recovered.lease_expires_at).toBeNull();
     expect(recovered.claimed_by).toBeNull();
     expect(new Date(recovered.available_at).getTime()).toBeGreaterThan(Date.now());
 
     await pool.query('UPDATE clothos_core.jobs SET available_at = now() WHERE id = $1', [id]);
-    const reclaimed = requireClaim(await otherWorker.claimNext('lite'));
+    const reclaimed = requireClaim(await otherWorker.claimNext(JobQueue.LITE));
     expect(reclaimed.id).toBe(id);
     expect(reclaimed.claim_token).not.toBe(claimed.claim_token);
   });
 
   it('moves an expired final attempt to DLQ instead of retrying again', async () => {
     const id = await insertJob(pool, 1);
-    requireClaim(await owner.claimNext('lite'));
+    requireClaim(await owner.claimNext(JobQueue.LITE));
 
     await pool.query(
       "UPDATE clothos_core.jobs SET lease_expires_at = now() - interval '1 second' WHERE id = $1",
@@ -132,7 +133,7 @@ describe('JobRepository - ownership and lease lifecycle', () => {
     await expect(otherWorker.reclaimExpired()).resolves.toBe(1);
 
     const recovered = await getJob(pool, id);
-    expect(recovered.status).toBe('failed');
+    expect(recovered.status).toBe(JobStatus.FAILED);
     expect(recovered.attempts).toBe(1);
     expect(recovered.claim_token).toBeNull();
     expect(recovered.lease_expires_at).toBeNull();
@@ -141,18 +142,18 @@ describe('JobRepository - ownership and lease lifecycle', () => {
 
   it('allows one terminal write and prevents duplicate finalization', async () => {
     const id = await insertJob(pool);
-    const job = await owner.claimNext('lite');
+    const job = await owner.claimNext(JobQueue.LITE);
     const claimed = requireClaim(job);
-    const result = { protocol_version: 1, status: 'completed' };
+    const result = { protocol_version: 1, status: JobStatus.COMPLETED };
 
     await expect(owner.complete(id, claimed.claim_token, result, 3)).resolves.toBe(true);
     await expect(
       owner.complete(
         id,
         claimed.claim_token,
-        { protocol_version: 1, status: 'partial' },
+        { protocol_version: 1, status: JobStatus.PARTIAL },
         4,
-        'partial',
+        JobStatus.PARTIAL,
       ),
     ).resolves.toBe(false);
     await expect(owner.fail(id, claimed.claim_token, { error: 'late_failure' })).resolves.toBe(
@@ -160,7 +161,7 @@ describe('JobRepository - ownership and lease lifecycle', () => {
     );
 
     const finalized = await getJob(pool, id);
-    expect(finalized.status).toBe('completed');
+    expect(finalized.status).toBe(JobStatus.COMPLETED);
     expect(finalized.cost_actual).toBe(3);
     expect(finalized.claim_token).toBeNull();
     expect(finalized.lease_expires_at).toBeNull();

@@ -6,6 +6,7 @@
  * purge_expired_cache funciona e v_dlq reflete jobs failed.
  */
 
+import { JobQueue, JobStatus } from '@shared/domain/enums/queue.js';
 import { Pool } from 'pg';
 import { truncateTables } from './setup/truncate.js';
 
@@ -67,9 +68,9 @@ describe('Objetos de banco — DDL, índices, funções, views', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Teste 3: índice parcial idx_jobs_claim existe com predicado status='pending'
+  // Teste 3: indice parcial idx_jobs_claim existe com o predicado NUMERICO (status = 0 = pending).
   // -------------------------------------------------------------------------
-  it("idx_jobs_claim existe e tem predicado WHERE status='pending'", async () => {
+  it('idx_jobs_claim existe e tem predicado WHERE status = 0 (pending)', async () => {
     const { rows } = await pool.query<{ indexname: string; indexdef: string }>(
       `SELECT indexname, indexdef
          FROM pg_indexes
@@ -81,8 +82,8 @@ describe('Objetos de banco — DDL, índices, funções, views', () => {
     expect(rows).toHaveLength(1);
     const def = rows[0]?.indexdef.toLowerCase();
     // O predicado deve aparecer na definição do índice.
-    // PostgreSQL serializa como "where (status = 'pending'::text)" — aceita ambas as formas.
-    expect(def).toMatch(/where \(status = 'pending'(::text)?\)/);
+    // Apos o ADR-0024 a coluna e SMALLINT: o predicado e numerico, sem cast de texto.
+    expect(def).toMatch(new RegExp(`where \\(status = ${JobStatus.PENDING}\\)`));
     // Deve cobrir as colunas queue, priority, available_at
     expect(def).toContain('queue');
     expect(def).toContain('priority');
@@ -102,9 +103,9 @@ describe('Objetos de banco — DDL, índices, funções, views', () => {
           correlation_id, requested_by)
        SELECT
          gen_random_uuid(),
-         'lite',
+         ${JobQueue.LITE},
          (g % 10) + 1,
-         'pending',
+         ${JobStatus.PENDING},
          'acme',
          'cpf',
          'abc' || g,
@@ -132,13 +133,13 @@ describe('Objetos de banco — DDL, índices, funções, views', () => {
         `EXPLAIN (FORMAT TEXT)
          WITH next AS (
            SELECT id FROM clothos_core.jobs
-           WHERE status = 'pending' AND queue = $1 AND available_at <= now()
+           WHERE status = ${JobStatus.PENDING} AND queue = $1 AND available_at <= now()
            ORDER BY priority, available_at
            FOR UPDATE SKIP LOCKED
            LIMIT 1
          )
          UPDATE clothos_core.jobs j
-            SET status     = 'claimed',
+            SET status     = ${JobStatus.CLAIMED},
                 claimed_at = now(),
                 claimed_by = 'test-worker',
                 attempts   = attempts + 1,
@@ -146,7 +147,7 @@ describe('Objetos de banco — DDL, índices, funções, views', () => {
            FROM next
           WHERE j.id = next.id
          RETURNING j.*`,
-        ['lite'],
+        [JobQueue.LITE],
       );
       plan = rows
         .map((r) => String(Object.values(r)[0]))
@@ -206,14 +207,14 @@ describe('Objetos de banco — DDL, índices, funções, views', () => {
           correlation_id, requested_by)
        VALUES
          -- DLQ: failed + attempts >= max_attempts
-         ('${dlqJobId1}','lite',5,'failed','acme','dlq_type','dlq1','finder_team','{}',1,0,2,2,now(),gen_random_uuid(),gen_random_uuid()),
-         ('${dlqJobId2}','lite',5,'failed','acme','dlq_type','dlq2','finder_team','{}',1,0,3,3,now(),gen_random_uuid(),gen_random_uuid()),
+         ('${dlqJobId1}',${JobQueue.LITE},5,${JobStatus.FAILED},'acme','dlq_type','dlq1','finder_team','{}',1,0,2,2,now(),gen_random_uuid(),gen_random_uuid()),
+         ('${dlqJobId2}',${JobQueue.LITE},5,${JobStatus.FAILED},'acme','dlq_type','dlq2','finder_team','{}',1,0,3,3,now(),gen_random_uuid(),gen_random_uuid()),
          -- NÃO DLQ: failed mas attempts < max_attempts
-         (gen_random_uuid(),'lite',5,'failed','acme','not_dlq','not-dlq','finder_team','{}',1,0,3,2,now(),gen_random_uuid(),gen_random_uuid()),
+         (gen_random_uuid(),${JobQueue.LITE},5,${JobStatus.FAILED},'acme','not_dlq','not-dlq','finder_team','{}',1,0,3,2,now(),gen_random_uuid(),gen_random_uuid()),
          -- NÃO DLQ: pending
-         (gen_random_uuid(),'lite',5,'pending','acme','pend_type','pend','finder_team','{}',1,0,2,0,now(),gen_random_uuid(),gen_random_uuid()),
+         (gen_random_uuid(),${JobQueue.LITE},5,${JobStatus.PENDING},'acme','pend_type','pend','finder_team','{}',1,0,2,0,now(),gen_random_uuid(),gen_random_uuid()),
          -- NÃO DLQ: completed
-         (gen_random_uuid(),'lite',5,'completed','acme','done_type','done','finder_team','{}',1,1,2,1,now(),gen_random_uuid(),gen_random_uuid())`,
+         (gen_random_uuid(),${JobQueue.LITE},5,${JobStatus.COMPLETED},'acme','done_type','done','finder_team','{}',1,1,2,1,now(),gen_random_uuid(),gen_random_uuid())`,
     );
 
     const { rows } = await pool.query<{ job_id: string }>(
@@ -237,9 +238,9 @@ describe('Objetos de banco — DDL, índices, funções, views', () => {
           correlation_id, requested_by)
        SELECT
          gen_random_uuid(),
-         CASE WHEN g <= 3 THEN 'lite' ELSE 'full' END,
+         CASE WHEN g <= 3 THEN ${JobQueue.LITE} ELSE ${JobQueue.FULL} END,
          5,
-         CASE WHEN g <= 2 THEN 'pending' WHEN g = 3 THEN 'completed' ELSE 'pending' END,
+         CASE WHEN g <= 2 THEN ${JobStatus.PENDING} WHEN g = 3 THEN ${JobStatus.COMPLETED} ELSE ${JobStatus.PENDING} END,
          'acme', 'cpf', 'id' || g, 'finder_team', '{}', 1, 0, 2,
          now(), gen_random_uuid(), gen_random_uuid()
        FROM generate_series(1, 5) AS g`,
@@ -249,6 +250,7 @@ describe('Objetos de banco — DDL, índices, funções, views', () => {
       'SELECT queue, status, total FROM clothos_core.v_queue_stats ORDER BY queue, status',
     );
 
+    // A view traduz o numero de volta para o rotulo (ADR-0024): quem OPERA le texto.
     // lite: 2 pending + 1 completed; full: 2 pending
     const litePending = rows.find((r) => r.queue === 'lite' && r.status === 'pending');
     const liteCompleted = rows.find((r) => r.queue === 'lite' && r.status === 'completed');
@@ -294,10 +296,10 @@ describe('Objetos de banco — DDL, índices, funções, views', () => {
           payload, cost_reserved, cost_actual, max_attempts, available_at,
           correlation_id, requested_by, updated_at)
        VALUES
-         (gen_random_uuid(),'lite',5,'completed','acme','cpf','arch1','finder_team','{}',1,0,2,now(),gen_random_uuid(),gen_random_uuid(), now() - interval '10 days'),
-         (gen_random_uuid(),'lite',5,'completed','acme','cpf','arch2','finder_team','{}',1,0,2,now(),gen_random_uuid(),gen_random_uuid(), now() - interval '10 days'),
+         (gen_random_uuid(),${JobQueue.LITE},5,${JobStatus.COMPLETED},'acme','cpf','arch1','finder_team','{}',1,0,2,now(),gen_random_uuid(),gen_random_uuid(), now() - interval '10 days'),
+         (gen_random_uuid(),${JobQueue.LITE},5,${JobStatus.COMPLETED},'acme','cpf','arch2','finder_team','{}',1,0,2,now(),gen_random_uuid(),gen_random_uuid(), now() - interval '10 days'),
          -- Este deve permanecer (recente)
-         (gen_random_uuid(),'lite',5,'completed','acme','cpf','recent','finder_team','{}',1,0,2,now(),gen_random_uuid(),gen_random_uuid(), now())`,
+         (gen_random_uuid(),${JobQueue.LITE},5,${JobStatus.COMPLETED},'acme','cpf','recent','finder_team','{}',1,0,2,now(),gen_random_uuid(),gen_random_uuid(), now())`,
     );
 
     // Arquiva com retenção de 7 dias

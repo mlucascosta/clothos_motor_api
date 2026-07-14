@@ -6,6 +6,7 @@
  */
 
 import { JobRepository } from '@infrastructure/database/JobRepository.js';
+import { JobQueue, type JobQueueValue, JobStatus } from '@shared/domain/enums/queue.js';
 import { Pool } from 'pg';
 import { truncateTables } from './setup/truncate.js';
 
@@ -16,19 +17,19 @@ const DATABASE_URL = process.env['DATABASE_URL'] ?? process.env['MOTOR_DATABASE_
 // ---------------------------------------------------------------------------
 let jobSeq = 0;
 function makeJobInsert(opts: {
-  queue?: string;
+  queue?: JobQueueValue;
   priority?: number;
   availableAt?: string; // SQL expression
 }): string {
   jobSeq++;
-  const queue = opts.queue ?? 'lite';
+  const queue = opts.queue ?? JobQueue.LITE;
   const priority = opts.priority ?? 5;
   const availableAt = opts.availableAt ?? 'now()';
   return `(
     gen_random_uuid(),
-    '${queue}',
+    ${queue},
     ${priority},
-    'pending',
+    ${JobStatus.PENDING},
     'acme',
     'cpf',
     'abc123${String(jobSeq).padStart(6, '0')}',
@@ -74,7 +75,7 @@ describe('JobRepository — FOR UPDATE SKIP LOCKED', () => {
     // Arrange: insere 50 jobs pending
     const N = 50;
     const M = 20;
-    const rows = Array.from({ length: N }, () => makeJobInsert({ queue: 'lite' }));
+    const rows = Array.from({ length: N }, () => makeJobInsert({ queue: JobQueue.LITE }));
     await pool.query(
       `INSERT INTO clothos_core.jobs
          (job_id, queue, priority, status, tenant_slug, query_type, identifier, plan,
@@ -84,7 +85,9 @@ describe('JobRepository — FOR UPDATE SKIP LOCKED', () => {
     );
 
     // Act: M claims concorrentes via Promise.all
-    const claims = await Promise.all(Array.from({ length: M }, () => repo.claimNext('lite')));
+    const claims = await Promise.all(
+      Array.from({ length: M }, () => repo.claimNext(JobQueue.LITE)),
+    );
 
     // Assert: sem null no início (M <= N, todos devem ter claimado)
     const successful = claims.filter((j) => j !== null);
@@ -100,15 +103,15 @@ describe('JobRepository — FOR UPDATE SKIP LOCKED', () => {
       'SELECT status, count(*) AS count FROM clothos_core.jobs GROUP BY status ORDER BY status',
     );
     const byStatus = Object.fromEntries(stats.map((r) => [r.status, Number(r.count)]));
-    expect(byStatus['claimed']).toBe(M);
-    expect(byStatus['pending']).toBe(N - M);
+    expect(byStatus[JobStatus.CLAIMED]).toBe(M);
+    expect(byStatus[JobStatus.PENDING]).toBe(N - M);
   });
 
   // -------------------------------------------------------------------------
   // Teste 2: retorna null quando fila está vazia
   // -------------------------------------------------------------------------
   it('retorna null quando não há jobs pending na queue', async () => {
-    const result = await repo.claimNext('lite');
+    const result = await repo.claimNext(JobQueue.LITE);
     expect(result).toBeNull();
   });
 
@@ -123,16 +126,16 @@ describe('JobRepository — FOR UPDATE SKIP LOCKED', () => {
           payload, cost_reserved, cost_actual, max_attempts, available_at,
           correlation_id, requested_by)
        VALUES
-         (gen_random_uuid(),'lite',5,'pending','acme','cpf','id0001','finder_team','{}',1,0,2, now(), gen_random_uuid(), gen_random_uuid()),
-         (gen_random_uuid(),'lite',5,'pending','acme','cpf','id0002','finder_team','{}',1,0,2, now() + interval '1 hour', gen_random_uuid(), gen_random_uuid()),
-         (gen_random_uuid(),'lite',5,'pending','acme','cpf','id0003','finder_team','{}',1,0,2, now() + interval '1 hour', gen_random_uuid(), gen_random_uuid()),
-         (gen_random_uuid(),'lite',5,'pending','acme','cpf','id0004','finder_team','{}',1,0,2, now() + interval '1 hour', gen_random_uuid(), gen_random_uuid())
+         (gen_random_uuid(),${JobQueue.LITE},5,${JobStatus.PENDING},'acme','cpf','id0001','finder_team','{}',1,0,2, now(), gen_random_uuid(), gen_random_uuid()),
+         (gen_random_uuid(),${JobQueue.LITE},5,${JobStatus.PENDING},'acme','cpf','id0002','finder_team','{}',1,0,2, now() + interval '1 hour', gen_random_uuid(), gen_random_uuid()),
+         (gen_random_uuid(),${JobQueue.LITE},5,${JobStatus.PENDING},'acme','cpf','id0003','finder_team','{}',1,0,2, now() + interval '1 hour', gen_random_uuid(), gen_random_uuid()),
+         (gen_random_uuid(),${JobQueue.LITE},5,${JobStatus.PENDING},'acme','cpf','id0004','finder_team','{}',1,0,2, now() + interval '1 hour', gen_random_uuid(), gen_random_uuid())
       `,
     );
 
     // Apenas 1 deve ser claimado (o disponível agora)
-    const first = await repo.claimNext('lite');
-    const second = await repo.claimNext('lite');
+    const first = await repo.claimNext(JobQueue.LITE);
+    const second = await repo.claimNext(JobQueue.LITE);
 
     expect(first).not.toBeNull();
     expect(second).toBeNull(); // os 3 restantes têm available_at futuro
@@ -149,15 +152,15 @@ describe('JobRepository — FOR UPDATE SKIP LOCKED', () => {
           payload, cost_reserved, cost_actual, max_attempts, available_at,
           correlation_id, requested_by)
        VALUES
-         (gen_random_uuid(),'full',5,'pending','acme','cpf','low_prio', 'finder_team','{}',1,0,2, now(), gen_random_uuid(), gen_random_uuid()),
-         (gen_random_uuid(),'full',1,'pending','acme','cpf','high_prio','finder_team','{}',1,0,2, now(), gen_random_uuid(), gen_random_uuid()),
-         (gen_random_uuid(),'full',3,'pending','acme','cpf','mid_prio', 'finder_team','{}',1,0,2, now(), gen_random_uuid(), gen_random_uuid())
+         (gen_random_uuid(),${JobQueue.FULL},5,${JobStatus.PENDING},'acme','cpf','low_prio', 'finder_team','{}',1,0,2, now(), gen_random_uuid(), gen_random_uuid()),
+         (gen_random_uuid(),${JobQueue.FULL},1,${JobStatus.PENDING},'acme','cpf','high_prio','finder_team','{}',1,0,2, now(), gen_random_uuid(), gen_random_uuid()),
+         (gen_random_uuid(),${JobQueue.FULL},3,${JobStatus.PENDING},'acme','cpf','mid_prio', 'finder_team','{}',1,0,2, now(), gen_random_uuid(), gen_random_uuid())
       `,
     );
 
-    const first = await repo.claimNext('full');
-    const second = await repo.claimNext('full');
-    const third = await repo.claimNext('full');
+    const first = await repo.claimNext(JobQueue.FULL);
+    const second = await repo.claimNext(JobQueue.FULL);
+    const third = await repo.claimNext(JobQueue.FULL);
 
     expect(first).not.toBeNull();
     expect(second).not.toBeNull();
@@ -180,16 +183,18 @@ describe('JobRepository — FOR UPDATE SKIP LOCKED', () => {
           payload, cost_reserved, cost_actual, max_attempts, available_at,
           correlation_id, requested_by)
        VALUES
-         (gen_random_uuid(),'graph',5,'pending','acme','cpf','g1','finder_team','{}',1,0,2,now(),gen_random_uuid(),gen_random_uuid()),
-         (gen_random_uuid(),'graph',5,'pending','acme','cpf','g2','finder_team','{}',1,0,2,now(),gen_random_uuid(),gen_random_uuid()),
-         (gen_random_uuid(),'graph',5,'pending','acme','cpf','g3','finder_team','{}',1,0,2,now(),gen_random_uuid(),gen_random_uuid()),
-         (gen_random_uuid(),'graph',5,'pending','acme','cpf','g4','finder_team','{}',1,0,2,now(),gen_random_uuid(),gen_random_uuid()),
-         (gen_random_uuid(),'graph',5,'pending','acme','cpf','g5','finder_team','{}',1,0,2,now(),gen_random_uuid(),gen_random_uuid())
+         (gen_random_uuid(),${JobQueue.GRAPH},5,${JobStatus.PENDING},'acme','cpf','g1','finder_team','{}',1,0,2,now(),gen_random_uuid(),gen_random_uuid()),
+         (gen_random_uuid(),${JobQueue.GRAPH},5,${JobStatus.PENDING},'acme','cpf','g2','finder_team','{}',1,0,2,now(),gen_random_uuid(),gen_random_uuid()),
+         (gen_random_uuid(),${JobQueue.GRAPH},5,${JobStatus.PENDING},'acme','cpf','g3','finder_team','{}',1,0,2,now(),gen_random_uuid(),gen_random_uuid()),
+         (gen_random_uuid(),${JobQueue.GRAPH},5,${JobStatus.PENDING},'acme','cpf','g4','finder_team','{}',1,0,2,now(),gen_random_uuid(),gen_random_uuid()),
+         (gen_random_uuid(),${JobQueue.GRAPH},5,${JobStatus.PENDING},'acme','cpf','g5','finder_team','{}',1,0,2,now(),gen_random_uuid(),gen_random_uuid())
       `,
     );
 
     const M = 8;
-    const claims = await Promise.all(Array.from({ length: M }, () => repo.claimNext('graph')));
+    const claims = await Promise.all(
+      Array.from({ length: M }, () => repo.claimNext(JobQueue.GRAPH)),
+    );
 
     const ok = claims.filter((j) => j !== null);
     const nulls = claims.filter((j) => j === null);

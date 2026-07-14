@@ -3,6 +3,7 @@ import type { SourceContext } from '@application/queries/ports/ISourceExecutor.j
 import type { FinderJobRepository } from '@infrastructure/database/FinderJobRepository.js';
 import type { JobRow } from '@infrastructure/database/JobRepository.js';
 import { isLeft } from '@shared/domain/Either.js';
+import { JobEventType, JobStatus } from '@shared/domain/enums/queue.js';
 import { deriveCacheKey } from '@shared/domain/privacy/cacheKey.js';
 import type { RegisteredSource, SourceRegistry } from './SourceRegistry.js';
 import type { FinderArtifact, FinderJobPayload, ProcessCandidate } from './contracts.js';
@@ -64,7 +65,7 @@ export class FinderJobProcessor {
         const selected = this.selectedCandidates(payload, candidates);
         if (selected === null) {
           requiresSelection = true;
-          await this.repository.appendEvent(job.job_id, 'candidate_selection_required', {
+          await this.repository.appendEvent(job.job_id, JobEventType.CANDIDATE_SELECTION_REQUIRED, {
             source: source.id,
             max_selectable: this.candidateFanoutLimit,
             candidate_ids: candidates.map((candidate) => candidate.id),
@@ -93,7 +94,7 @@ export class FinderJobProcessor {
           stage: source.stage,
         });
         await this.repository.failSourceExecution(executionId, 'CPF_IDENTIFIER_UNAVAILABLE');
-        await this.repository.appendEvent(job.job_id, 'source_failed', {
+        await this.repository.appendEvent(job.job_id, JobEventType.SOURCE_FAILED, {
           source: source.id,
           stage: source.stage,
           error_kind: 'CPF_IDENTIFIER_UNAVAILABLE',
@@ -108,13 +109,17 @@ export class FinderJobProcessor {
       if (result.artifacts.length > 0) artifacts.push(...result.artifacts);
     }
 
-    const status =
-      requiresSelection || blocks.some((block) => block.status === 'failed')
-        ? 'partial'
-        : 'completed';
+    // Duas representações do MESMO estado, de propósito:
+    //  - `statusLabel` vai no JSON de `jobs.result` — payload é validado por schema nos dois
+    //    lados e é o que um humano lê ao depurar um job;
+    //  - `status` vai na COLUNA `jobs.status`, que é numérica (contrato da fila, ADR-0024).
+    const partial = requiresSelection || blocks.some((block) => block.status === 'failed');
+    const statusLabel = partial ? 'partial' : 'completed';
+    const status = partial ? JobStatus.PARTIAL : JobStatus.COMPLETED;
+
     const safeResult: Record<string, unknown> = {
       protocol_version: 2,
-      status,
+      status: statusLabel,
       duration_ms: Date.now() - startedAt,
       blocks,
       summary: {
@@ -170,7 +175,7 @@ export class FinderJobProcessor {
   ): Promise<{ block: SourceBlock; cost: number; artifacts: FinderArtifact[] }> {
     this.assertNotAborted(signal);
     const cacheKey = deriveCacheKey(source.id, identifier.identifierKind, identifier.identifier);
-    await this.repository.appendEvent(job.job_id, 'progress', {
+    await this.repository.appendEvent(job.job_id, JobEventType.PROGRESS, {
       source: source.id,
       stage: source.stage,
       state: 'started',
@@ -187,7 +192,7 @@ export class FinderJobProcessor {
     const cached = await this.repository.lookupCache(cacheKey);
     if (cached !== null) {
       await this.repository.completeSourceExecution(executionId, { cacheHit: true, cacheKey });
-      await this.repository.appendEvent(job.job_id, 'source_completed', {
+      await this.repository.appendEvent(job.job_id, JobEventType.SOURCE_COMPLETED, {
         source: source.id,
         stage: source.stage,
         cache_hit: true,
@@ -211,7 +216,7 @@ export class FinderJobProcessor {
       });
     } catch {
       await this.repository.failSourceExecution(executionId, 'UPSTREAM_ERROR');
-      await this.repository.appendEvent(job.job_id, 'source_failed', {
+      await this.repository.appendEvent(job.job_id, JobEventType.SOURCE_FAILED, {
         source: source.id,
         stage: source.stage,
         error_kind: 'UPSTREAM_ERROR',
@@ -225,7 +230,7 @@ export class FinderJobProcessor {
     this.assertNotAborted(signal);
     if (isLeft(outcome)) {
       await this.repository.failSourceExecution(executionId, outcome.value.kind);
-      await this.repository.appendEvent(job.job_id, 'source_failed', {
+      await this.repository.appendEvent(job.job_id, JobEventType.SOURCE_FAILED, {
         source: source.id,
         stage: source.stage,
         error_kind: outcome.value.kind,
@@ -261,7 +266,7 @@ export class FinderJobProcessor {
       cacheKey,
       rawResultId,
     });
-    await this.repository.appendEvent(job.job_id, 'source_completed', {
+    await this.repository.appendEvent(job.job_id, JobEventType.SOURCE_COMPLETED, {
       source: source.id,
       stage: source.stage,
     });

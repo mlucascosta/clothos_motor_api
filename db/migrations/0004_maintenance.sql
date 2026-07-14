@@ -76,7 +76,7 @@ BEGIN
       DELETE FROM clothos_core.jobs
       WHERE id IN (
         SELECT id FROM clothos_core.jobs
-        WHERE status IN ('completed', 'partial', 'failed')
+        WHERE status IN (2, 3, 4)   -- completed | partial | failed
           AND updated_at < now() - retention_interval
         LIMIT batch_size
         FOR UPDATE SKIP LOCKED
@@ -154,47 +154,49 @@ COMMENT ON FUNCTION clothos_core.purge_old_raw_results(INTERVAL) IS
 -- A view encapsula a semântica para evitar que consumers precisem conhecer
 -- a condição exata; suporta o endpoint GET /admin/engine/dlq.
 -- ---------------------------------------------------------------------------
+-- Tabelas de rotulo: traduzem o numero de volta para o nome. A coluna e numerica
+-- (ADR-0024: indice, storage, sem typo); a VIEW e legivel. Quem opera le a view.
+CREATE OR REPLACE VIEW clothos_core.v_queue_label AS
+SELECT * FROM (VALUES
+  (0,'lite'), (1,'full'), (2,'monitor'), (3,'dossier'), (4,'export'), (5,'graph'), (6,'custom')
+) AS q(queue, queue_label);
+
+CREATE OR REPLACE VIEW clothos_core.v_job_status_label AS
+SELECT * FROM (VALUES
+  (0,'pending'), (1,'claimed'), (2,'completed'), (3,'partial'), (4,'failed')
+) AS s(status, status_label);
+
 CREATE OR REPLACE VIEW clothos_core.v_dlq AS
 SELECT
-  id,
-  job_id,
-  queue,
-  query_type,
-  tenant_slug,
-  attempts,
-  max_attempts,
-  result,
-  payload,
-  correlation_id,
-  updated_at
-FROM clothos_core.jobs
-WHERE status = 'failed'
-  AND attempts >= max_attempts
-ORDER BY updated_at DESC;
+  j.id, j.job_id,
+  q.queue_label AS queue,
+  j.query_type, j.tenant_slug, j.attempts, j.max_attempts,
+  j.result, j.payload, j.correlation_id, j.updated_at
+FROM clothos_core.jobs j
+LEFT JOIN clothos_core.v_queue_label q ON q.queue = j.queue
+WHERE j.status = 4                    -- JobStatus::FAILED
+  AND j.attempts >= j.max_attempts
+ORDER BY j.updated_at DESC;
 
 COMMENT ON VIEW clothos_core.v_dlq IS
   'Dead Letter Queue: jobs que esgotaram max_attempts. '
-  'Reprocessar: UPDATE jobs SET status=''pending'', attempts=0, available_at=now() WHERE id=?.';
+  'Reprocessar: UPDATE jobs SET status=0, attempts=0, available_at=now() WHERE id=?.';
 
--- ---------------------------------------------------------------------------
--- VIEW: clothos_core.v_queue_stats
---
--- Métricas operacionais da fila por queue/status. Substitui Bull Board.
--- ADR-0019: "Dashboard de fila = SELECT status, count(*) … GROUP BY".
--- ---------------------------------------------------------------------------
 CREATE OR REPLACE VIEW clothos_core.v_queue_stats AS
 SELECT
-  queue,
-  status,
+  q.queue_label                                   AS queue,
+  s.status_label                                  AS status,
   count(*)                                        AS total,
-  min(created_at)                                 AS oldest_created_at,
+  min(j.created_at)                               AS oldest_created_at,
   percentile_cont(0.5) WITHIN GROUP (
-    ORDER BY EXTRACT(EPOCH FROM (now() - created_at))
+    ORDER BY EXTRACT(EPOCH FROM (now() - j.created_at))
   )                                               AS median_age_seconds
-FROM clothos_core.jobs
-GROUP BY queue, status
-ORDER BY queue, status;
+FROM clothos_core.jobs j
+LEFT JOIN clothos_core.v_queue_label q      ON q.queue  = j.queue
+LEFT JOIN clothos_core.v_job_status_label s ON s.status = j.status
+GROUP BY q.queue_label, s.status_label
+ORDER BY q.queue_label, s.status_label;
 
 COMMENT ON VIEW clothos_core.v_queue_stats IS
-  'Estatísticas operacionais da fila por (queue, status). '
-  'Substitui Bull Board — sem infra extra (ADR-0019).';
+  'Estatisticas da fila por (queue, status), com ROTULO legivel — a coluna e numerica '
+  '(ADR-0024), a view traduz. Substitui Bull Board (ADR-0019).';

@@ -15,4 +15,4 @@ ALTER TABLE IF EXISTS clothos_core.jobs_history
 -- migration that have no lease yet.
 CREATE INDEX IF NOT EXISTS idx_jobs_claimed_lease_expires
   ON clothos_core.jobs (lease_expires_at)
-  WHERE status = 'claimed';
+  WHERE status = 1;   -- claimed

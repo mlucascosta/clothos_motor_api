@@ -17,9 +17,9 @@ CREATE SCHEMA IF NOT EXISTS clothos_core;
 CREATE TABLE IF NOT EXISTS clothos_core.jobs (
   id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   job_id         UUID NOT NULL,
-  queue          TEXT NOT NULL,                         -- lite|full|graph|dossier|export|custom
+  queue          SMALLINT NOT NULL,                     -- 0=lite 1=full 2=monitor 3=dossier 4=export 5=graph 6=custom
   priority       SMALLINT NOT NULL DEFAULT 5,           -- 1 alta … 10 baixa
-  status         TEXT NOT NULL DEFAULT 'pending',       -- pending|claimed|completed|partial|failed
+  status         SMALLINT NOT NULL DEFAULT 0,           -- 0=pending 1=claimed 2=completed 3=partial 4=failed
   tenant_slug    TEXT NOT NULL,                         -- rótulo de correlação (motor NÃO isola tenant)
   query_type     TEXT NOT NULL,
   identifier     TEXT NOT NULL,                         -- CPF=SHA-256 | CNPJ=plaintext alfanumérico
@@ -60,7 +60,7 @@ BEGIN
       AND conrelid = 'clothos_core.jobs'::regclass
   ) THEN
     ALTER TABLE clothos_core.jobs ADD CONSTRAINT jobs_status_check
-      CHECK (status IN ('pending', 'claimed', 'completed', 'partial', 'failed'));
+      CHECK (status BETWEEN 0 AND 4);
   END IF;
 END$$;
 
@@ -72,7 +72,7 @@ BEGIN
       AND conrelid = 'clothos_core.jobs'::regclass
   ) THEN
     ALTER TABLE clothos_core.jobs ADD CONSTRAINT jobs_queue_check
-      CHECK (queue IN ('lite', 'full', 'graph', 'dossier', 'export', 'custom'));
+      CHECK (queue BETWEEN 0 AND 6);
   END IF;
 END$$;
 
@@ -94,7 +94,7 @@ END$$;
 -- nunca tocam linhas em outros estados.
 CREATE INDEX IF NOT EXISTS idx_jobs_claim
   ON clothos_core.jobs (queue, priority, available_at)
-  WHERE status = 'pending';
+  WHERE status = 0;   -- pending
 
 -- ---------------------------------------------------------------------------
 -- TABELA: clothos_core.raw_results
@@ -108,8 +108,8 @@ CREATE TABLE IF NOT EXISTS clothos_core.raw_results (
   tipo_param     TEXT,                         -- 'cpf' | 'cnpj' | 'nome' | null
   param          TEXT,                         -- CPF=hash SHA-256; CNPJ/outros=plaintext
   result         JSONB,                        -- payload bruto devolvido pelo provider
-  status         TEXT NOT NULL,                -- 'ok' | 'error' | 'timeout' | 'circuit_open'
-  error_kind     TEXT,                         -- categoria de erro quando status != 'ok'
+  status         SMALLINT NOT NULL,            -- 0=started 1=completed 2=failed
+  error_kind     SMALLINT,                     -- SourceErrorKind (0=TIMEOUT … 6=UPSTREAM_ERROR)
   correlation_id TEXT,                         -- liga ao job que originou esta chamada
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );

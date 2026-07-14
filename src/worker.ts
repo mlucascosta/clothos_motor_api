@@ -5,10 +5,8 @@ import { type JobProcessor, JobWorker } from '@application/jobs/JobWorker.js';
 import { createMonitorJobProcessorFromEnvironment } from '@application/monitor/MonitorProcessorFactory.js';
 import { JobRepository } from '@infrastructure/database/JobRepository.js';
 import { closePool, getPool } from '@infrastructure/database/pool.js';
+import { JobQueue, type JobQueueValue, jobQueueFromName } from '@shared/domain/enums/queue.js';
 import { logger } from '@shared/infrastructure/logger.js';
-
-/** Fila dos polls de monitoramento processual (04-MONITOR §6). */
-export const MONITOR_QUEUE = 'monitor';
 
 /**
  * O payload de cada fila é um contrato diferente: a fila `monitor` carrega um
@@ -16,8 +14,8 @@ export const MONITOR_QUEUE = 'monitor';
  * com o processador da outra falharia o parse de payload em todo job — por isso o
  * processador default é escolhido pela fila que o worker consome.
  */
-export function buildDefaultProcessor(queue: string): JobProcessor {
-  return queue === MONITOR_QUEUE
+export function buildDefaultProcessor(queue: JobQueueValue): JobProcessor {
+  return queue === JobQueue.MONITOR
     ? createMonitorJobProcessorFromEnvironment()
     : createFinderJobProcessorFromEnvironment(getPool());
 }
@@ -48,7 +46,7 @@ export async function resolveWorkerProcessor(
   return loadProcessor(modulePath);
 }
 
-export async function runWorker(processor: JobProcessor, queue: string): Promise<void> {
+export async function runWorker(processor: JobProcessor, queue: JobQueueValue): Promise<void> {
   const pool = getPool();
   if (pool === null) {
     throw new Error('DATABASE_URL or MOTOR_DATABASE_URL is required to start worker');
@@ -72,7 +70,9 @@ export async function runWorker(processor: JobProcessor, queue: string): Promise
 }
 
 async function main(): Promise<void> {
-  const queue = process.env['WORKER_QUEUE'] ?? 'full';
+  // Falha fechado: WORKER_QUEUE com typo derruba o worker no boot, em vez de deixa-lo
+  // rodando eternamente sem reclamar job nenhum (que e como um typo se manifestava).
+  const queue = jobQueueFromName(process.env['WORKER_QUEUE'] ?? 'full');
   const processor = await resolveWorkerProcessor(process.env['WORKER_PROCESSOR_MODULE'], () =>
     buildDefaultProcessor(queue),
   );

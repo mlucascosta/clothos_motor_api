@@ -1,12 +1,19 @@
 import type { FinderArtifact } from '@application/finder/contracts.js';
+import {
+  JobEventType,
+  type JobEventTypeValue,
+  SourceExecutionStatus,
+  sourceErrorKindFromName,
+} from '@shared/domain/enums/queue.js';
 import { hashCpfIfNeeded } from '@shared/domain/privacy/hashCpf.js';
 import type { Pool } from 'pg';
 
-export type FinderJobEventType =
-  | 'progress'
-  | 'source_completed'
-  | 'source_failed'
-  | 'candidate_selection_required';
+/**
+ * Tipo do evento durável, no contrato numérico da fila (docs/enums/queue-contract.json).
+ * Reexportado para os chamadores usarem `JobEventType.SOURCE_COMPLETED`, nunca um literal.
+ */
+export type FinderJobEventType = JobEventTypeValue;
+export { JobEventType };
 
 export interface SourceExecutionStart {
   jobId: string;
@@ -81,9 +88,9 @@ export class FinderJobRepository {
     const { rows } = await this.pool.query<{ id: string }>(
       `INSERT INTO clothos_core.job_source_executions
          (job_id, source_id, source_code, stage, candidate_id, status, started_at)
-       VALUES ($1, $2, $3, $4, $5, 'started', now())
+       VALUES ($1, $2, $3, $4, $5, ${SourceExecutionStatus.STARTED}, now())
        ON CONFLICT (job_id, source_id, candidate_id)
-       DO UPDATE SET source_code = EXCLUDED.source_code, status = 'started',
+       DO UPDATE SET source_code = EXCLUDED.source_code, status = ${SourceExecutionStatus.STARTED},
                      error_kind = NULL, started_at = now(), completed_at = NULL,
                      cache_hit = FALSE, cache_key = NULL, raw_result_id = NULL
        RETURNING id`,
@@ -104,7 +111,7 @@ export class FinderJobRepository {
   ): Promise<void> {
     await this.pool.query(
       `UPDATE clothos_core.job_source_executions
-          SET status = 'completed', completed_at = now(),
+          SET status = ${SourceExecutionStatus.COMPLETED}, completed_at = now(),
               cache_hit = $2, cache_key = $3, raw_result_id = $4
         WHERE id = $1`,
       [
@@ -119,9 +126,9 @@ export class FinderJobRepository {
   async failSourceExecution(id: number, errorKind: string): Promise<void> {
     await this.pool.query(
       `UPDATE clothos_core.job_source_executions
-          SET status = 'failed', error_kind = $2, completed_at = now()
+          SET status = ${SourceExecutionStatus.FAILED}, error_kind = $2, completed_at = now()
         WHERE id = $1`,
-      [id, errorKind],
+      [id, sourceErrorKindFromName(errorKind)],
     );
   }
 

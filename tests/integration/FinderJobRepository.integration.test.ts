@@ -1,4 +1,10 @@
 import { FinderJobRepository } from '@infrastructure/database/FinderJobRepository.js';
+import {
+  JobEventType,
+  JobQueue,
+  JobStatus,
+  SourceExecutionStatus,
+} from '@shared/domain/enums/queue.js';
 import { Pool } from 'pg';
 import { truncateTables } from './setup/truncate.js';
 
@@ -11,7 +17,7 @@ async function insertJob(pool: Pool): Promise<string> {
        (job_id, queue, priority, status, tenant_slug, query_type, identifier, plan,
         payload, cost_reserved, max_attempts, correlation_id, requested_by)
      VALUES
-       ($1, 'full', 5, 'claimed', 'acme', 'finder', 'sha256-only', 'finder',
+       ($1, ${JobQueue.FULL}, 5, ${JobStatus.CLAIMED}, 'acme', 'finder', 'sha256-only', 'finder',
         '{"protocol_version":2}', 10, 2,
         '00000000-0000-0000-0000-000000000098',
         '00000000-0000-0000-0000-000000000097')`,
@@ -42,8 +48,11 @@ describe('FinderJobRepository', () => {
 
   it('persists ordered events, source execution, and provenance-linked artifact', async () => {
     const jobId = await insertJob(pool);
-    await repository.appendEvent(jobId, 'progress', { source: 'escavador', stage: 1 });
-    await repository.appendEvent(jobId, 'source_completed', { source: 'escavador', stage: 1 });
+    await repository.appendEvent(jobId, JobEventType.PROGRESS, { source: 'escavador', stage: 1 });
+    await repository.appendEvent(jobId, JobEventType.SOURCE_COMPLETED, {
+      source: 'escavador',
+      stage: 1,
+    });
     const executionId = await repository.startSourceExecution({
       jobId,
       sourceId: 'escavador',
@@ -66,8 +75,8 @@ describe('FinderJobRepository', () => {
       [jobId],
     );
     expect(events).toEqual([
-      { sequence: '1', event_type: 'progress' },
-      { sequence: '2', event_type: 'source_completed' },
+      { sequence: '1', event_type: JobEventType.PROGRESS },
+      { sequence: '2', event_type: JobEventType.SOURCE_COMPLETED },
     ]);
 
     const { rows: artifacts } = await pool.query<{
@@ -102,7 +111,7 @@ describe('FinderJobRepository', () => {
       tipoParam: 'cnpj',
       param: '11222333000181',
       result: { razao_social: 'Acme Ltda' },
-      status: 'ok',
+      status: SourceExecutionStatus.COMPLETED,
       correlationId: '00000000-0000-0000-0000-000000000098',
       cacheKey: 'cache-key-1',
     });

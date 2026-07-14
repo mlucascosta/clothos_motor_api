@@ -1,4 +1,5 @@
-import { MONITOR_QUEUE, buildDefaultProcessor } from '../src/worker.js';
+import { JobQueue } from '@shared/domain/enums/queue.js';
+import { buildDefaultProcessor } from '../src/worker.js';
 
 const monitorEnvironment = {
   DATAJUD_APIKEY: 'datajud-token',
@@ -17,14 +18,14 @@ describe('buildDefaultProcessor', () => {
     // sem DIRECTDATA_TOKEN — e a fila `monitor` ficaria eternamente sem consumidor.
     process.env = { ...monitorEnvironment };
 
-    expect(() => buildDefaultProcessor(MONITOR_QUEUE)).not.toThrow();
-    expect(typeof buildDefaultProcessor(MONITOR_QUEUE)).toBe('function');
+    expect(() => buildDefaultProcessor(JobQueue.MONITOR)).not.toThrow();
+    expect(typeof buildDefaultProcessor(JobQueue.MONITOR)).toBe('function');
   });
 
   it('a fila monitor exige as credenciais das suas duas fontes', () => {
     process.env = { DATAJUD_APIKEY: 'datajud-token' };
 
-    expect(() => buildDefaultProcessor(MONITOR_QUEUE)).toThrow(
+    expect(() => buildDefaultProcessor(JobQueue.MONITOR)).toThrow(
       'missing_provider_configuration:ESCAVADOR_API_KEY',
     );
   });
@@ -33,7 +34,7 @@ describe('buildDefaultProcessor', () => {
     // O Finder exige DirectData: a ausência prova que a fila `full` não caiu no monitor.
     process.env = { ...monitorEnvironment };
 
-    expect(() => buildDefaultProcessor('full')).toThrow(
+    expect(() => buildDefaultProcessor(JobQueue.FULL)).toThrow(
       'missing_provider_configuration:DIRECTDATA_TOKEN',
     );
   });

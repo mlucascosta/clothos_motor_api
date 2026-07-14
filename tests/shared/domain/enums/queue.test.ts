@@ -18,7 +18,10 @@ import {
  * em produção, se manifestaria como job nunca reclamado, sem erro nenhum.
  */
 const contract = JSON.parse(
-  readFileSync(join(__dirname, '..', '..', '..', '..', '..', 'docs', 'enums', 'queue-contract.json'), 'utf-8'),
+  readFileSync(
+    join(__dirname, '..', '..', '..', '..', '..', 'docs', 'enums', 'queue-contract.json'),
+    'utf-8',
+  ),
 ) as Record<string, Record<string, number>>;
 
 function expectMatchesContract(actual: Record<string, number>, key: string): void {

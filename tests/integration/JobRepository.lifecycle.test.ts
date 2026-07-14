@@ -6,6 +6,7 @@
  */
 
 import { JobRepository, type JobRow } from '@infrastructure/database/JobRepository.js';
+import { JobQueue, type JobQueueValue, JobStatus } from '@shared/domain/enums/queue.js';
 import { Pool } from 'pg';
 import { truncateTables } from './setup/truncate.js';
 
@@ -25,12 +26,12 @@ function requireClaim(job: JobRow | null): JobRow & { claim_token: string } {
 async function insertJob(
   pool: Pool,
   opts: {
-    queue?: string;
+    queue?: JobQueueValue;
     maxAttempts?: number;
     jobId?: string;
   } = {},
 ): Promise<number> {
-  const queue = opts.queue ?? 'lite';
+  const queue = opts.queue ?? JobQueue.LITE;
   const maxAttempts = opts.maxAttempts ?? 2;
   const jobId = opts.jobId ?? null; // null → gen_random_uuid()
 
@@ -42,7 +43,7 @@ async function insertJob(
         payload, cost_reserved, cost_actual, max_attempts, available_at,
         correlation_id, requested_by)
      VALUES
-       (${jobIdExpr}, $1, 5, 'pending', 'acme', 'cpf', 'abc123', 'finder_team',
+       (${jobIdExpr}, $1, 5, ${JobStatus.PENDING}, 'acme', 'cpf', 'abc123', 'finder_team',
         '{}', 1, 0, $2, now(), gen_random_uuid(), gen_random_uuid())
      RETURNING id`,
     [queue, maxAttempts],
@@ -97,7 +98,7 @@ describe('JobRepository — Ciclo de vida', () => {
   // -------------------------------------------------------------------------
   it('complete() grava result JSONB e status; roundtrip fiel para objeto aninhado', async () => {
     const id = await insertJob(pool);
-    const job = requireClaim(await repo.claimNext('lite'));
+    const job = requireClaim(await repo.claimNext(JobQueue.LITE));
 
     const deepResult = {
       score: 7.5,
@@ -112,7 +113,7 @@ describe('JobRepository — Ciclo de vida', () => {
     await repo.complete(job.id, job.claim_token, deepResult, 3);
 
     const updated = await getJob(pool, id);
-    expect(updated.status).toBe('completed');
+    expect(updated.status).toBe(JobStatus.COMPLETED);
     expect(updated.cost_actual).toBe(3);
 
     // JSONB roundtrip — o driver pg retorna o objeto parseado
@@ -122,16 +123,16 @@ describe('JobRepository — Ciclo de vida', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Teste 3: complete() com status='partial'
+  // Teste 3: complete() com status = PARTIAL
   // -------------------------------------------------------------------------
   it('complete() com status=partial grava corretamente', async () => {
     await insertJob(pool);
-    const job = requireClaim(await repo.claimNext('lite'));
+    const job = requireClaim(await repo.claimNext(JobQueue.LITE));
 
-    await repo.complete(job.id, job.claim_token, { parcial: true }, 1, 'partial');
+    await repo.complete(job.id, job.claim_token, { parcial: true }, 1, JobStatus.PARTIAL);
 
     const updated = await getJob(pool, job?.id);
-    expect(updated.status).toBe('partial');
+    expect(updated.status).toBe(JobStatus.PARTIAL);
   });
 
   // -------------------------------------------------------------------------
@@ -140,13 +141,13 @@ describe('JobRepository — Ciclo de vida', () => {
   it('fail() com attempts < max_attempts volta a pending com available_at futuro', async () => {
     // max_attempts=3: após 1 claim (attempts=1), fail → ainda 1 < 3
     await insertJob(pool, { maxAttempts: 3 });
-    const job = requireClaim(await repo.claimNext('lite'));
+    const job = requireClaim(await repo.claimNext(JobQueue.LITE));
     expect(job.attempts).toBe(1); // incrementado pelo claim
 
     await repo.fail(job.id, job.claim_token, { error: 'upstream_timeout' });
 
     const updated = await getJob(pool, job?.id);
-    expect(updated.status).toBe('pending');
+    expect(updated.status).toBe(JobStatus.PENDING);
     // available_at deve ser > now (backoff aplicado)
     expect(new Date(updated.available_at).getTime()).toBeGreaterThan(Date.now());
   });
@@ -157,13 +158,13 @@ describe('JobRepository — Ciclo de vida', () => {
   it('fail() com attempts >= max_attempts manda para DLQ (status=failed)', async () => {
     // max_attempts=1: após 1 claim (attempts=1), fail → 1 >= 1 → DLQ
     await insertJob(pool, { maxAttempts: 1 });
-    const job = requireClaim(await repo.claimNext('lite'));
+    const job = requireClaim(await repo.claimNext(JobQueue.LITE));
     expect(job.attempts).toBe(1);
 
     await repo.fail(job.id, job.claim_token, { error: 'max_retries_exceeded' });
 
     const updated = await getJob(pool, job?.id);
-    expect(updated.status).toBe('failed');
+    expect(updated.status).toBe(JobStatus.FAILED);
   });
 
   // -------------------------------------------------------------------------
@@ -177,14 +178,14 @@ describe('JobRepository — Ciclo de vida', () => {
 
     // Coloca idA e idB em DLQ
     for (const pendingId of [idA, idB]) {
-      const claimed = requireClaim(await repo.claimNext('lite'));
+      const claimed = requireClaim(await repo.claimNext(JobQueue.LITE));
       const j = await getJob(pool, pendingId);
       await repo.fail(j.id, claimed.claim_token, { error: 'forced' });
     }
 
     // Cria e conclui 1 job (completed — não deve aparecer)
     const idC = await insertJob(pool);
-    const claimedC = requireClaim(await repo.claimNext('lite'));
+    const claimedC = requireClaim(await repo.claimNext(JobQueue.LITE));
     await repo.complete(claimedC.id, claimedC.claim_token, {}, 0);
 
     const dlq = await repo.listDlq();
@@ -194,7 +195,7 @@ describe('JobRepository — Ciclo de vida', () => {
     expect(dlqIds).toContain(idB);
     expect(dlqIds).not.toContain(idC);
     // Todos devem ter status=failed
-    expect(dlq.every((j) => j.status === 'failed')).toBe(true);
+    expect(dlq.every((j) => j.status === JobStatus.FAILED)).toBe(true);
   });
 
   // -------------------------------------------------------------------------
@@ -202,7 +203,7 @@ describe('JobRepository — Ciclo de vida', () => {
   // -------------------------------------------------------------------------
   it('reprocess() reseta attempts para 0 e status para pending', async () => {
     await insertJob(pool, { maxAttempts: 1 });
-    const job = requireClaim(await repo.claimNext('lite'));
+    const job = requireClaim(await repo.claimNext(JobQueue.LITE));
     await repo.fail(job.id, job.claim_token, { error: 'forced' });
 
     const dlqBefore = await repo.listDlq();
@@ -214,7 +215,7 @@ describe('JobRepository — Ciclo de vida', () => {
     expect(dlqAfter).toHaveLength(0); // saiu da DLQ
 
     const updated = await getJob(pool, job?.id);
-    expect(updated.status).toBe('pending');
+    expect(updated.status).toBe(JobStatus.PENDING);
     expect(updated.attempts).toBe(0);
     // available_at deve ser <= now (imediatamente disponível)
     expect(new Date(updated.available_at).getTime()).toBeLessThanOrEqual(Date.now() + 1000);
@@ -225,18 +226,18 @@ describe('JobRepository — Ciclo de vida', () => {
   // -------------------------------------------------------------------------
   it('getWaitingCount() retorna contagem precisa por queue, ignorando outras filas', async () => {
     // 3 pending em 'lite', 2 pending em 'full', 1 claimed em 'lite'
-    await insertJob(pool, { queue: 'lite' });
-    await insertJob(pool, { queue: 'lite' });
-    await insertJob(pool, { queue: 'lite' });
-    await insertJob(pool, { queue: 'full' });
-    await insertJob(pool, { queue: 'full' });
+    await insertJob(pool, { queue: JobQueue.LITE });
+    await insertJob(pool, { queue: JobQueue.LITE });
+    await insertJob(pool, { queue: JobQueue.LITE });
+    await insertJob(pool, { queue: JobQueue.FULL });
+    await insertJob(pool, { queue: JobQueue.FULL });
 
     // Claim 1 job de 'lite' para tirá-lo de pending
-    await repo.claimNext('lite');
+    await repo.claimNext(JobQueue.LITE);
 
-    const liteCount = await repo.getWaitingCount('lite');
-    const fullCount = await repo.getWaitingCount('full');
-    const graphCount = await repo.getWaitingCount('graph');
+    const liteCount = await repo.getWaitingCount(JobQueue.LITE);
+    const fullCount = await repo.getWaitingCount(JobQueue.FULL);
+    const graphCount = await repo.getWaitingCount(JobQueue.GRAPH);
 
     expect(liteCount).toBe(2); // 3 - 1 claimed
     expect(fullCount).toBe(2);

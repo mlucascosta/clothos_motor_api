@@ -14,7 +14,7 @@
 -- Query: SELECT … FROM clothos_core.jobs WHERE status='failed' ORDER BY updated_at DESC
 CREATE INDEX IF NOT EXISTS idx_jobs_dlq
   ON clothos_core.jobs (updated_at DESC)
-  WHERE status = 'failed';
+  WHERE status = 4;   -- failed
 
 -- Lookup por job_id já coberto pelo UNIQUE constraint (jobs_job_id_unique),
 -- que implicitamente cria um índice B-tree em job_id. Não duplicar.
@@ -44,7 +44,7 @@ CREATE INDEX IF NOT EXISTS idx_jobs_tenant_created
 -- Query: SELECT … FROM clothos_core.jobs WHERE status='claimed' AND claimed_at < now() - interval
 CREATE INDEX IF NOT EXISTS idx_jobs_claimed_stale
   ON clothos_core.jobs (claimed_at)
-  WHERE status = 'claimed';
+  WHERE status = 1;   -- claimed
 
 -- ---------------------------------------------------------------------------
 -- clothos_core.raw_results
