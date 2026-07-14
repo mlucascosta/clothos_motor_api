@@ -8,9 +8,7 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "dev": "node --watch --import @swc-node/register/esm-register src/presentation/server.ts",
     "build": "swc src -d dist --copy-files && tsc-alias",
-    "start": "node dist/presentation/server.js",
     "worker": "node --import @swc-node/register/esm-register src/worker.ts",
     "start:worker": "node dist/worker.js",
     "test": "jest",
@@ -20,12 +18,11 @@
     "lint:fix": "biome check --fix .",
     "format": "biome format --fix .",
     "typecheck": "tsc --noEmit",
-    "test:integration": "jest --config jest.integration.config.cjs --runInBand --forceExit"
+    "test:integration": "jest --config jest.integration.config.cjs --runInBand --forceExit",
+    "dev": "node --watch --import @swc-node/register/esm-register src/worker.ts"
   },
   "dependencies": {
-    "@hono/node-server": "^1.14.0",
     "dotenv": "^17.4.2",
-    "hono": "^4.7.11",
     "pg": "^8.22.0",
     "pino": "^9.7.0",
     "zod": "^3.24.4"
