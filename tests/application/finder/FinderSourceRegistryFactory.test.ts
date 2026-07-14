@@ -18,11 +18,13 @@ describe('createCnpjFinderSourceRegistry', () => {
       'escavador',
     ]);
     expect(registry.plan({ profile: 'judicial' }).map((source) => source.id)).toEqual([
+      'directdata_processos',
       'escavador',
       'datajud',
     ]);
     expect(registry.plan({ profile: 'full' }).map((source) => source.id)).toEqual([
       'directdata',
+      'directdata_processos',
       'escavador',
       'datajud',
     ]);

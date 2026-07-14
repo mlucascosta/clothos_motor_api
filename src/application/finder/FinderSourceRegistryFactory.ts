@@ -9,6 +9,7 @@ import { Cnpj } from '@infrastructure/providers/brasilapi/operations/Cnpj.js';
 import { DataJudExecutor } from '@infrastructure/providers/datajud/DataJudExecutor.js';
 import { DataJudHttpClient } from '@infrastructure/providers/datajud/DataJudHttpClient.js';
 import { BuscarProcessoPorNumero } from '@infrastructure/providers/datajud/operations/BuscarProcessoPorNumero.js';
+import { DirectDataCnpjExecutor } from '@infrastructure/providers/directdata/DirectDataCnpjExecutor.js';
 import { DirectDataExecutor } from '@infrastructure/providers/directdata/DirectDataExecutor.js';
 import { DirectDataHttpClient } from '@infrastructure/providers/directdata/DirectDataHttpClient.js';
 import { CadastroPessoaFisica } from '@infrastructure/providers/directdata/operations/CadastroPessoaFisica.js';
@@ -127,6 +128,17 @@ export function createCnpjFinderSourceRegistry(
       stage: 1,
       executor: new BrasilApiExecutor(new Cnpj(brasilApiHttp)),
     },
+    {
+      // Processos judiciais da empresa por CNPJ (endpoint DirectData recebe CPF/CNPJ,
+      // não número de processo). Fonte própria — o dispatch por identifierKind do
+      // DirectDataExecutor não distinguiria duas fontes CNPJ (qsa × processos).
+      id: 'directdata_processos',
+      stage: 1,
+      executor: new DirectDataCnpjExecutor(
+        new ProcessosJudiciaisCompleta(directDataHttp),
+        'directdata_processos',
+      ),
+    },
   ];
   if (infosimplesApiKey !== undefined) {
     const infosimplesHttp = new InfosimplesHttpClient(
@@ -170,8 +182,8 @@ export function createCnpjFinderSourceRegistry(
 
   return new SourceRegistry(sources, {
     identity: ['directdata', 'escavador'],
-    judicial: ['datajud'],
-    full: ['directdata', 'escavador', 'datajud'],
+    judicial: ['datajud', 'directdata_processos'],
+    full: ['directdata', 'escavador', 'datajud', 'directdata_processos'],
     public_cnpj: ['brasilapi_cnpj'],
   });
 }
