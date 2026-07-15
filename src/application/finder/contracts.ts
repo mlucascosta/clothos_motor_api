@@ -11,6 +11,15 @@ const sourceSelectionSchema = z
     }
   });
 
+/**
+ * Perfil do investigado (data de nascimento, nome da mãe, etc.) CIFRADO, exigido por certas
+ * fontes. O Laravel obriga e cifra no submit (SubjectProfileField); o motor decifra em memória
+ * com a chave apontada por key_id. Presente apenas quando alguma fonte selecionada exige perfil.
+ */
+export const subjectProfileSchema = z
+  .object({ ciphertext: z.string().min(1), key_id: z.string().min(1) })
+  .strict();
+
 export const FinderJobPayloadSchema = z.object({
   protocol_version: z.literal(2),
   operation: z.enum(['full_query', 'lite_query']),
@@ -22,6 +31,7 @@ export const FinderJobPayloadSchema = z.object({
   ]),
   source_selection: sourceSelectionSchema,
   selected_candidate_ids: z.array(z.string().min(1)).optional(),
+  subject_profile: subjectProfileSchema.optional(),
 });
 
 export type FinderJobPayload = z.infer<typeof FinderJobPayloadSchema>;
