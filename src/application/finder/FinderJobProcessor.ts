@@ -18,11 +18,20 @@ export interface SubjectProfileResolver {
   resolveProfile(ciphertext: string, keyId: string): Promise<Record<string, string>>;
 }
 
+/** Circuit breaker por provider — protege a margem: circuito aberto NÃO chama o provider. */
+export interface CircuitBreakerPort {
+  isOpen(): Promise<boolean>;
+  recordSuccess(): Promise<void>;
+  recordFailure(): Promise<void>;
+}
+
 export interface FinderJobProcessorOptions {
   candidateFanoutLimit?: number;
   sourceTimeoutMs?: number;
   cpfIdentifierResolver?: CpfIdentifierResolver;
   subjectProfileResolver?: SubjectProfileResolver;
+  /** Fábrica de breaker por slug de provider. Ausente = sem circuit breaker (ex.: testes unitários). */
+  circuitBreakerFor?: (providerSlug: string) => CircuitBreakerPort;
 }
 
 interface SourceBlock {
@@ -240,6 +249,23 @@ export class FinderJobProcessor {
       };
     }
 
+    // Circuit breaker: com o circuito ABERTO, o provider degradado NÃO é chamado — falha
+    // rápido, sem queimar COGS. O cache-hit acima já foi servido (não depende do provider).
+    const breaker = this.options.circuitBreakerFor?.(source.executor.sourceName);
+    if (breaker !== undefined && (await breaker.isOpen())) {
+      await this.repository.failSourceExecution(executionId, 'CIRCUIT_OPEN');
+      await this.repository.appendEvent(job.job_id, JobEventType.SOURCE_FAILED, {
+        source: source.id,
+        stage: source.stage,
+        error_kind: 'CIRCUIT_OPEN',
+      });
+      return {
+        block: { source: source.id, stage: source.stage, status: 'failed' },
+        cost: 0,
+        artifacts: [],
+      };
+    }
+
     let outcome: Awaited<ReturnType<typeof source.executor.execute>>;
     try {
       outcome = await source.executor.execute({
@@ -250,6 +276,7 @@ export class FinderJobProcessor {
         ...(subjectProfile === undefined ? {} : { subjectProfile }),
       });
     } catch {
+      await breaker?.recordFailure();
       await this.repository.failSourceExecution(executionId, 'UPSTREAM_ERROR');
       await this.repository.appendEvent(job.job_id, JobEventType.SOURCE_FAILED, {
         source: source.id,
@@ -264,6 +291,7 @@ export class FinderJobProcessor {
     }
     this.assertNotAborted(signal);
     if (isLeft(outcome)) {
+      await breaker?.recordFailure();
       await this.repository.failSourceExecution(executionId, outcome.value.kind);
       await this.repository.appendEvent(job.job_id, JobEventType.SOURCE_FAILED, {
         source: source.id,
@@ -276,6 +304,9 @@ export class FinderJobProcessor {
         artifacts: [],
       };
     }
+
+    // Provider respondeu com sucesso — fecha o circuito se estava em sondagem (half_open).
+    await breaker?.recordSuccess();
 
     // Miss: persiste resultado bruto (auditoria) + entrada de cache com TTL <= 7 dias,
     // ligados pela chave opaca. CPF e hasheado dentro do repositorio (LGPD).

@@ -353,4 +353,80 @@ describe('FinderJobProcessor', () => {
     ).rejects.toThrow('subject_profile_resolver_unavailable');
     expect(execute).not.toHaveBeenCalled();
   });
+
+  function breaker(open: boolean) {
+    return {
+      isOpen: jest.fn().mockResolvedValue(open),
+      recordSuccess: jest.fn().mockResolvedValue(undefined),
+      recordFailure: jest.fn().mockResolvedValue(undefined),
+    };
+  }
+
+  it('circuito ABERTO: nao chama o provider e marca a fonte como falha (CIRCUIT_OPEN)', async () => {
+    const execute = jest.fn();
+    const cb = breaker(true);
+    const repo = persistence();
+    const processor = new FinderJobProcessor(
+      new SourceRegistry(
+        [{ id: 'escavador', stage: 1, executor: { sourceName: 'escavador', execute } }],
+        {},
+      ),
+      repo,
+      { circuitBreakerFor: () => cb },
+    );
+
+    const outcome = await processor.process(job(payload), new AbortController().signal);
+
+    expect(execute).not.toHaveBeenCalled();
+    expect(cb.recordFailure).not.toHaveBeenCalled();
+    expect(repo.appendEvent).toHaveBeenLastCalledWith(
+      '00000000-0000-0000-0000-000000000007',
+      JobEventType.SOURCE_FAILED,
+      { source: 'escavador', stage: 1, error_kind: 'CIRCUIT_OPEN' },
+    );
+    expect(outcome.costActual).toBe(0);
+  });
+
+  it('circuito FECHADO + sucesso: chama o provider e registra recordSuccess', async () => {
+    const execute = jest
+      .fn()
+      .mockResolvedValue(
+        right({ source: 'escavador', data: { ok: true }, cost: 3, latency_ms: 5 }),
+      );
+    const cb = breaker(false);
+    const processor = new FinderJobProcessor(
+      new SourceRegistry(
+        [{ id: 'escavador', stage: 1, executor: { sourceName: 'escavador', execute } }],
+        {},
+      ),
+      persistence(),
+      { circuitBreakerFor: () => cb },
+    );
+
+    await processor.process(job(payload), new AbortController().signal);
+
+    expect(execute).toHaveBeenCalledTimes(1);
+    expect(cb.recordSuccess).toHaveBeenCalledTimes(1);
+    expect(cb.recordFailure).not.toHaveBeenCalled();
+  });
+
+  it('circuito FECHADO + falha do provider: registra recordFailure', async () => {
+    const execute = jest
+      .fn()
+      .mockResolvedValue(left(new SourceError('TIMEOUT', 'escavador', 'detail')));
+    const cb = breaker(false);
+    const processor = new FinderJobProcessor(
+      new SourceRegistry(
+        [{ id: 'escavador', stage: 1, executor: { sourceName: 'escavador', execute } }],
+        {},
+      ),
+      persistence(),
+      { circuitBreakerFor: () => cb },
+    );
+
+    await processor.process(job(payload), new AbortController().signal);
+
+    expect(cb.recordFailure).toHaveBeenCalledTimes(1);
+    expect(cb.recordSuccess).not.toHaveBeenCalled();
+  });
 });

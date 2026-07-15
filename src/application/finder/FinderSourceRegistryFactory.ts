@@ -1,4 +1,5 @@
 import type { JobProcessor } from '@application/jobs/JobWorker.js';
+import { CircuitBreaker } from '@infrastructure/circuit-breaker/CircuitBreaker.js';
 import { LaravelPiiResolver } from '@infrastructure/crypto/LaravelPiiResolver.js';
 import { FinderJobRepository } from '@infrastructure/database/FinderJobRepository.js';
 import { ApiBrasilExecutor } from '@infrastructure/providers/apibrasil/ApiBrasilExecutor.js';
@@ -187,9 +188,21 @@ export function createFinderJobProcessorFromEnvironment(
   // Decifra CPF/perfil com a MESMA chave AES do Laravel. Ausente a chave, o resolver é
   // undefined e o processor trata CPF como indisponível (fonte PF fica fora) — nunca em claro.
   const piiResolver = LaravelPiiResolver.fromEnvironment(environment);
-  const options =
-    piiResolver === undefined
+  // Um breaker por slug de provider, reaproveitado entre fontes/jobs (estado vive no banco).
+  const breakers = new Map<string, CircuitBreaker>();
+  const circuitBreakerFor = (providerSlug: string): CircuitBreaker => {
+    let breaker = breakers.get(providerSlug);
+    if (breaker === undefined) {
+      breaker = new CircuitBreaker(pool, providerSlug);
+      breakers.set(providerSlug, breaker);
+    }
+    return breaker;
+  };
+  const options = {
+    circuitBreakerFor,
+    ...(piiResolver === undefined
       ? {}
-      : { cpfIdentifierResolver: piiResolver, subjectProfileResolver: piiResolver };
+      : { cpfIdentifierResolver: piiResolver, subjectProfileResolver: piiResolver }),
+  };
   return new FinderJobProcessor(registry, new FinderJobRepository(pool), options).process;
 }
