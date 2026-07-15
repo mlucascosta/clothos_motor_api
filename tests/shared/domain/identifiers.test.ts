@@ -90,4 +90,29 @@ describe('hashCpfIfNeeded — interação com CNPJ alfanumérico', () => {
     const cnpj = '11222333000181';
     expect(hashCpfIfNeeded('cpf_cnpj', cnpj)).toBe(cnpj);
   });
+
+  // P16: o Finder envia tipo_param='cpf' (não 'cpf_cnpj'). O gate antigo, preso a
+  // 'cpf_cnpj', deixava TODO CPF do Finder ser gravado em texto claro em raw_results.param
+  // — violação direta de "CPF nunca em texto claro". A garantia agora é pelo VALOR.
+  it('hasheia CPF quando tipo_param=cpf (caminho do Finder)', () => {
+    const out = hashCpfIfNeeded('cpf', '123.456.789-01');
+    expect(out).toHaveLength(64);
+    expect(out).not.toContain('123');
+  });
+
+  it('hasheia CPF de 11 dígitos mesmo com tipo_param nulo (falha segura)', () => {
+    const out = hashCpfIfNeeded(null, '12345678901');
+    expect(out).toHaveLength(64);
+    expect(out).not.toBe('12345678901');
+  });
+
+  it('NÃO hasheia CNPJ numérico (14 dígitos) sob tipo_param=cnpj', () => {
+    const cnpj = '11222333000181';
+    expect(hashCpfIfNeeded('cnpj', cnpj)).toBe(cnpj);
+  });
+
+  it('NÃO hasheia número de processo CNJ (20 dígitos)', () => {
+    const cnj = '00000000020248260100';
+    expect(hashCpfIfNeeded('numero_cnj', cnj)).toBe(cnj);
+  });
 });
