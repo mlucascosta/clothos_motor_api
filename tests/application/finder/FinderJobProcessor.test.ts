@@ -289,4 +289,68 @@ describe('FinderJobProcessor', () => {
       { source: 'escavador', stage: 1, error_kind: 'TIMEOUT' },
     );
   });
+
+  const payloadWithProfile = {
+    ...payload,
+    subject_profile: { ciphertext: 'ciph', key_id: 'v1' },
+  };
+
+  it('decifra o subject_profile e o entrega ao executor no contexto', async () => {
+    const execute = jest
+      .fn()
+      .mockResolvedValue(
+        right({ source: 'escavador', data: { ok: true }, cost: 1, latency_ms: 5 }),
+      );
+    const source: ISourceExecutor = { sourceName: 'escavador', execute };
+    const resolveProfile = jest.fn().mockResolvedValue({ birthdate: '1985-03-14' });
+    const processor = new FinderJobProcessor(
+      new SourceRegistry([{ id: 'escavador', stage: 1, executor: source }], {}),
+      persistence(),
+      { subjectProfileResolver: { resolveProfile } },
+    );
+
+    await processor.process(job(payloadWithProfile), new AbortController().signal);
+
+    expect(resolveProfile).toHaveBeenCalledWith('ciph', 'v1');
+    expect(execute).toHaveBeenCalledWith(
+      expect.objectContaining({ subjectProfile: { birthdate: '1985-03-14' } }),
+    );
+  });
+
+  it('não injeta subjectProfile quando o job não carrega perfil', async () => {
+    const execute = jest
+      .fn()
+      .mockResolvedValue(
+        right({ source: 'escavador', data: { ok: true }, cost: 1, latency_ms: 5 }),
+      );
+    const processor = new FinderJobProcessor(
+      new SourceRegistry(
+        [{ id: 'escavador', stage: 1, executor: { sourceName: 'escavador', execute } }],
+        {},
+      ),
+      persistence(),
+    );
+
+    await processor.process(job(payload), new AbortController().signal);
+
+    expect(execute).toHaveBeenCalledWith(
+      expect.not.objectContaining({ subjectProfile: expect.anything() }),
+    );
+  });
+
+  it('falha alto se o job exige perfil mas não há resolver configurado', async () => {
+    const execute = jest.fn();
+    const processor = new FinderJobProcessor(
+      new SourceRegistry(
+        [{ id: 'escavador', stage: 1, executor: { sourceName: 'escavador', execute } }],
+        {},
+      ),
+      persistence(),
+    );
+
+    await expect(
+      processor.process(job(payloadWithProfile), new AbortController().signal),
+    ).rejects.toThrow('subject_profile_resolver_unavailable');
+    expect(execute).not.toHaveBeenCalled();
+  });
 });

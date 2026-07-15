@@ -186,7 +186,10 @@ export function createFinderJobProcessorFromEnvironment(
   }
   // Decifra CPF/perfil com a MESMA chave AES do Laravel. Ausente a chave, o resolver é
   // undefined e o processor trata CPF como indisponível (fonte PF fica fora) — nunca em claro.
-  const cpfIdentifierResolver = LaravelPiiResolver.fromEnvironment(environment);
-  const options = cpfIdentifierResolver === undefined ? {} : { cpfIdentifierResolver };
+  const piiResolver = LaravelPiiResolver.fromEnvironment(environment);
+  const options =
+    piiResolver === undefined
+      ? {}
+      : { cpfIdentifierResolver: piiResolver, subjectProfileResolver: piiResolver };
   return new FinderJobProcessor(registry, new FinderJobRepository(pool), options).process;
 }

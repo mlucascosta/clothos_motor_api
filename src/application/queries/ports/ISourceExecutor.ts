@@ -47,6 +47,15 @@ export interface SourceContext {
    * @type {number}
    */
   timeoutMs: number;
+
+  /**
+   * Perfil do investigado DECIFRADO (slug canônico -> valor), presente só quando o job
+   * carrega subject_profile. Fornece os campos que certas operations exigem além do
+   * identificador (`birthdate`, `mother_name`, etc.). Vive apenas em memória durante a
+   * execução — nunca logado nem persistido. Cada operation mapeia o slug para o seu parâmetro.
+   * @type {Record<string, string> | undefined}
+   */
+  subjectProfile?: Record<string, string>;
 }
 
 /**

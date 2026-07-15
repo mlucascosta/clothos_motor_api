@@ -14,10 +14,15 @@ export interface CpfIdentifierResolver {
   resolve(ciphertext: string, keyId: string): Promise<string>;
 }
 
+export interface SubjectProfileResolver {
+  resolveProfile(ciphertext: string, keyId: string): Promise<Record<string, string>>;
+}
+
 export interface FinderJobProcessorOptions {
   candidateFanoutLimit?: number;
   sourceTimeoutMs?: number;
   cpfIdentifierResolver?: CpfIdentifierResolver;
+  subjectProfileResolver?: SubjectProfileResolver;
 }
 
 interface SourceBlock {
@@ -53,6 +58,8 @@ export class FinderJobProcessor {
     const startedAt = Date.now();
     const payload = parseFinderJobPayload(this.payloadObject(job));
     const plan = this.registry.plan(payload.source_selection);
+    // Perfil do investigado, decifrado UMA vez por job e compartilhado entre as fontes.
+    const subjectProfile = await this.resolveSubjectProfile(payload);
     const blocks: SourceBlock[] = [];
     const artifacts: FinderArtifact[] = [];
     let costActual = 0;
@@ -79,6 +86,7 @@ export class FinderJobProcessor {
             { identifier: candidate.cnj, identifierKind: 'PROCESSO' },
             candidate.id,
             signal,
+            subjectProfile,
           );
           blocks.push(result.block);
           costActual += result.cost;
@@ -103,7 +111,14 @@ export class FinderJobProcessor {
         continue;
       }
 
-      const result = await this.executeSource(job, source, identifier, undefined, signal);
+      const result = await this.executeSource(
+        job,
+        source,
+        identifier,
+        undefined,
+        signal,
+        subjectProfile,
+      );
       blocks.push(result.block);
       costActual += result.cost;
       if (result.artifacts.length > 0) artifacts.push(...result.artifacts);
@@ -166,12 +181,31 @@ export class FinderJobProcessor {
     return { identifier, identifierKind: 'CPF' };
   }
 
+  /**
+   * Decifra o perfil do investigado uma vez por job. Ausente no payload, devolve undefined
+   * (job sem perfil). Presente mas sem resolver disponível é erro de configuração — falha alto
+   * em vez de rodar sem o dado que a fonte exige.
+   */
+  private async resolveSubjectProfile(
+    payload: FinderJobPayload,
+  ): Promise<Record<string, string> | undefined> {
+    if (payload.subject_profile === undefined) return undefined;
+    if (this.options.subjectProfileResolver === undefined) {
+      throw new Error('subject_profile_resolver_unavailable');
+    }
+    return this.options.subjectProfileResolver.resolveProfile(
+      payload.subject_profile.ciphertext,
+      payload.subject_profile.key_id,
+    );
+  }
+
   private async executeSource(
     job: JobRow,
     source: RegisteredSource,
     identifier: Pick<SourceContext, 'identifier' | 'identifierKind'>,
     candidateId: string | undefined,
     signal: AbortSignal,
+    subjectProfile?: Record<string, string>,
   ): Promise<{ block: SourceBlock; cost: number; artifacts: FinderArtifact[] }> {
     this.assertNotAborted(signal);
     const cacheKey = deriveCacheKey(source.id, identifier.identifierKind, identifier.identifier);
@@ -213,6 +247,7 @@ export class FinderJobProcessor {
         tenantSlug: job.tenant_slug,
         correlationId: job.correlation_id,
         timeoutMs: this.sourceTimeoutMs,
+        ...(subjectProfile === undefined ? {} : { subjectProfile }),
       });
     } catch {
       await this.repository.failSourceExecution(executionId, 'UPSTREAM_ERROR');
