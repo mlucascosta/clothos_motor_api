@@ -20,6 +20,29 @@ export const subjectProfileSchema = z
   .object({ ciphertext: z.string().min(1), key_id: z.string().min(1) })
   .strict();
 
+/**
+ * Plano de execução CONGELADO por produto (B4.5). O Laravel (dono do catálogo) resolve o bundle e
+ * congela os passos: qual fonte, se é essencial (`required`) e a que grupo de fallback pertence. O
+ * motor executa exatamente isto — não consulta catálogo — e devolve cobertura/lacunas. Um
+ * `fallback_group` é UM requisito satisfeito por qualquer membro: o motor pula os demais membros do
+ * grupo assim que um deles entrega (economia de COGS).
+ */
+export const executionStepSchema = z
+  .object({
+    source_code: z.string().min(1),
+    required: z.boolean(),
+    fallback_group: z.string().min(1).nullable(),
+    order: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const executionPlanSchema = z
+  .object({
+    product_code: z.string().min(1),
+    steps: z.array(executionStepSchema).min(1),
+  })
+  .strict();
+
 export const FinderJobPayloadSchema = z.object({
   protocol_version: z.literal(2),
   operation: z.enum(['full_query', 'lite_query']),
@@ -32,7 +55,11 @@ export const FinderJobPayloadSchema = z.object({
   source_selection: sourceSelectionSchema,
   selected_candidate_ids: z.array(z.string().min(1)).optional(),
   subject_profile: subjectProfileSchema.optional(),
+  execution_plan: executionPlanSchema.optional(),
 });
+
+export type ExecutionStep = z.infer<typeof executionStepSchema>;
+export type ExecutionPlan = z.infer<typeof executionPlanSchema>;
 
 export type FinderJobPayload = z.infer<typeof FinderJobPayloadSchema>;
 export type FinderSourceSelection = FinderJobPayload['source_selection'];

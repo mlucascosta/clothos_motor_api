@@ -6,9 +6,15 @@ import { isLeft } from '@shared/domain/Either.js';
 import { JobEventType, JobStatus } from '@shared/domain/enums/queue.js';
 import { deriveCacheKey } from '@shared/domain/privacy/cacheKey.js';
 import type { RegisteredSource, SourceRegistry } from './SourceRegistry.js';
-import type { FinderArtifact, FinderJobPayload, ProcessCandidate } from './contracts.js';
+import type {
+  ExecutionPlan,
+  FinderArtifact,
+  FinderJobPayload,
+  ProcessCandidate,
+} from './contracts.js';
 import { parseFinderJobPayload } from './contracts.js';
 import { deriveEscavadorArtifacts } from './derived.js';
+import { type StepOutcome, computeCoverage } from './executionPlan.js';
 
 export interface CpfIdentifierResolver {
   resolve(ciphertext: string, keyId: string): Promise<string>;
@@ -37,7 +43,7 @@ export interface FinderJobProcessorOptions {
 interface SourceBlock {
   source: string;
   stage: number;
-  status: 'completed' | 'failed';
+  status: 'completed' | 'failed' | 'skipped';
 }
 
 const DEFAULT_CANDIDATE_FANOUT_LIMIT = 10;
@@ -74,7 +80,18 @@ export class FinderJobProcessor {
     let costActual = 0;
     let requiresSelection = false;
 
-    for (const source of plan) {
+    // Plano CONGELADO por produto (B4.5): grupo de fallback por fonte canônica + rastreio de
+    // desfechos para cobertura. `satisfiedGroups` habilita o skip best-effort (não re-chama um
+    // grupo já coberto). Ausente = fluxo legado por-fonte, sem cobertura.
+    const executionPlan = payload.execution_plan;
+    const groupBySource = this.canonicalGroups(executionPlan);
+    const satisfiedGroups = new Set<string>();
+    const outcomes = new Map<string, StepOutcome>();
+    // Dentro de um mesmo stage, executa na ordem CONGELADA do plano (primário antes do fallback),
+    // preservando a ordem por stage entre dependências. Sem plano, mantém a ordem do registry.
+    const orderedPlan = this.applyFrozenOrder(plan, executionPlan);
+
+    for (const source of orderedPlan) {
       this.assertNotAborted(signal);
       if (source.requiresCandidate) {
         const candidates = this.readCandidates(artifacts);
@@ -103,6 +120,15 @@ export class FinderJobProcessor {
         continue;
       }
 
+      // Skip de fallback (B4.5): se este grupo já foi coberto por um membro anterior, não re-chama
+      // o provider — economiza COGS sem alterar a cobertura (o grupo já está satisfeito).
+      const group = groupBySource.get(source.id) ?? null;
+      if (group !== null && satisfiedGroups.has(group)) {
+        outcomes.set(source.id, 'skipped');
+        blocks.push({ source: source.id, stage: source.stage, status: 'skipped' });
+        continue;
+      }
+
       const identifier = await this.resolveIdentifier(payload);
       if (identifier === null) {
         const executionId = await this.repository.startSourceExecution({
@@ -116,6 +142,7 @@ export class FinderJobProcessor {
           stage: source.stage,
           error_kind: 'CPF_IDENTIFIER_UNAVAILABLE',
         });
+        outcomes.set(source.id, 'failed');
         blocks.push({ source: source.id, stage: source.stage, status: 'failed' });
         continue;
       }
@@ -131,6 +158,8 @@ export class FinderJobProcessor {
       blocks.push(result.block);
       costActual += result.cost;
       if (result.artifacts.length > 0) artifacts.push(...result.artifacts);
+      outcomes.set(source.id, result.block.status);
+      if (result.block.status === 'completed' && group !== null) satisfiedGroups.add(group);
     }
 
     // Duas representações do MESMO estado, de propósito:
@@ -141,15 +170,32 @@ export class FinderJobProcessor {
     const statusLabel = partial ? 'partial' : 'completed';
     const status = partial ? JobStatus.PARTIAL : JobStatus.COMPLETED;
 
+    const summary: Record<string, unknown> = {
+      completed_sources: blocks.filter((block) => block.status === 'completed').length,
+      failed_sources: blocks.filter((block) => block.status === 'failed').length,
+    };
+    // Cobertura por REQUISITO (B4.5): alimenta a máquina de consumo do Laravel (B4.3). Só existe
+    // quando o job trouxe plano congelado (investigação por produto).
+    if (executionPlan !== undefined) {
+      const normalized = this.normalizePlan(executionPlan);
+      const coverage = computeCoverage(normalized, outcomes);
+      summary['coverage'] = {
+        required_total: coverage.requiredTotal,
+        required_succeeded: coverage.requiredSucceeded,
+        optional_total: coverage.optionalTotal,
+        optional_succeeded: coverage.optionalSucceeded,
+        // Heurística conservadora: houve dado quando ao menos uma fonte completou. A distinção
+        // fina "completou porém vazio" (ausência válida) é refinada no Laravel por bloco.
+        records_found: blocks.some((block) => block.status === 'completed'),
+      };
+    }
+
     const safeResult: Record<string, unknown> = {
       protocol_version: 2,
       status: statusLabel,
       duration_ms: Date.now() - startedAt,
       blocks,
-      summary: {
-        completed_sources: blocks.filter((block) => block.status === 'completed').length,
-        failed_sources: blocks.filter((block) => block.status === 'failed').length,
-      },
+      summary,
       artifacts,
     };
     if (requiresSelection) {
@@ -159,6 +205,58 @@ export class FinderJobProcessor {
       };
     }
     return { result: safeResult, costActual, status };
+  }
+
+  /**
+   * Índice fonte-canônica → grupo de fallback, a partir do plano congelado. Os passos falam em
+   * códigos do catálogo Laravel (`directdata_qsa`); aqui resolvemos para o id canônico do registry
+   * (`directdata`) para casar com as fontes efetivamente executadas.
+   */
+  private canonicalGroups(plan: ExecutionPlan | undefined): ReadonlyMap<string, string | null> {
+    if (plan === undefined) return new Map();
+    const groups = new Map<string, string | null>();
+    for (const step of plan.steps) {
+      const canonical = this.registry.resolveCanonicalId(step.source_code);
+      if (canonical !== undefined) groups.set(canonical, step.fallback_group);
+    }
+    return groups;
+  }
+
+  /**
+   * Ordena as fontes por stage (preserva dependências) e, DENTRO do stage, pela ordem congelada do
+   * plano — o primário (order menor) roda antes do fallback, habilitando o skip. Fontes fora do
+   * plano (dependências injetadas) mantêm precedência por stage.
+   */
+  private applyFrozenOrder(
+    plan: readonly RegisteredSource[],
+    executionPlan: ExecutionPlan | undefined,
+  ): RegisteredSource[] {
+    if (executionPlan === undefined) return [...plan];
+    const orderByCanonical = new Map<string, number>();
+    for (const step of executionPlan.steps) {
+      const canonical = this.registry.resolveCanonicalId(step.source_code);
+      if (canonical !== undefined && !orderByCanonical.has(canonical)) {
+        orderByCanonical.set(canonical, step.order);
+      }
+    }
+    return [...plan].sort(
+      (left, right) =>
+        left.stage - right.stage ||
+        (orderByCanonical.get(left.id) ?? Number.POSITIVE_INFINITY) -
+          (orderByCanonical.get(right.id) ?? Number.POSITIVE_INFINITY) ||
+        left.id.localeCompare(right.id),
+    );
+  }
+
+  /** Reescreve os `source_code` dos passos para o id canônico, para a contagem de cobertura. */
+  private normalizePlan(plan: ExecutionPlan): ExecutionPlan {
+    return {
+      product_code: plan.product_code,
+      steps: plan.steps.map((step) => ({
+        ...step,
+        source_code: this.registry.resolveCanonicalId(step.source_code) ?? step.source_code,
+      })),
+    };
   }
 
   private payloadObject(job: JobRow): unknown {

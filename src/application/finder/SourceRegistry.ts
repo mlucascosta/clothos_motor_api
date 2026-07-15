@@ -29,6 +29,15 @@ export class SourceRegistry {
     if (this.byId.size !== entries.length) throw new Error('duplicate_source_id');
   }
 
+  /**
+   * Resolve um código (id canônico OU alias, ex.: `directdata_qsa`) para o id canônico da fonte
+   * registrada (`directdata`). Usado para casar o plano congelado (que fala em códigos do catálogo
+   * Laravel) com as fontes executadas (identificadas pelo id canônico). `undefined` = não registrada.
+   */
+  resolveCanonicalId(code: string): string | undefined {
+    return this.byId.get(code)?.id;
+  }
+
   plan(selection: FinderSourceSelection): RegisteredSource[] {
     const requested = selection.profile ? this.profiles[selection.profile] : selection.sources;
     if (requested === undefined) throw new Error('unknown_source_profile');
