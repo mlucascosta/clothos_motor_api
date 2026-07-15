@@ -1,4 +1,5 @@
 import type { JobProcessor } from '@application/jobs/JobWorker.js';
+import { LaravelPiiResolver } from '@infrastructure/crypto/LaravelPiiResolver.js';
 import { FinderJobRepository } from '@infrastructure/database/FinderJobRepository.js';
 import { ApiBrasilExecutor } from '@infrastructure/providers/apibrasil/ApiBrasilExecutor.js';
 import { ApiBrasilHttpClient } from '@infrastructure/providers/apibrasil/ApiBrasilHttpClient.js';
@@ -183,5 +184,9 @@ export function createFinderJobProcessorFromEnvironment(
   if (pool === null) {
     throw new Error('DATABASE_URL or MOTOR_DATABASE_URL is required to start worker');
   }
-  return new FinderJobProcessor(registry, new FinderJobRepository(pool)).process;
+  // Decifra CPF/perfil com a MESMA chave AES do Laravel. Ausente a chave, o resolver é
+  // undefined e o processor trata CPF como indisponível (fonte PF fica fora) — nunca em claro.
+  const cpfIdentifierResolver = LaravelPiiResolver.fromEnvironment(environment);
+  const options = cpfIdentifierResolver === undefined ? {} : { cpfIdentifierResolver };
+  return new FinderJobProcessor(registry, new FinderJobRepository(pool), options).process;
 }
