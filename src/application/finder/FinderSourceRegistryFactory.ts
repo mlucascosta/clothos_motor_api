@@ -26,6 +26,14 @@ import { ObterInstituicao } from '@infrastructure/providers/escavador/operations
 import { ObterPessoa } from '@infrastructure/providers/escavador/operations/ObterPessoa.js';
 import { ObterProcessosInstituicao } from '@infrastructure/providers/escavador/operations/ObterProcessosInstituicao.js';
 import { ObterProcessosPessoa } from '@infrastructure/providers/escavador/operations/ObterProcessosPessoa.js';
+import {
+  CadastroPfBasicaSchema,
+  CadastroPjBasicaSchema,
+  ConsultaCnpjReceitaSchema,
+} from '@infrastructure/providers/fontedata/dtos/FonteDataDtos.js';
+import { FonteDataExecutor } from '@infrastructure/providers/fontedata/FonteDataExecutor.js';
+import { FonteDataHttpClient } from '@infrastructure/providers/fontedata/FonteDataHttpClient.js';
+import { FonteDataQuery } from '@infrastructure/providers/fontedata/operations/FonteDataQuery.js';
 import { InfosimplesExecutor } from '@infrastructure/providers/infosimples/InfosimplesExecutor.js';
 import { InfosimplesHttpClient } from '@infrastructure/providers/infosimples/InfosimplesHttpClient.js';
 import { CadastroPessoaJuridica as InfosimplesCadastroPessoaJuridica } from '@infrastructure/providers/infosimples/operations/CadastroPessoaJuridica.js';
@@ -169,11 +177,57 @@ export function createCnpjFinderSourceRegistry(
     });
   }
 
+  // Fonte Data (RB-05): fallback de contingência com custo MEDIDO (X-Request-Cost).
+  // Gated por env como InfoSimples/APIBrasil; as source_definitions ficam is_active=false
+  // até homologação jurídica (FONTEDATA-IMPLEMENTACAO §6) — registrar aqui não ativa nada.
+  const fonteDataApiKey = optionalConfiguration(environment, 'FONTEDATA_API_KEY');
+  if (fonteDataApiKey !== undefined) {
+    const fonteDataHttp = new FonteDataHttpClient(
+      fonteDataApiKey,
+      environment['FONTEDATA_BASE_URL']?.trim() || undefined,
+    );
+    const cnpjParams = (ctx: { identifierKind: string; identifier: string }) =>
+      ctx.identifierKind === 'CNPJ' ? { cnpj: ctx.identifier } : null;
+    sources.push({
+      id: 'fontedata_cnpj',
+      stage: 1,
+      executor: new FonteDataExecutor(
+        new FonteDataQuery(fonteDataHttp, 'consulta-cnpj-receita', ConsultaCnpjReceitaSchema),
+        'fontedata_cnpj',
+        cnpjParams,
+      ),
+    });
+    sources.push({
+      id: 'fontedata_cadastro_pj',
+      stage: 1,
+      executor: new FonteDataExecutor(
+        new FonteDataQuery(fonteDataHttp, 'cadastro-pj-basica', CadastroPjBasicaSchema),
+        'fontedata_cadastro_pj',
+        cnpjParams,
+      ),
+    });
+    sources.push({
+      id: 'fontedata_cadastro_pf',
+      stage: 1,
+      executor: new FonteDataExecutor(
+        new FonteDataQuery(fonteDataHttp, 'cadastro-pf-basica', CadastroPfBasicaSchema),
+        'fontedata_cadastro_pf',
+        // CPF chega DECIFRADO no contexto (LaravelPiiResolver); sem resolver, a fonte
+        // simplesmente não roda — nunca CPF em claro fora da memória.
+        (ctx) => (ctx.identifierKind === 'CPF' ? { cpf: ctx.identifier } : null),
+      ),
+    });
+  }
+
   return new SourceRegistry(sources, {
     identity: ['directdata', 'escavador'],
     judicial: ['datajud', 'directdata_processos'],
     full: ['directdata', 'escavador', 'datajud', 'directdata_processos'],
-    public_cnpj: ['brasilapi_cnpj'],
+    // Fonte Data entra como FALLBACK do grupo apenas quando registrada (chave presente):
+    // grupo com fonte inexistente derruba o plan() com unknown_source.
+    public_cnpj: fonteDataApiKey === undefined
+      ? ['brasilapi_cnpj']
+      : ['brasilapi_cnpj', 'fontedata_cnpj'],
   });
 }
 

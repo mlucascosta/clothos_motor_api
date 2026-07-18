@@ -79,11 +79,19 @@ export interface SourceResult {
   data: Record<string, unknown>;
 
   /**
-   * Custo de execução em créditos do tenant.
-   * Deduzido do saldo após settle bem-sucedido.
+   * Contador de execução da fonte (1 execução = 1 unidade). NÃO é dinheiro: o COGS
+   * real é interno e nunca se mistura com quota de produto (P1).
    * @type {number}
    */
   cost: number;
+
+  /**
+   * Custo REAL da chamada em CENTAVOS (BRL), quando o provider o informa de forma
+   * medida — ex.: header `X-Request-Cost` da Fonte Data (RB-03/RB-05). Ausente nos
+   * providers cujo custo vem do catálogo interno (source_definitions.cost_cents).
+   * @type {number | undefined}
+   */
+  costCents?: number;
 
   /**
    * Latência observada da fonte, em milissegundos.

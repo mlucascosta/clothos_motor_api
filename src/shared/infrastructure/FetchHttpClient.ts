@@ -147,6 +147,38 @@ export class FetchHttpClient implements IHttpClient {
   }
 
   /**
+   * Idêntico ao request(), mas expõe também os HEADERS da resposta (chaves minúsculas).
+   *
+   * Existe para providers cujo contrato comercial vive em headers — ex.: Fonte Data
+   * devolve o custo REAL debitado em `X-Request-Cost` (RB-03/RB-05). Os providers que
+   * não precisam de headers continuam usando request(), sem mudança de contrato.
+   */
+  async requestWithHeaders<T>(
+    path: string,
+    options: HttpRequestOptions = {},
+  ): Promise<Either<SourceError, { body: T; headers: Record<string, string> }>> {
+    const maxRetries = this.config.maxRetries ?? 1;
+    const baseDelay = this.config.retryBaseDelayMs ?? 200;
+
+    let last: Either<SourceError, { body: T; headers: Record<string, string> }> = left(
+      new SourceError('UPSTREAM_ERROR', this.config.sourceName ?? 'http', 'no attempts made'),
+    );
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      if (attempt > 0) {
+        await sleep(baseDelay * 2 ** (attempt - 1));
+      }
+
+      last = await this.attemptRequestWithHeaders<T>(path, options);
+
+      if (!isLeft(last)) return last;
+      if (!RETRYABLE_KINDS.has(last.value.kind)) return last;
+    }
+
+    return last;
+  }
+
+  /**
    * Executa uma requisição HTTP e retorna dados binários brutos (ArrayBuffer).
    *
    * Idêntico ao request() mas sem parsing JSON.
@@ -231,6 +263,76 @@ export class FetchHttpClient implements IHttpClient {
 
       const data = (await response.json()) as T;
       return right(data);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'TimeoutError') {
+        return left(new SourceError('TIMEOUT', source));
+      }
+      const safeMsg =
+        err instanceof Error
+          ? err.message.replace(
+              /([?&])(TOKEN|token|apikey|api_key|key|secret|password|passwd)=[^&\s]*/gi,
+              '$1$2=[REDACTED]',
+            )
+          : 'network error';
+      return left(new SourceError('UPSTREAM_ERROR', source, safeMsg));
+    }
+  }
+
+  /**
+   * Tentativa única de requisição JSON expondo headers (sem retry).
+   * Chamada internamente por requestWithHeaders().
+   *
+   * @private
+   */
+  private async attemptRequestWithHeaders<T>(
+    path: string,
+    options: HttpRequestOptions,
+  ): Promise<Either<SourceError, { body: T; headers: Record<string, string> }>> {
+    const url = this.buildUrl(path, options.params);
+    const timeoutMs = options.timeoutMs ?? this.config.defaultTimeoutMs ?? 30_000;
+    const source = this.config.sourceName ?? 'http';
+
+    try {
+      const init: RequestInit = {
+        method: options.method ?? 'GET',
+        signal: AbortSignal.timeout(timeoutMs),
+        headers: {
+          'User-Agent': DEFAULT_USER_AGENT,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          ...this.config.defaultHeaders,
+          ...options.headers,
+        },
+      };
+      if (options.body !== undefined) {
+        init.body = JSON.stringify(options.body);
+      }
+      const response = await fetch(url, init);
+
+      if (response.status === 401 || response.status === 403) {
+        return left(new SourceError('AUTH_FAILED', source, `HTTP ${response.status}`));
+      }
+      if (response.status === 404) {
+        return left(new SourceError('NOT_FOUND', source));
+      }
+      if (response.status === 429) {
+        return left(new SourceError('RATE_LIMITED', source));
+      }
+      if (!response.ok) {
+        return left(new SourceError('UPSTREAM_ERROR', source, `HTTP ${response.status}`));
+      }
+
+      const headers: Record<string, string> = {};
+      response.headers.forEach((value, key) => {
+        headers[key.toLowerCase()] = value;
+      });
+
+      if (response.status === 204 || response.status === 205) {
+        return right({ body: undefined as unknown as T, headers });
+      }
+
+      const body = (await response.json()) as T;
+      return right({ body, headers });
     } catch (err) {
       if (err instanceof DOMException && err.name === 'TimeoutError') {
         return left(new SourceError('TIMEOUT', source));

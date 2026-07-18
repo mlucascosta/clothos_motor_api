@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 # =============================================================================
-# db/apply.sh — Aplica todas as migrations e seeds do motor CLOTHOS
+# db/apply.sh — Bootstrap de DESENVOLVIMENTO do schema do motor CLOTHOS
+#
+# ⚠ DEV-ONLY. Em producao o OWNER unico do schema `clothos_core` e o Laravel
+#   (role clothos_migration, 00-FOUNDATION/G1); este script NUNCA roda la.
+#   Ele existe para subir um Postgres descartavel do motor sem o Laravel.
+#
 # Uso: DATABASE_URL="postgres://user:pass@host:port/dbname" ./db/apply.sh
-# Idempotente: seguro executar multiplas vezes.
+# Idempotente: seguro executar multiplas vezes. Aplica TODAS as migrations
+# de db/migrations/ na ordem numerica + seeds.
 # =============================================================================
 set -euo pipefail
 
@@ -58,25 +64,21 @@ echo "  CLOTHOS Motor -- Aplicando schema de banco de dados"
 echo "============================================================"
 echo ""
 
-echo "[1/7] Schema e tabelas base..."
-run_sql "0001_core_schema" "${SCRIPT_DIR}/migrations/0001_core_schema.sql"
+# Todas as migrations, em ordem numerica — um arquivo novo em db/migrations/
+# entra automaticamente (a auditoria A3 pegou o script desatualizado ao
+# enumerar migrations a mao; enumerar o diretorio elimina a classe do erro).
+migrations=("${SCRIPT_DIR}"/migrations/*.sql)
+total=$(( ${#migrations[@]} + 1 ))
+step=0
+for file in "${migrations[@]}"; do
+  step=$((step + 1))
+  name="$(basename "${file}" .sql)"
+  echo "[${step}/${total}] ${name}..."
+  run_sql "${name}" "${file}"
+done
 
-echo "[2/7] Indices otimizados..."
-run_sql "0002_indexes_optimization" "${SCRIPT_DIR}/migrations/0002_indexes_optimization.sql"
-
-echo "[3/7] Afinacao de autovacuum..."
-run_sql "0003_autovacuum_tuning" "${SCRIPT_DIR}/migrations/0003_autovacuum_tuning.sql"
-
-echo "[4/7] Funcoes de manutencao e views..."
-run_sql "0004_maintenance" "${SCRIPT_DIR}/migrations/0004_maintenance.sql"
-
-echo "[5/7] Claim tokens e leases..."
-run_sql "0005_job_claim_leases" "${SCRIPT_DIR}/migrations/0005_job_claim_leases.sql"
-
-echo "[6/7] Planejamento progressivo Finder..."
-run_sql "0006_finder_progressive_planning" "${SCRIPT_DIR}/migrations/0006_finder_progressive_planning.sql"
-
-echo "[7/7] Seed de providers..."
+step=$((step + 1))
+echo "[${step}/${total}] Seed de providers..."
 run_sql "seeds/providers" "${SCRIPT_DIR}/seeds/providers.sql"
 
 echo ""
