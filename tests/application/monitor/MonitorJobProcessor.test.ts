@@ -20,7 +20,7 @@ function job(overrides: Partial<JobRow> = {}): JobRow {
       protocol_version: 2,
       operation: 'monitor_check',
       monitor_id: 7,
-      frequency: 'daily',
+      frequency: 'weekly',
       source: 'cnj',
     },
     result: null,
@@ -103,7 +103,7 @@ describe('MonitorJobProcessor', () => {
         protocol_version: 2,
         operation: 'monitor_check',
         monitor_id: 7,
-        frequency: 'weekly',
+        frequency: 'monthly',
         source: 'escavador',
       },
     });
@@ -132,7 +132,7 @@ describe('MonitorJobProcessor', () => {
         protocol_version: 2,
         operation: 'monitor_check',
         monitor_id: 7,
-        frequency: 'daily',
+        frequency: 'weekly',
         source: 'cnj',
       }),
     });

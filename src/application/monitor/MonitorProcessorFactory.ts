@@ -1,8 +1,8 @@
 /**
  * @fileoverview Composição do processador da fila `monitor` a partir do ambiente.
  *
- * O monitoramento usa só duas fontes (04-MONITOR §1) — DataJud (Diário) e Escavador
- * (Semanal) — então exige apenas as duas credenciais correspondentes. Diferente do
+ * O monitoramento usa só duas fontes (V6 §P10) — DataJud (Semanal) e Escavador
+ * (Mensal) — então exige apenas as duas credenciais correspondentes. Diferente do
  * Finder, **não** depende de DirectData: um worker de monitoramento sobe sem ela.
  *
  * @module application/monitor/MonitorProcessorFactory

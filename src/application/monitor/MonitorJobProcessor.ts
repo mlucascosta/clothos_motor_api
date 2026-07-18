@@ -2,7 +2,7 @@
  * @fileoverview Processador da fila `monitor` (04-MONITOR §6) — Fase 6.
  *
  * Executa o poll recorrente de UM processo por **busca ativa** na fonte da sua modalidade
- * (Diário → DataJud/CNJ; Semanal → Escavador) e devolve o snapshot normalizado no
+ * (Semanal → DataJud/CNJ; Mensal → Escavador) e devolve o snapshot normalizado no
  * `jobs.result`. Não há webhook nem callback: o Escavador é consultado ativamente.
  *
  * Fronteira de responsabilidade (ADR-0025): o motor **não** toca em schema de tenant, não

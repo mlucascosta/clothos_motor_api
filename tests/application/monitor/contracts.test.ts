@@ -8,7 +8,7 @@ const validPayload = {
   protocol_version: 2,
   operation: 'monitor_check',
   monitor_id: 42,
-  frequency: 'daily',
+  frequency: 'weekly',
   source: 'cnj',
 };
 
@@ -16,21 +16,21 @@ describe('parseMonitorJobPayload', () => {
   it('aceita o payload do contrato e normaliza os campos', () => {
     expect(parseMonitorJobPayload(validPayload)).toEqual({
       monitorId: 42,
-      frequency: 'daily',
+      frequency: 'weekly',
       source: 'cnj',
     });
   });
 
   it('aceita a modalidade semanal com fonte escavador', () => {
     expect(
-      parseMonitorJobPayload({ ...validPayload, frequency: 'weekly', source: 'escavador' }),
-    ).toEqual({ monitorId: 42, frequency: 'weekly', source: 'escavador' });
+      parseMonitorJobPayload({ ...validPayload, frequency: 'monthly', source: 'escavador' }),
+    ).toEqual({ monitorId: 42, frequency: 'monthly', source: 'escavador' });
   });
 
   it('rejeita par modalidade/fonte incoerente em vez de consultar a fonte errada', () => {
-    // Semanal é Escavador e Diário é CNJ (04-MONITOR §1). Um par cruzado significa
+    // Mensal é Escavador e Semanal é CNJ (V6 §P10). Um par cruzado significa
     // contrato corrompido — pesquisar a fonte errada geraria eventos falsos.
-    expect(() => parseMonitorJobPayload({ ...validPayload, frequency: 'weekly' })).toThrow(
+    expect(() => parseMonitorJobPayload({ ...validPayload, frequency: 'monthly' })).toThrow(
       'invalid_monitor_payload',
     );
     expect(() => parseMonitorJobPayload({ ...validPayload, source: 'escavador' })).toThrow(

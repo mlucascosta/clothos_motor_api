@@ -17,14 +17,14 @@
  */
 
 /**
- * Fonte da modalidade do processo (04-MONITOR §1): cada processo é Diário (CNJ/DataJud)
- * OU Semanal (Escavador) — nunca ambos.
+ * Fonte da modalidade do processo (V6 §P10; RC-2 resolvido): cada processo é Semanal
+ * (CNJ/DataJud) OU Mensal (Escavador) — nunca ambos.
  */
 export type MonitorSource = 'cnj' | 'escavador';
 
 export interface MonitorJobPayload {
   readonly monitorId: number;
-  readonly frequency: 'daily' | 'weekly';
+  readonly frequency: 'weekly' | 'monthly';
   readonly source: MonitorSource;
 }
 
@@ -66,7 +66,7 @@ export function parseMonitorJobPayload(input: unknown): MonitorJobPayload {
   }
 
   const frequency = payload['frequency'];
-  if (frequency !== 'daily' && frequency !== 'weekly') {
+  if (frequency !== 'weekly' && frequency !== 'monthly') {
     throw new Error('invalid_monitor_payload');
   }
 
@@ -75,9 +75,9 @@ export function parseMonitorJobPayload(input: unknown): MonitorJobPayload {
     throw new Error('invalid_monitor_payload');
   }
 
-  // A modalidade define a fonte (04-MONITOR §1). Um par incoerente indica corrupção do
+  // A modalidade define a fonte (V6 §P10). Um par incoerente indica corrupção do
   // contrato entre os dois lados — falha em vez de silenciosamente pesquisar a fonte errada.
-  const expected: MonitorSource = frequency === 'weekly' ? 'escavador' : 'cnj';
+  const expected: MonitorSource = frequency === 'monthly' ? 'escavador' : 'cnj';
   if (source !== expected) {
     throw new Error('invalid_monitor_payload');
   }
