@@ -240,3 +240,78 @@ describe('FinderJobProcessor com plano congelado (B4.5)', () => {
     expect(summary['coverage']).toBeUndefined();
   });
 });
+
+describe('computeCoverage ponderada (REGRAS §14)', () => {
+  const plan = {
+    product_code: 'P2',
+    steps: [
+      { source_code: 'primaria_pesada', required: true, fallback_group: null, order: 1, weight: 3 },
+      { source_code: 'secundaria', required: true, fallback_group: null, order: 2, weight: 1 },
+      { source_code: 'enriquecimento', required: false, fallback_group: null, order: 3, weight: 2 },
+    ],
+  };
+
+  it('soma PESOS por requisito — primária pesada falhando derruba a cobertura além da contagem', () => {
+    const outcomes = new Map<string, StepOutcome>([
+      ['primaria_pesada', 'failed'],
+      ['secundaria', 'completed'],
+      ['enriquecimento', 'completed'],
+    ]);
+
+    const coverage = computeCoverage(plan, outcomes);
+
+    // Contagem simples daria 1/2 = 0.5; ponderada dá 1/4 = 0.25.
+    expect(coverage).toEqual({
+      requiredTotal: 4,
+      requiredSucceeded: 1,
+      optionalTotal: 2,
+      optionalSucceeded: 2,
+    });
+  });
+
+  it('peso do requisito em grupo de fallback é o MAIOR entre os membros', () => {
+    const grouped = {
+      product_code: 'P2',
+      steps: [
+        { source_code: 'a', required: true, fallback_group: 'g', order: 1, weight: 3 },
+        { source_code: 'b', required: false, fallback_group: 'g', order: 2, weight: 1 },
+      ],
+    };
+    const coverage = computeCoverage(
+      grouped,
+      new Map<string, StepOutcome>([
+        ['a', 'failed'],
+        ['b', 'completed'],
+      ]),
+    );
+
+    // O fallback barato satisfaz o MESMO requisito, valendo o peso cheio (3/3).
+    expect(coverage).toEqual({
+      requiredTotal: 3,
+      requiredSucceeded: 3,
+      optionalTotal: 0,
+      optionalSucceeded: 0,
+    });
+  });
+
+  it('sem pesos declarados degenera na contagem simples (compatibilidade)', () => {
+    const unweighted = {
+      product_code: 'P2',
+      steps: [
+        { source_code: 'a', required: true, fallback_group: null, order: 1 },
+        { source_code: 'b', required: true, fallback_group: null, order: 2 },
+      ],
+    };
+    const coverage = computeCoverage(
+      unweighted,
+      new Map<string, StepOutcome>([['a', 'completed']]),
+    );
+
+    expect(coverage).toEqual({
+      requiredTotal: 2,
+      requiredSucceeded: 1,
+      optionalTotal: 0,
+      optionalSucceeded: 0,
+    });
+  });
+});

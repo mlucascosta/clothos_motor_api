@@ -6,6 +6,10 @@ export type StepOutcome = 'completed' | 'failed' | 'skipped';
 /**
  * Cobertura de uma investigação por produto (B4.5), na linguagem de REQUISITOS — não de fontes.
  * Alimenta a ConsumptionStateMachine (B4.3) do lado do Laravel.
+ *
+ * PONDERADA (REGRAS §14): cada requisito contribui com o seu PESO (máximo entre os membros do
+ * grupo; default 1). Com todos os pesos = 1 o resultado degenera na contagem simples — o
+ * contrato com o Laravel não muda, só a unidade (pontos em vez de fontes).
  */
 export interface PlanCoverage {
   requiredTotal: number;
@@ -29,11 +33,14 @@ export function computeCoverage(
   plan: ExecutionPlan,
   outcomes: ReadonlyMap<string, StepOutcome>,
 ): PlanCoverage {
-  const groups = new Map<string, { required: boolean; satisfied: boolean }>();
+  const groups = new Map<string, { required: boolean; satisfied: boolean; weight: number }>();
   for (const step of plan.steps) {
     const key = requirementKey(step.source_code, step.fallback_group);
-    const group = groups.get(key) ?? { required: false, satisfied: false };
+    const group = groups.get(key) ?? { required: false, satisfied: false, weight: 1 };
     group.required = group.required || step.required;
+    // O peso do REQUISITO é o maior peso entre os membros: um fallback barato que substitui
+    // uma primária pesada satisfaz o mesmo requisito, com o mesmo valor de cobertura.
+    group.weight = Math.max(group.weight, step.weight ?? 1);
     if (outcomes.get(step.source_code) === 'completed') group.satisfied = true;
     groups.set(key, group);
   }
@@ -46,11 +53,11 @@ export function computeCoverage(
   };
   for (const group of groups.values()) {
     if (group.required) {
-      coverage.requiredTotal += 1;
-      if (group.satisfied) coverage.requiredSucceeded += 1;
+      coverage.requiredTotal += group.weight;
+      if (group.satisfied) coverage.requiredSucceeded += group.weight;
     } else {
-      coverage.optionalTotal += 1;
-      if (group.satisfied) coverage.optionalSucceeded += 1;
+      coverage.optionalTotal += group.weight;
+      if (group.satisfied) coverage.optionalSucceeded += group.weight;
     }
   }
   return coverage;

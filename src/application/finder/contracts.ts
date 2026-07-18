@@ -33,6 +33,8 @@ export const executionStepSchema = z
     required: z.boolean(),
     fallback_group: z.string().min(1).nullable(),
     order: z.number().int().nonnegative(),
+    // Peso do componente na cobertura ponderada (REGRAS §14). Ausente = 1 (contagem simples).
+    weight: z.number().int().positive().optional(),
   })
   .strict();
 
