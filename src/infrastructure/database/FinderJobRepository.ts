@@ -29,6 +29,8 @@ export interface SourceExecutionCompletion {
   cacheHit?: boolean;
   cacheKey?: string;
   rawResultId?: number | null;
+  /** Custo REAL medido pelo provider (X-Request-Cost), em centavos; null = sem medição (catálogo decide). */
+  costCents?: number;
 }
 
 /** Linha de auditoria bruta persistida no miss de cache. */
@@ -112,13 +114,14 @@ export class FinderJobRepository {
     await this.pool.query(
       `UPDATE clothos_core.job_source_executions
           SET status = ${SourceExecutionStatus.COMPLETED}, completed_at = now(),
-              cache_hit = $2, cache_key = $3, raw_result_id = $4
+              cache_hit = $2, cache_key = $3, raw_result_id = $4, cost_cents = $5
         WHERE id = $1`,
       [
         id,
         completion.cacheHit ?? false,
         completion.cacheKey ?? null,
         completion.rawResultId ?? null,
+        completion.costCents ?? null,
       ],
     );
   }
