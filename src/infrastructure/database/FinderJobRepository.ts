@@ -3,6 +3,7 @@ import {
   JobEventType,
   type JobEventTypeValue,
   SourceExecutionStatus,
+  type SourceExecutionStatusValue,
   sourceErrorKindFromName,
 } from '@shared/domain/enums/queue.js';
 import { hashCpfIfNeeded } from '@shared/domain/privacy/hashCpf.js';
@@ -40,7 +41,8 @@ export interface RawResultInput {
   tipoParam: string | null;
   param: string | null;
   result: unknown;
-  status: string;
+  /** Numérico (ADR-0024): SourceExecutionStatus — o owner Laravel guarda SMALLINT. */
+  status: SourceExecutionStatusValue;
   errorKind?: string | null;
   correlationId?: string | null;
   cacheKey: string;

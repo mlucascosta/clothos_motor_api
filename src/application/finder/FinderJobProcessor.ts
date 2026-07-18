@@ -3,7 +3,7 @@ import type { SourceContext } from '@application/queries/ports/ISourceExecutor.j
 import type { FinderJobRepository } from '@infrastructure/database/FinderJobRepository.js';
 import type { JobRow } from '@infrastructure/database/JobRepository.js';
 import { isLeft } from '@shared/domain/Either.js';
-import { JobEventType, JobStatus } from '@shared/domain/enums/queue.js';
+import { JobEventType, JobStatus, SourceExecutionStatus } from '@shared/domain/enums/queue.js';
 import { deriveCacheKey } from '@shared/domain/privacy/cacheKey.js';
 import type { RegisteredSource, SourceRegistry } from './SourceRegistry.js';
 import type {
@@ -216,12 +216,21 @@ export class FinderJobProcessor {
       };
     }
 
+    // Contrato terminal com o consumidor Laravel (drift pego pelo E2E cross-process, P14):
+    // o consume-terminal EXIGE cost_actual (espelho do contador da coluna), `full` (dados
+    // allowlisted projetados em result_full) e `failed_blocks` (lista de fontes falhas).
     const safeResult: Record<string, unknown> = {
       protocol_version: 2,
       status: statusLabel,
+      cost_actual: costActual,
       duration_ms: Date.now() - startedAt,
       blocks,
       summary,
+      // Derivados allowlisted por chave de artefato — nunca payload bruto de provider.
+      full: Object.fromEntries(artifacts.map((artifact) => [artifact.key, artifact.value])),
+      failed_blocks: blocks
+        .filter((block) => block.status === 'failed')
+        .map((block) => block.source),
       artifacts,
     };
     if (requiresSelection) {
@@ -443,7 +452,7 @@ export class FinderJobProcessor {
       tipoParam: this.deriveTipoParam(identifier.identifierKind),
       param: identifier.identifier,
       result: outcome.value.data,
-      status: 'ok',
+      status: SourceExecutionStatus.COMPLETED,
       correlationId: job.correlation_id,
       cacheKey,
     });

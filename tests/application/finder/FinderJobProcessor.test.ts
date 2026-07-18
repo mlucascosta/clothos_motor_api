@@ -92,7 +92,11 @@ describe('FinderJobProcessor', () => {
     expect(outcome.result).toEqual(
       expect.objectContaining({ protocol_version: 2, status: 'completed' }),
     );
-    expect(JSON.stringify(outcome.result)).not.toContain('cost');
+    // O que se protege é COGS (dinheiro) — `cost_actual` é CONTADOR de execução e faz parte
+    // do contrato terminal (o consume-terminal o exige; drift pego pelo E2E cross-process).
+    expect(JSON.stringify(outcome.result)).not.toContain('cost_cents');
+    expect(JSON.stringify(outcome.result)).not.toContain('centavos');
+    expect((outcome.result as { cost_actual: number }).cost_actual).toBe(outcome.costActual);
   });
 
   it('reuses a cache hit without calling the provider or charging cost', async () => {
@@ -141,7 +145,7 @@ describe('FinderJobProcessor', () => {
     const outcome = await processor.process(job(payload), new AbortController().signal);
 
     expect(repo.saveRawResult).toHaveBeenCalledWith(
-      expect.objectContaining({ gateway: 'escavador', tipoParam: 'cnpj', status: 'ok' }),
+      expect.objectContaining({ gateway: 'escavador', tipoParam: 'cnpj', status: 1 }),
     );
     expect(repo.saveCache).toHaveBeenCalledWith(
       expect.any(String),
