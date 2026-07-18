@@ -5,7 +5,7 @@
  * EXIGEM banco real (política do projeto: nunca mockar o banco).
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { Pool } from 'pg';
 
@@ -29,16 +29,14 @@ export default async function globalSetup(): Promise<void> {
   const pool = new Pool({ connectionString: url });
 
   try {
-    // Aplica migrations na ordem correta — todas idempotentes
+    // Aplica TODAS as migrations em ordem numérica (idempotentes) + seeds.
+    // Enumerar o diretório elimina a classe de erro da lista manual desatualizada
+    // (mesma correção do db/apply.sh, achado A3): migration nova entra sozinha.
     const migrations = [
-      'migrations/0001_core_schema.sql',
-      'migrations/0002_indexes_optimization.sql',
-      'migrations/0003_autovacuum_tuning.sql',
-      'migrations/0004_maintenance.sql',
-      'migrations/0005_job_claim_leases.sql',
-      'migrations/0006_finder_progressive_planning.sql',
-      'migrations/0007_finder_cache_alignment.sql',
-      'migrations/0008_queue_enums_to_int.sql',
+      ...readdirSync(join(ROOT, 'migrations'))
+        .filter((file) => file.endsWith('.sql'))
+        .sort()
+        .map((file) => `migrations/${file}`),
       'seeds/providers.sql',
     ];
 
