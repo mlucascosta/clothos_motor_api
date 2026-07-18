@@ -309,6 +309,16 @@ export class FinderJobProcessor {
     if (payload.identifier.kind === 'cnpj') {
       return { identifier: payload.identifier.value, identifierKind: 'CNPJ' };
     }
+    // Públicos dos produtos P6/P8: CNJ vira o kind PROCESSO já existente; placa/chassi são novos.
+    if (payload.identifier.kind === 'cnj') {
+      return { identifier: payload.identifier.value, identifierKind: 'PROCESSO' };
+    }
+    if (payload.identifier.kind === 'placa') {
+      return { identifier: payload.identifier.value, identifierKind: 'PLACA' };
+    }
+    if (payload.identifier.kind === 'chassi') {
+      return { identifier: payload.identifier.value, identifierKind: 'CHASSI' };
+    }
     if (this.options.cpfIdentifierResolver === undefined) return null;
     let identifier: string;
     try {
@@ -506,6 +516,8 @@ export class FinderJobProcessor {
   private deriveTipoParam(kind: SourceContext['identifierKind']): string {
     if (kind === 'CPF') return 'cpf';
     if (kind === 'CNPJ') return 'cnpj';
+    if (kind === 'PLACA') return 'placa';
+    if (kind === 'CHASSI') return 'chassi';
     return 'numero_cnj';
   }
 

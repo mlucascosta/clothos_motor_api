@@ -81,6 +81,18 @@ describe('createCnpjFinderSourceRegistry', () => {
     expect(withCredential.plan({ sources: ['infosimples_cnep'] })).toEqual([
       expect.objectContaining({ id: 'infosimples_cnep', stage: 1 }),
     ]);
+    expect(withCredential.plan({ sources: ['infosimples_cpf'] })).toEqual([
+      expect.objectContaining({ id: 'infosimples_cpf', stage: 1 }),
+    ]);
+    expect(withCredential.plan({ sources: ['infosimples_certidoes'] })).toEqual([
+      expect.objectContaining({ id: 'infosimples_certidoes', stage: 1 }),
+    ]);
+    expect(() => withoutCredential.plan({ sources: ['infosimples_cpf'] })).toThrow(
+      'unknown_source',
+    );
+    expect(() => withoutCredential.plan({ sources: ['infosimples_certidoes'] })).toThrow(
+      'unknown_source',
+    );
   });
 
   it('enables ApiBrasil only with both required credentials', () => {
@@ -99,6 +111,45 @@ describe('createCnpjFinderSourceRegistry', () => {
     );
     expect(withCredentials.plan({ sources: ['apibrasil_cadastro_pj'] })).toEqual([
       expect.objectContaining({ id: 'apibrasil_cadastro_pj', stage: 1 }),
+    ]);
+    expect(withCredentials.plan({ sources: ['apibrasil_cadastro_pf'] })).toEqual([
+      expect.objectContaining({ id: 'apibrasil_cadastro_pf', stage: 1 }),
+    ]);
+    expect(withCredentials.plan({ sources: ['apibrasil_score_quod'] })).toEqual([
+      expect.objectContaining({ id: 'apibrasil_score_quod', stage: 1 }),
+    ]);
+    expect(() => withoutDeviceToken.plan({ sources: ['apibrasil_cadastro_pf'] })).toThrow(
+      'unknown_source',
+    );
+    expect(() => withoutDeviceToken.plan({ sources: ['apibrasil_score_quod'] })).toThrow(
+      'unknown_source',
+    );
+  });
+
+  it('enables Fonte Data phase 1/2 sources only when its credential is configured', () => {
+    const withoutCredential = createCnpjFinderSourceRegistry(environment);
+    const withCredential = createCnpjFinderSourceRegistry({
+      ...environment,
+      FONTEDATA_API_KEY: 'fontedata-token',
+    });
+
+    const phaseSources = [
+      'fontedata_ceis',
+      'fontedata_processos',
+      'fontedata_car',
+      'fontedata_cafir',
+      'fontedata_veicular',
+      'fontedata_veicular_hist',
+    ];
+    for (const source of phaseSources) {
+      expect(() => withoutCredential.plan({ sources: [source] })).toThrow('unknown_source');
+      expect(withCredential.plan({ sources: [source] })).toEqual([
+        expect.objectContaining({ id: source, stage: 1 }),
+      ]);
+    }
+    expect(withCredential.plan({ profile: 'public_cnpj' }).map((source) => source.id)).toEqual([
+      'brasilapi_cnpj',
+      'fontedata_cnpj',
     ]);
   });
 

@@ -88,13 +88,13 @@ export class DirectDataExecutor implements ISourceExecutor {
         return this.deps.processosJudiciaisCompleta.execute({ PROCESSO: context.identifier });
 
       default: {
-        const exhaustive: never = context.identifierKind;
+        // PLACA/CHASSI (P8) não têm operação DirectData — falha fechado.
         return Promise.resolve(
           left(
             new SourceError(
               'UPSTREAM_ERROR',
               this.sourceName,
-              `Tipo de identificador não suportado: ${String(exhaustive)}`,
+              `Tipo de identificador não suportado: ${String(context.identifierKind)}`,
             ),
           ),
         );

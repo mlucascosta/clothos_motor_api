@@ -21,3 +21,13 @@ export type FonteDataObject = z.infer<typeof FonteDataObjectSchema>;
 export const CadastroPfBasicaSchema = FonteDataObjectSchema;
 export const CadastroPjBasicaSchema = FonteDataObjectSchema;
 export const ConsultaCnpjReceitaSchema = FonteDataObjectSchema;
+
+// Fase 1/2 (doc §4/§5) — compliance, judicial, rural e veicular. Aliases nomeados do
+// schema estrutural mínimo: ganham os campos reais na homologação (gate técnico §6)
+// sem mudar o contrato do executor.
+export const CeisSancoesSchema = FonteDataObjectSchema;
+export const ProcessosAgrupadaSchema = FonteDataObjectSchema;
+export const CarAmbientalSchema = FonteDataObjectSchema;
+export const CafirImoveisSchema = FonteDataObjectSchema;
+export const ConsultaVeicularSchema = FonteDataObjectSchema;
+export const HistoricoVeiculosSchema = FonteDataObjectSchema;

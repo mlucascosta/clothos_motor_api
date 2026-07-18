@@ -56,6 +56,14 @@ export const FinderJobPayloadSchema = z.object({
     z
       .object({ kind: z.literal('cpf'), ciphertext: z.string().min(1), key_id: z.string().min(1) })
       .strict(),
+    // Identificadores públicos dos produtos P6 (CNJ) e P8 (placa/chassi) — em claro.
+    z.object({ kind: z.literal('cnj'), value: z.string().regex(/^\d{20}$/) }).strict(),
+    z
+      .object({ kind: z.literal('placa'), value: z.string().regex(/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/) })
+      .strict(),
+    z
+      .object({ kind: z.literal('chassi'), value: z.string().regex(/^[A-HJ-NPR-Z0-9]{17}$/) })
+      .strict(),
   ]),
   source_selection: sourceSelectionSchema,
   selected_candidate_ids: z.array(z.string().min(1)).optional(),
