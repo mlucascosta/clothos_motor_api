@@ -35,6 +35,9 @@ export const executionStepSchema = z
     order: z.number().int().nonnegative(),
     // Peso do componente na cobertura ponderada (REGRAS §14). Ausente = 1 (contagem simples).
     weight: z.number().int().positive().optional(),
+    // Origem REAL do dado (RB-08): o breaker correlaciona por origem — dois providers que
+    // revendem a mesma origem compartilham circuito. null/ausente = origem própria da fonte.
+    origin: z.string().min(1).nullable().optional(),
   })
   .strict();
 

@@ -85,6 +85,12 @@ export class FinderJobProcessor {
     // grupo já coberto). Ausente = fluxo legado por-fonte, sem cobertura.
     const executionPlan = payload.execution_plan;
     const groupBySource = this.canonicalGroups(executionPlan);
+    // RB-08: origem real por fonte (do plano congelado). O breaker correlaciona por origem —
+    // Receita fora do ar abre UM circuito para todos os proxies dela.
+    const originBySource = new Map<string, string>();
+    for (const step of executionPlan?.steps ?? []) {
+      if (step.origin != null) originBySource.set(step.source_code, step.origin);
+    }
     const satisfiedGroups = new Set<string>();
     const outcomes = new Map<string, StepOutcome>();
     // Dentro de um mesmo stage, executa na ordem CONGELADA do plano (primário antes do fallback),
@@ -113,6 +119,7 @@ export class FinderJobProcessor {
             candidate.id,
             signal,
             subjectProfile,
+            originBySource.get(source.id),
           );
           blocks.push(result.block);
           costActual += result.cost;
@@ -154,6 +161,7 @@ export class FinderJobProcessor {
         undefined,
         signal,
         subjectProfile,
+        originBySource.get(source.id),
       );
       blocks.push(result.block);
       costActual += result.cost;
@@ -179,11 +187,29 @@ export class FinderJobProcessor {
     if (executionPlan !== undefined) {
       const normalized = this.normalizePlan(executionPlan);
       const coverage = computeCoverage(normalized, outcomes);
+      // RB-14: quantos grupos de fallback foram satisfeitos SEM a primária (degradação suave —
+      // a primária falhou/vazou e o fallback segurou). Alimenta o alerta do Laravel.
+      let fallbackHits = 0;
+      const byGroup = new Map<string, { source_code: string; order: number }[]>();
+      for (const step of normalized.steps) {
+        if (step.fallback_group === null) continue;
+        const members = byGroup.get(step.fallback_group) ?? [];
+        members.push({ source_code: step.source_code, order: step.order });
+        byGroup.set(step.fallback_group, members);
+      }
+      for (const members of byGroup.values()) {
+        members.sort((a, b) => a.order - b.order);
+        const primary = members[0];
+        if (primary === undefined) continue;
+        const satisfied = members.some((m) => outcomes.get(m.source_code) === 'completed');
+        if (satisfied && outcomes.get(primary.source_code) !== 'completed') fallbackHits += 1;
+      }
       summary['coverage'] = {
         required_total: coverage.requiredTotal,
         required_succeeded: coverage.requiredSucceeded,
         optional_total: coverage.optionalTotal,
         optional_succeeded: coverage.optionalSucceeded,
+        fallback_hits: fallbackHits,
         // Heurística conservadora: houve dado quando ao menos uma fonte completou. A distinção
         // fina "completou porém vazio" (ausência válida) é refinada no Laravel por bloco.
         records_found: blocks.some((block) => block.status === 'completed'),
@@ -313,6 +339,7 @@ export class FinderJobProcessor {
     candidateId: string | undefined,
     signal: AbortSignal,
     subjectProfile?: Record<string, string>,
+    breakerOrigin?: string,
   ): Promise<{ block: SourceBlock; cost: number; artifacts: FinderArtifact[] }> {
     this.assertNotAborted(signal);
     const cacheKey = deriveCacheKey(source.id, identifier.identifierKind, identifier.identifier);
@@ -349,7 +376,9 @@ export class FinderJobProcessor {
 
     // Circuit breaker: com o circuito ABERTO, o provider degradado NÃO é chamado — falha
     // rápido, sem queimar COGS. O cache-hit acima já foi servido (não depende do provider).
-    const breaker = this.options.circuitBreakerFor?.(source.executor.sourceName);
+    // RB-08: circuito por ORIGEM quando conhecida (mata falsa diversidade de revendedores);
+    // sem origem homologada, cai no comportamento por provider.
+    const breaker = this.options.circuitBreakerFor?.(breakerOrigin ?? source.executor.sourceName);
     if (breaker !== undefined && (await breaker.isOpen())) {
       await this.repository.failSourceExecution(executionId, 'CIRCUIT_OPEN');
       await this.repository.appendEvent(job.job_id, JobEventType.SOURCE_FAILED, {

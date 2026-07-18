@@ -160,6 +160,7 @@ describe('FinderJobProcessor com plano congelado (B4.5)', () => {
       required_succeeded: 1,
       optional_total: 0,
       optional_succeeded: 0,
+      fallback_hits: 0,
       records_found: true,
     });
   });
