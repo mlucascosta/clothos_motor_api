@@ -1,6 +1,7 @@
 import { type Either, isLeft, left, right } from '@shared/domain/Either.js';
 import { SourceError } from '@shared/domain/errors/SourceError.js';
 import type { HttpRequestOptions, IHttpClient } from './IHttpClient.js';
+import { safeErrorMessage } from './redactSecrets.js';
 
 /** Kinds que justificam retry (erros transitórios de upstream). */
 const RETRYABLE_KINDS = new Set(['UPSTREAM_ERROR', 'TIMEOUT']);
@@ -267,14 +268,7 @@ export class FetchHttpClient implements IHttpClient {
       if (err instanceof DOMException && err.name === 'TimeoutError') {
         return left(new SourceError('TIMEOUT', source));
       }
-      const safeMsg =
-        err instanceof Error
-          ? err.message.replace(
-              /([?&])(TOKEN|token|apikey|api_key|key|secret|password|passwd)=[^&\s]*/gi,
-              '$1$2=[REDACTED]',
-            )
-          : 'network error';
-      return left(new SourceError('UPSTREAM_ERROR', source, safeMsg));
+      return left(new SourceError('UPSTREAM_ERROR', source, safeErrorMessage(err)));
     }
   }
 
@@ -337,14 +331,7 @@ export class FetchHttpClient implements IHttpClient {
       if (err instanceof DOMException && err.name === 'TimeoutError') {
         return left(new SourceError('TIMEOUT', source));
       }
-      const safeMsg =
-        err instanceof Error
-          ? err.message.replace(
-              /([?&])(TOKEN|token|apikey|api_key|key|secret|password|passwd)=[^&\s]*/gi,
-              '$1$2=[REDACTED]',
-            )
-          : 'network error';
-      return left(new SourceError('UPSTREAM_ERROR', source, safeMsg));
+      return left(new SourceError('UPSTREAM_ERROR', source, safeErrorMessage(err)));
     }
   }
 
@@ -396,14 +383,7 @@ export class FetchHttpClient implements IHttpClient {
       if (err instanceof DOMException && err.name === 'TimeoutError') {
         return left(new SourceError('TIMEOUT', source));
       }
-      const safeMsg =
-        err instanceof Error
-          ? err.message.replace(
-              /([?&])(TOKEN|token|apikey|api_key|key|secret|password|passwd)=[^&\s]*/gi,
-              '$1$2=[REDACTED]',
-            )
-          : 'network error';
-      return left(new SourceError('UPSTREAM_ERROR', source, safeMsg));
+      return left(new SourceError('UPSTREAM_ERROR', source, safeErrorMessage(err)));
     }
   }
 

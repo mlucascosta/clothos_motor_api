@@ -1,6 +1,7 @@
 import type { JobRepository, JobRow } from '@infrastructure/database/JobRepository.js';
 import type { JobQueueValue, JobStatusValue } from '@shared/domain/enums/queue.js';
 import { logger } from '@shared/infrastructure/logger.js';
+import { redactSecrets } from '@shared/infrastructure/redactSecrets.js';
 
 export interface JobProcessResult {
   result: Record<string, unknown>;
@@ -94,7 +95,10 @@ export class JobWorker {
       }
     } catch (err) {
       const failed = await this.repository.fail(job.id, claimToken, {
-        error: err instanceof Error ? err.message : 'processor_failed',
+        // Redigido: esta mensagem é persistida no job e lida por operação/Laravel.
+        // Um processor pode lançar erro carregando credencial (connection string,
+        // header de provider) que viraria segredo em banco.
+        error: err instanceof Error ? redactSecrets(err.message) : 'processor_failed',
       });
       if (!failed) {
         logger.warn({ jobId: job.id }, 'JobWorker: failure update rejected because claim was lost');
