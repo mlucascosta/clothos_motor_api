@@ -207,7 +207,10 @@ describe('FinderJobProcessor', () => {
       JobEventType.SOURCE_COMPLETED,
       JobEventType.CANDIDATE_SELECTION_REQUIRED,
     ]);
-    expect(outcome.status).toBe(JobStatus.PARTIAL);
+    // ADR-0029: esperar escolha do usuário NÃO é "terminou incompleto". Era PARTIAL, que é
+    // terminal — e fazia o Laravel encerrar a investigação (settle ou release conforme a
+    // cobertura) antes do job-filho executar as fontes pagas da etapa seguinte.
+    expect(outcome.status).toBe(JobStatus.AWAITING_SELECTION);
     expect(outcome.result).toEqual(
       expect.objectContaining({
         selection_required: {

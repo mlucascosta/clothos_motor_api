@@ -3,7 +3,12 @@ import type { SourceContext } from '@application/queries/ports/ISourceExecutor.j
 import type { FinderJobRepository } from '@infrastructure/database/FinderJobRepository.js';
 import type { JobRow } from '@infrastructure/database/JobRepository.js';
 import { isLeft } from '@shared/domain/Either.js';
-import { JobEventType, JobStatus, SourceExecutionStatus } from '@shared/domain/enums/queue.js';
+import {
+  JobEventType,
+  JobStatus,
+  type JobStatusValue,
+  SourceExecutionStatus,
+} from '@shared/domain/enums/queue.js';
 import { deriveCacheKey } from '@shared/domain/privacy/cacheKey.js';
 import type { RegisteredSource, SourceRegistry } from './SourceRegistry.js';
 import type {
@@ -174,9 +179,22 @@ export class FinderJobProcessor {
     //  - `statusLabel` vai no JSON de `jobs.result` — payload é validado por schema nos dois
     //    lados e é o que um humano lê ao depurar um job;
     //  - `status` vai na COLUNA `jobs.status`, que é numérica (contrato da fila, ADR-0024).
-    const partial = requiresSelection || blocks.some((block) => block.status === 'failed');
-    const statusLabel = partial ? 'partial' : 'completed';
-    const status = partial ? JobStatus.PARTIAL : JobStatus.COMPLETED;
+    // ADR-0029: "esperando o usuário escolher" e "terminou incompleto" são estados DIFERENTES.
+    // Colapsar os dois em PARTIAL fazia o Laravel encerrar financeiramente uma investigação que
+    // ainda ia continuar — a reserva era fechada antes do job-filho executar as fontes pagas.
+    const partial = blocks.some((block) => block.status === 'failed');
+    let statusLabel: string;
+    let status: JobStatusValue;
+    if (requiresSelection) {
+      statusLabel = 'awaiting_selection';
+      status = JobStatus.AWAITING_SELECTION;
+    } else if (partial) {
+      statusLabel = 'partial';
+      status = JobStatus.PARTIAL;
+    } else {
+      statusLabel = 'completed';
+      status = JobStatus.COMPLETED;
+    }
 
     const summary: Record<string, unknown> = {
       completed_sources: blocks.filter((block) => block.status === 'completed').length,

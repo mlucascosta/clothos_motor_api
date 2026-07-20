@@ -18,6 +18,12 @@ export const JobStatus = {
   COMPLETED: 2,
   PARTIAL: 3,
   FAILED: 4,
+  /**
+   * Execução suspensa aguardando o usuário escolher um candidato (ADR-0029).
+   * NÃO é terminal: o Laravel não consome nem liquida, a reserva de SKU continua de pé e
+   * quem finaliza a investigação é o job-filho criado depois da escolha.
+   */
+  AWAITING_SELECTION: 5,
 } as const;
 export type JobStatusValue = (typeof JobStatus)[keyof typeof JobStatus];
 
