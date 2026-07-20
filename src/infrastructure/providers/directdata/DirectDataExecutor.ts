@@ -87,18 +87,38 @@ export class DirectDataExecutor implements ISourceExecutor {
       case 'PROCESSO':
         return this.deps.processosJudiciaisCompleta.execute({ PROCESSO: context.identifier });
 
-      default: {
-        // PLACA/CHASSI (P8) não têm operação DirectData — falha fechado.
+      case 'PLACA':
+      case 'CHASSI':
+        // Veicular (P8): DirectData não tem operação — NÃO suporta, falha fechado (explícito).
         return Promise.resolve(
           left(
             new SourceError(
               'UPSTREAM_ERROR',
               this.sourceName,
-              `Tipo de identificador não suportado: ${String(context.identifierKind)}`,
+              `Tipo de identificador não suportado: ${context.identifierKind}`,
             ),
           ),
         );
-      }
+
+      default:
+        // RB-21: exhaustiveness check. Todo `identifierKind` do contrato compartilhado precisa ser
+        // tratado acima (suporta OU não suporta, explicitamente). Adicionar um novo kind ao union
+        // `SourceContext['identifierKind']` sem tratá-lo aqui QUEBRA O BUILD (o parâmetro deixa de
+        // ser `never`) — nunca mais um kind novo cai num erro genérico de runtime.
+        return this.unsupportedIdentifierKind(context.identifierKind);
     }
+  }
+
+  /**
+   * Guarda de exaustividade (RB-21). Só é chamável quando `kind` é `never` — ou seja, quando todos
+   * os membros do union foram cobertos pelos `case` acima. Se o TypeScript reclamar aqui, é porque
+   * um novo `identifierKind` foi adicionado ao contrato e este executor precisa declará-lo.
+   *
+   * @private
+   */
+  private unsupportedIdentifierKind(kind: never): Promise<Either<SourceError, unknown>> {
+    return Promise.resolve(
+      left(new SourceError('UPSTREAM_ERROR', this.sourceName, `Tipo de identificador não tratado: ${String(kind)}`)),
+    );
   }
 }

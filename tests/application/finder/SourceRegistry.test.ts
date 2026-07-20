@@ -95,3 +95,57 @@ describe('derived Finder artifacts', () => {
     ]);
   });
 });
+
+describe('SourceRegistry — manifesto de adapters (§12)', () => {
+  const manifestSources: RegisteredSource[] = [
+    {
+      id: 'directdata',
+      aliases: ['directdata_qsa'],
+      stage: 1,
+      requiresCandidate: true,
+      cacheTtlSeconds: 3600,
+      executor: executor('directdata'),
+    },
+    {
+      id: 'escavador',
+      aliases: ['escavador_summary', 'escavador_detalhes'],
+      stage: 1,
+      executor: executor('escavador'),
+    },
+  ];
+
+  it('manifest() lista uma entrada serializável por id canônico, ordenada', () => {
+    const registry = new SourceRegistry(manifestSources, {});
+
+    expect(registry.manifest()).toEqual([
+      {
+        id: 'directdata',
+        aliases: ['directdata_qsa'],
+        stage: 1,
+        requiresCandidate: true,
+        cacheTtlSeconds: 3600,
+      },
+      {
+        id: 'escavador',
+        aliases: ['escavador_summary', 'escavador_detalhes'],
+        stage: 1,
+        requiresCandidate: false,
+        cacheTtlSeconds: null,
+      },
+    ]);
+  });
+
+  it('executableCodes() inclui ids canônicos E aliases (o conjunto executável do §12)', () => {
+    const registry = new SourceRegistry(manifestSources, {});
+
+    expect(registry.executableCodes()).toEqual([
+      'directdata',
+      'directdata_qsa',
+      'escavador',
+      'escavador_detalhes',
+      'escavador_summary',
+    ]);
+    // O que está no catálogo mas não aqui = fonte cadastrada SEM adapter executável.
+    expect(registry.executableCodes()).not.toContain('fonte_sem_adapter');
+  });
+});
