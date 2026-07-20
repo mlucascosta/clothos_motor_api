@@ -6,7 +6,7 @@
 -- =============================================================================
 
 -- ---------------------------------------------------------------------------
--- clothos_core.jobs — fila de alta rotação
+-- reduto_core.jobs — fila de alta rotação
 --
 -- Perfil: linhas são inseridas (pending), atualizadas múltiplas vezes
 -- (claimed → completed/failed) e permanecem na tabela por minutos/horas antes
@@ -39,7 +39,7 @@
 --       numa tabela pequena-mas-ativa onde o padrão seria agressivo demais.
 --       500M dá margem suficiente para o vacuum regular cuidar do freeze.
 -- ---------------------------------------------------------------------------
-ALTER TABLE clothos_core.jobs SET (
+ALTER TABLE reduto_core.jobs SET (
   autovacuum_vacuum_scale_factor   = 0.05,
   autovacuum_analyze_scale_factor  = 0.02,
   autovacuum_vacuum_cost_delay     = 2,
@@ -48,7 +48,7 @@ ALTER TABLE clothos_core.jobs SET (
 );
 
 -- ---------------------------------------------------------------------------
--- clothos_core.raw_results — escrita intensiva de resultados de providers
+-- reduto_core.raw_results — escrita intensiva de resultados de providers
 --
 -- Perfil: apenas INSERTs (imutável após inserção) + eventual DELETE no expurgo.
 -- Dead tuples vêm do expurgo de linhas antigas; analyze é importante porque
@@ -61,7 +61,7 @@ ALTER TABLE clothos_core.jobs SET (
 --     → Atualiza estatísticas quando 5% das linhas mudam; garante planos
 --       corretos para queries de agregação por gateway/status.
 -- ---------------------------------------------------------------------------
-ALTER TABLE clothos_core.raw_results SET (
+ALTER TABLE reduto_core.raw_results SET (
   autovacuum_vacuum_scale_factor   = 0.10,
   autovacuum_analyze_scale_factor  = 0.05,
   autovacuum_vacuum_cost_delay     = 2,
@@ -69,23 +69,23 @@ ALTER TABLE clothos_core.raw_results SET (
 );
 
 -- ---------------------------------------------------------------------------
--- clothos_core.query_refs — escrita moderada, leitura de auditoria
+-- reduto_core.query_refs — escrita moderada, leitura de auditoria
 --
 -- Perfil similar a raw_results: INSERTs + expurgo eventual. Valores conservadores
 -- pois a pressão de bloat é menor.
 -- ---------------------------------------------------------------------------
-ALTER TABLE clothos_core.query_refs SET (
+ALTER TABLE reduto_core.query_refs SET (
   autovacuum_vacuum_scale_factor   = 0.10,
   autovacuum_analyze_scale_factor  = 0.05
 );
 
 -- ---------------------------------------------------------------------------
--- Nota sobre clothos_core.cache (UNLOGGED)
+-- Nota sobre reduto_core.cache (UNLOGGED)
 --
 -- Tabelas UNLOGGED NÃO participam do autovacuum (não geram WAL; o daemon
 -- autovacuum não as processa). O expurgo de linhas expiradas é responsabilidade
 -- exclusiva da função de manutenção em 0004_maintenance.sql
--- (clothos_core.purge_expired_cache). Executar via pg_cron ou cron externo
+-- (reduto_core.purge_expired_cache). Executar via pg_cron ou cron externo
 -- com frequência adequada ao TTL médio do cache (recomendado: a cada 5-15 min).
 --
 -- Não há ALTER TABLE … SET (autovacuum_…) aplicável a UNLOGGED tables.

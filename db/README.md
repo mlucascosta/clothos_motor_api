@@ -1,6 +1,6 @@
 # Banco do Motor
 
-`migrations/0001_core_schema.sql` cria `clothos_core.jobs`, resultados brutos,
+`migrations/0001_core_schema.sql` cria `reduto_core.jobs`, resultados brutos,
 refs, estado de providers e cache PostgreSQL.
 
 Runtime usa roles separadas: Laravel produz jobs; worker pode fazer claim e

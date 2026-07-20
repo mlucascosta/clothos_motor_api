@@ -2,7 +2,7 @@
 # =============================================================================
 # db/apply.sh — Bootstrap de DESENVOLVIMENTO do schema do motor CLOTHOS
 #
-# ⚠ DEV-ONLY. Em producao o OWNER unico do schema `clothos_core` e o Laravel
+# ⚠ DEV-ONLY. Em producao o OWNER unico do schema `reduto_core` e o Laravel
 #   (role clothos_migration, 00-FOUNDATION/G1); este script NUNCA roda la.
 #   Ele existe para subir um Postgres descartavel do motor sem o Laravel.
 #
@@ -24,7 +24,7 @@ if [[ -z "${DATABASE_URL:-}" ]]; then
 fi
 
 # Detecta psql no host. Para CI sem psql local, defina PSQL_CMD manualmente:
-#   export PSQL_CMD="docker exec -i clothos_db psql -U postgres -d clothos_core"
+#   export PSQL_CMD="docker exec -i clothos_db psql -U postgres -d reduto_core"
 if [[ -z "${PSQL_CMD:-}" ]]; then
   if command -v psql &>/dev/null; then
     PSQL_CMD="psql \"\${DATABASE_URL}\""
@@ -32,7 +32,7 @@ if [[ -z "${PSQL_CMD:-}" ]]; then
     echo "AVISO: psql nao encontrado no PATH." >&2
     echo "Defina PSQL_CMD para usar docker exec ou outro wrapper." >&2
     echo "Exemplo:" >&2
-    echo "  export PSQL_CMD=\"docker exec -i clothos_db psql -U postgres -d clothos_core\"" >&2
+    echo "  export PSQL_CMD=\"docker exec -i clothos_db psql -U postgres -d reduto_core\"" >&2
     exit 1
   fi
 fi

@@ -69,13 +69,13 @@ export class FinderJobRepository {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      await client.query('SELECT id FROM clothos_core.jobs WHERE job_id = $1 FOR UPDATE', [jobId]);
+      await client.query('SELECT id FROM reduto_core.jobs WHERE job_id = $1 FOR UPDATE', [jobId]);
       const { rows } = await client.query<{ sequence: number }>(
-        'SELECT COALESCE(MAX(sequence), 0) + 1 AS sequence FROM clothos_core.job_events WHERE job_id = $1',
+        'SELECT COALESCE(MAX(sequence), 0) + 1 AS sequence FROM reduto_core.job_events WHERE job_id = $1',
         [jobId],
       );
       await client.query(
-        `INSERT INTO clothos_core.job_events (job_id, sequence, event_type, payload)
+        `INSERT INTO reduto_core.job_events (job_id, sequence, event_type, payload)
          VALUES ($1, $2, $3, $4::jsonb)`,
         [jobId, rows[0]?.sequence ?? 1, type, JSON.stringify(payload)],
       );
@@ -90,7 +90,7 @@ export class FinderJobRepository {
 
   async startSourceExecution(input: SourceExecutionStart): Promise<number> {
     const { rows } = await this.pool.query<{ id: string }>(
-      `INSERT INTO clothos_core.job_source_executions
+      `INSERT INTO reduto_core.job_source_executions
          (job_id, source_id, source_code, stage, candidate_id, status, started_at)
        VALUES ($1, $2, $3, $4, $5, ${SourceExecutionStatus.STARTED}, now())
        ON CONFLICT (job_id, source_id, candidate_id)
@@ -114,7 +114,7 @@ export class FinderJobRepository {
     completion: SourceExecutionCompletion = {},
   ): Promise<void> {
     await this.pool.query(
-      `UPDATE clothos_core.job_source_executions
+      `UPDATE reduto_core.job_source_executions
           SET status = ${SourceExecutionStatus.COMPLETED}, completed_at = now(),
               cache_hit = $2, cache_key = $3, raw_result_id = $4, cost_cents = $5
         WHERE id = $1`,
@@ -130,7 +130,7 @@ export class FinderJobRepository {
 
   async failSourceExecution(id: number, errorKind: string): Promise<void> {
     await this.pool.query(
-      `UPDATE clothos_core.job_source_executions
+      `UPDATE reduto_core.job_source_executions
           SET status = ${SourceExecutionStatus.FAILED}, error_kind = $2, completed_at = now()
         WHERE id = $1`,
       [id, sourceErrorKindFromName(errorKind)],
@@ -143,7 +143,7 @@ export class FinderJobRepository {
    */
   async lookupCache(cacheKey: string): Promise<CachedSourceResult | null> {
     const { rows } = await this.pool.query<{ value: CachedSourceResult }>(
-      'SELECT value FROM clothos_core.cache WHERE key = $1 AND expires_at > now()',
+      'SELECT value FROM reduto_core.cache WHERE key = $1 AND expires_at > now()',
       [cacheKey],
     );
     return rows[0]?.value ?? null;
@@ -155,7 +155,7 @@ export class FinderJobRepository {
    */
   async saveCache(cacheKey: string, value: CachedSourceResult, ttlSeconds: number): Promise<void> {
     await this.pool.query(
-      `INSERT INTO clothos_core.cache (key, value, expires_at)
+      `INSERT INTO reduto_core.cache (key, value, expires_at)
        VALUES ($1, $2::jsonb, now() + make_interval(secs => $3))
        ON CONFLICT (key)
        DO UPDATE SET value = EXCLUDED.value, expires_at = EXCLUDED.expires_at`,
@@ -169,7 +169,7 @@ export class FinderJobRepository {
    */
   async saveRawResult(input: RawResultInput): Promise<number> {
     const { rows } = await this.pool.query<{ id: string }>(
-      `INSERT INTO clothos_core.raw_results
+      `INSERT INTO reduto_core.raw_results
          (gateway, fonte, tipo_param, param, result, status, error_kind, correlation_id, cache_key, created_at)
        VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8, $9, now())
        RETURNING id`,
@@ -190,7 +190,7 @@ export class FinderJobRepository {
 
   async saveArtifact(artifact: StoredFinderArtifact): Promise<void> {
     await this.pool.query(
-      `INSERT INTO clothos_core.derived_artifacts
+      `INSERT INTO reduto_core.derived_artifacts
          (job_id, artifact_key, value, provenance, source_execution_id)
        VALUES ($1, $2, $3::jsonb, $4::jsonb, $5)
        ON CONFLICT (job_id, artifact_key)

@@ -7,14 +7,14 @@
 -- ---------------------------------------------------------------------------
 -- Schema
 -- ---------------------------------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS clothos_core;
+CREATE SCHEMA IF NOT EXISTS reduto_core;
 
 -- ---------------------------------------------------------------------------
--- TABELA: clothos_core.jobs
+-- TABELA: reduto_core.jobs
 -- Fila de jobs via FOR UPDATE SKIP LOCKED (substitui BullMQ/Redis).
 -- Schema EXATO da ADR-0019 — nomes de coluna são contrato público.
 -- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS clothos_core.jobs (
+CREATE TABLE IF NOT EXISTS reduto_core.jobs (
   id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   job_id         UUID NOT NULL,
   queue          SMALLINT NOT NULL,                     -- 0=lite 1=full 2=monitor 3=dossier 4=export 5=graph 6=custom
@@ -45,9 +45,9 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
     WHERE conname = 'jobs_job_id_unique'
-      AND conrelid = 'clothos_core.jobs'::regclass
+      AND conrelid = 'reduto_core.jobs'::regclass
   ) THEN
-    ALTER TABLE clothos_core.jobs ADD CONSTRAINT jobs_job_id_unique UNIQUE (job_id);
+    ALTER TABLE reduto_core.jobs ADD CONSTRAINT jobs_job_id_unique UNIQUE (job_id);
   END IF;
 END$$;
 
@@ -57,9 +57,9 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
     WHERE conname = 'jobs_status_check'
-      AND conrelid = 'clothos_core.jobs'::regclass
+      AND conrelid = 'reduto_core.jobs'::regclass
   ) THEN
-    ALTER TABLE clothos_core.jobs ADD CONSTRAINT jobs_status_check
+    ALTER TABLE reduto_core.jobs ADD CONSTRAINT jobs_status_check
       CHECK (status BETWEEN 0 AND 4);
   END IF;
 END$$;
@@ -69,9 +69,9 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
     WHERE conname = 'jobs_queue_check'
-      AND conrelid = 'clothos_core.jobs'::regclass
+      AND conrelid = 'reduto_core.jobs'::regclass
   ) THEN
-    ALTER TABLE clothos_core.jobs ADD CONSTRAINT jobs_queue_check
+    ALTER TABLE reduto_core.jobs ADD CONSTRAINT jobs_queue_check
       CHECK (queue BETWEEN 0 AND 6);
   END IF;
 END$$;
@@ -81,9 +81,9 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
     WHERE conname = 'jobs_priority_check'
-      AND conrelid = 'clothos_core.jobs'::regclass
+      AND conrelid = 'reduto_core.jobs'::regclass
   ) THEN
-    ALTER TABLE clothos_core.jobs ADD CONSTRAINT jobs_priority_check
+    ALTER TABLE reduto_core.jobs ADD CONSTRAINT jobs_priority_check
       CHECK (priority BETWEEN 1 AND 10);
   END IF;
 END$$;
@@ -93,15 +93,15 @@ END$$;
 -- prioridade + idade. Workers que fazem SKIP LOCKED sobre este índice
 -- nunca tocam linhas em outros estados.
 CREATE INDEX IF NOT EXISTS idx_jobs_claim
-  ON clothos_core.jobs (queue, priority, available_at)
+  ON reduto_core.jobs (queue, priority, available_at)
   WHERE status = 0;   -- pending
 
 -- ---------------------------------------------------------------------------
--- TABELA: clothos_core.raw_results
+-- TABELA: reduto_core.raw_results
 -- Resultados brutos dos providers (substitui MongoDB clothos_motor.raw_results).
 -- JSONB com jsonb_path_ops para queries de extração de campos arbitrários.
 -- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS clothos_core.raw_results (
+CREATE TABLE IF NOT EXISTS reduto_core.raw_results (
   id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   gateway        TEXT NOT NULL,                -- slug do provider (escavador, datajud…)
   fonte          TEXT NOT NULL,                -- identificador interno da fonte/endpoint
@@ -115,11 +115,11 @@ CREATE TABLE IF NOT EXISTS clothos_core.raw_results (
 );
 
 -- ---------------------------------------------------------------------------
--- TABELA: clothos_core.query_refs
+-- TABELA: reduto_core.query_refs
 -- Correlação tenant ↔ pesquisa (substitui MongoDB clothos_motor.query_refs).
 -- Permite auditoria e rastreabilidade sem consultar raw_results diretamente.
 -- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS clothos_core.query_refs (
+CREATE TABLE IF NOT EXISTS reduto_core.query_refs (
   id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   correlation_id TEXT NOT NULL,
   tenant_id      TEXT NOT NULL,                -- slug ou id do tenant (rótulo de auditoria)
@@ -133,19 +133,19 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
     WHERE conname = 'query_refs_correlation_id_unique'
-      AND conrelid = 'clothos_core.query_refs'::regclass
+      AND conrelid = 'reduto_core.query_refs'::regclass
   ) THEN
-    ALTER TABLE clothos_core.query_refs
+    ALTER TABLE reduto_core.query_refs
       ADD CONSTRAINT query_refs_correlation_id_unique UNIQUE (correlation_id);
   END IF;
 END$$;
 
 -- ---------------------------------------------------------------------------
--- TABELA: clothos_core.providers
+-- TABELA: reduto_core.providers
 -- Estado do circuit breaker por provider (substitui sorted-set Redis).
 -- Atomicidade via pg_advisory_xact_lock + transação (ADR-0019 §8.6).
 -- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS clothos_core.providers (
+CREATE TABLE IF NOT EXISTS reduto_core.providers (
   slug                   TEXT PRIMARY KEY,
   name                   TEXT NOT NULL,
   circuit_breaker_state  JSONB NOT NULL DEFAULT
@@ -156,13 +156,13 @@ CREATE TABLE IF NOT EXISTS clothos_core.providers (
 );
 
 -- ---------------------------------------------------------------------------
--- TABELA: clothos_core.cache  (UNLOGGED — padrão Solid Cache)
+-- TABELA: reduto_core.cache  (UNLOGGED — padrão Solid Cache)
 -- Cache de resultados de providers (substitui Redis cache).
 -- UNLOGGED: sem WAL → writes ~3-5x mais rápidos; dados perdidos em crash do
 -- servidor (aceitável para cache — na reinicialização o cache está vazio e
 -- as requisições caem direto nos providers até o cache esquentar novamente).
 -- ---------------------------------------------------------------------------
-CREATE UNLOGGED TABLE IF NOT EXISTS clothos_core.cache (
+CREATE UNLOGGED TABLE IF NOT EXISTS reduto_core.cache (
   key        TEXT PRIMARY KEY,
   value      JSONB NOT NULL,
   expires_at TIMESTAMPTZ NOT NULL,

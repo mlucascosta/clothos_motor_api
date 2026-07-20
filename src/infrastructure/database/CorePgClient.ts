@@ -1,14 +1,14 @@
 /**
- * @fileoverview Cliente PostgreSQL do motor para o schema clothos_core.
+ * @fileoverview Cliente PostgreSQL do motor para o schema reduto_core.
  *
  * INVARIANTE — Motor não é multi-tenant (ADR-0019):
- *   O motor conecta APENAS ao banco clothos_core. Nunca executa `SET search_path`
+ *   O motor conecta APENAS ao banco reduto_core. Nunca executa `SET search_path`
  *   para schema de tenant nem interpola `tenant_slug` em SQL. O `tenant_slug`
  *   presente nas linhas de `jobs` é exclusivamente um rótulo de correlação/auditoria.
  *
  *   A validação de schema tenant e o `SET search_path TO tenant_{slug}` vivem
  *   exclusivamente no app Laravel (middleware `SetTenantSchema`), onde o resultado
- *   refinado é persistido em `clothos_results.tenant_{slug}`.
+ *   refinado é persistido em `reduto_results.tenant_{slug}`.
  *
  * @module infrastructure/database/CorePgClient
  */
@@ -17,17 +17,17 @@ import type { Pool, PoolClient } from 'pg';
 
 /**
  * Wrapper sobre o pool de conexões PostgreSQL que expõe acesso controlado
- * ao schema `clothos_core`.
+ * ao schema `reduto_core`.
  *
  * @example
  * const client = new CorePgClient(pool);
  * const rows = await client.withClient((c) =>
- *   c.query('SELECT id FROM clothos_core.jobs WHERE status = $1', ['pending'])
+ *   c.query('SELECT id FROM reduto_core.jobs WHERE status = $1', ['pending'])
  * );
  */
 export class CorePgClient {
   /**
-   * @param {Pool} pool - Pool pg apontando para clothos_core (tipicamente via PgBouncer).
+   * @param {Pool} pool - Pool pg apontando para reduto_core (tipicamente via PgBouncer).
    *   Sem SET search_path por tenant — motor não é multi-tenant (ADR-0019).
    */
   constructor(private readonly pool: Pool) {}

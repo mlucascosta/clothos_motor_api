@@ -1,7 +1,7 @@
 /**
- * @fileoverview Circuit Breaker com estado em clothos_core.providers (JSONB).
+ * @fileoverview Circuit Breaker com estado em reduto_core.providers (JSONB).
  *
- * Estado armazenado na coluna `circuit_breaker_state` JSONB de `clothos_core.providers`:
+ * Estado armazenado na coluna `circuit_breaker_state` JSONB de `reduto_core.providers`:
  *   { state: 'closed'|'open'|'half_open', opened_at: number, failures: number[] }
  *
  * onde `failures` é um array de epoch_ms filtrado por janela deslizante em código.
@@ -35,7 +35,7 @@ const DEFAULT_OPEN_DURATION_SEC = 300;
 // ---------------------------------------------------------------------------
 
 /**
- * Forma do JSONB armazenado em clothos_core.providers.circuit_breaker_state.
+ * Forma do JSONB armazenado em reduto_core.providers.circuit_breaker_state.
  */
 interface CircuitState {
   /** Estado atual do circuito. */
@@ -81,8 +81,8 @@ export class CircuitBreaker {
   private readonly config: CircuitBreakerConfig;
 
   /**
-   * @param {Pool} pool - Pool pg conectado a clothos_core
-   * @param {string} providerSlug - Identificador do provider (PK em clothos_core.providers)
+   * @param {Pool} pool - Pool pg conectado a reduto_core
+   * @param {string} providerSlug - Identificador do provider (PK em reduto_core.providers)
    * @param {Partial<CircuitBreakerConfig>} config - Sobrescreve defaults
    */
   constructor(
@@ -109,7 +109,7 @@ export class CircuitBreaker {
    */
   private async readState(): Promise<CircuitState> {
     const { rows } = await this.pool.query<{ s: Partial<CircuitState> | null }>(
-      'SELECT circuit_breaker_state AS s FROM clothos_core.providers WHERE slug = $1',
+      'SELECT circuit_breaker_state AS s FROM reduto_core.providers WHERE slug = $1',
       [this.providerSlug],
     );
     const raw: Partial<CircuitState> = rows[0]?.s ?? {};
@@ -129,7 +129,7 @@ export class CircuitBreaker {
    */
   private async writeStateInTx(client: PoolClient, state: CircuitState): Promise<void> {
     await client.query(
-      `UPDATE clothos_core.providers
+      `UPDATE reduto_core.providers
           SET circuit_breaker_state = $2, updated_at = now()
         WHERE slug = $1`,
       [this.providerSlug, JSON.stringify(state)],

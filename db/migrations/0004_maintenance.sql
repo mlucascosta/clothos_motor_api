@@ -4,7 +4,7 @@
 -- =============================================================================
 
 -- ---------------------------------------------------------------------------
--- clothos_core.purge_expired_cache()
+-- reduto_core.purge_expired_cache()
 --
 -- Expurga entradas de cache com TTL vencido. Deve ser chamada periodicamente
 -- (recomendado: a cada 5-15 minutos via pg_cron ou cron externo).
@@ -13,14 +13,14 @@
 -- TABELA UNLOGGED: o autovacuum não atua. Este DELETE é o único mecanismo
 -- de reclaim de espaço. Frequência adequada previne crescimento ilimitado.
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION clothos_core.purge_expired_cache()
+CREATE OR REPLACE FUNCTION reduto_core.purge_expired_cache()
 RETURNS INTEGER
 LANGUAGE plpgsql
 AS $$
 DECLARE
   deleted_count INTEGER;
 BEGIN
-  DELETE FROM clothos_core.cache
+  DELETE FROM reduto_core.cache
   WHERE expires_at < now();
 
   GET DIAGNOSTICS deleted_count = ROW_COUNT;
@@ -28,12 +28,12 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION clothos_core.purge_expired_cache() IS
+COMMENT ON FUNCTION reduto_core.purge_expired_cache() IS
   'Expurga entradas expiradas da tabela UNLOGGED cache. '
   'Chamar via pg_cron a cada 5-15 min. Retorna nº de linhas deletadas.';
 
 -- ---------------------------------------------------------------------------
--- clothos_core.archive_old_jobs(retention_interval INTERVAL)
+-- reduto_core.archive_old_jobs(retention_interval INTERVAL)
 --
 -- Arquiva (move para jobs_history) e expurga jobs concluídos ou falhos mais
 -- antigos que retention_interval. Previne bloat da tabela de alta rotação.
@@ -48,18 +48,18 @@ COMMENT ON FUNCTION clothos_core.purge_expired_cache() IS
 -- ---------------------------------------------------------------------------
 
 -- Tabela de histórico para jobs arquivados (estrutura idêntica a jobs).
-CREATE TABLE IF NOT EXISTS clothos_core.jobs_history (
-  LIKE clothos_core.jobs INCLUDING ALL
+CREATE TABLE IF NOT EXISTS reduto_core.jobs_history (
+  LIKE reduto_core.jobs INCLUDING ALL
 );
 
 -- Índice na tabela de histórico para consultas de auditoria por tenant/período.
 CREATE INDEX IF NOT EXISTS idx_jobs_history_tenant_created
-  ON clothos_core.jobs_history (tenant_slug, created_at DESC);
+  ON reduto_core.jobs_history (tenant_slug, created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_jobs_history_job_id
-  ON clothos_core.jobs_history (job_id);
+  ON reduto_core.jobs_history (job_id);
 
-CREATE OR REPLACE FUNCTION clothos_core.archive_old_jobs(
+CREATE OR REPLACE FUNCTION reduto_core.archive_old_jobs(
   retention_interval INTERVAL DEFAULT INTERVAL '7 days'
 )
 RETURNS INTEGER
@@ -73,9 +73,9 @@ BEGIN
   LOOP
     -- Move batch para histórico e deleta da tabela ativa numa única operação.
     WITH moved AS (
-      DELETE FROM clothos_core.jobs
+      DELETE FROM reduto_core.jobs
       WHERE id IN (
-        SELECT id FROM clothos_core.jobs
+        SELECT id FROM reduto_core.jobs
         WHERE status IN (2, 3, 4)   -- completed | partial | failed
           AND updated_at < now() - retention_interval
         LIMIT batch_size
@@ -85,7 +85,7 @@ BEGIN
     )
     -- OVERRIDING SYSTEM VALUE necessário porque jobs_history.id é GENERATED ALWAYS
     -- (herdado via LIKE jobs INCLUDING ALL) e SELECT * inclui o valor concreto de id.
-    INSERT INTO clothos_core.jobs_history
+    INSERT INTO reduto_core.jobs_history
     OVERRIDING SYSTEM VALUE
     SELECT * FROM moved;
 
@@ -99,21 +99,21 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION clothos_core.archive_old_jobs(INTERVAL) IS
+COMMENT ON FUNCTION reduto_core.archive_old_jobs(INTERVAL) IS
   'Move jobs concluídos/falhos mais antigos que retention_interval para '
   'jobs_history em batches de 1000. Previne bloat da tabela de alta rotação. '
   'Chamar diariamente via pg_cron. Padrão: 7 dias.';
 
 -- ---------------------------------------------------------------------------
--- clothos_core.purge_old_raw_results(retention_interval INTERVAL)
+-- reduto_core.purge_old_raw_results(retention_interval INTERVAL)
 --
 -- Expurga resultados brutos antigos da tabela raw_results.
 -- Estes dados têm valor operacional por ~30 dias; após isso são redundantes
--- com os resultados refinados persistidos pelo app em clothos_results.
+-- com os resultados refinados persistidos pelo app em reduto_results.
 -- Separado de archive_old_jobs para controle de retenção independente.
 -- Retorna nº de linhas deletadas.
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION clothos_core.purge_old_raw_results(
+CREATE OR REPLACE FUNCTION reduto_core.purge_old_raw_results(
   retention_interval INTERVAL DEFAULT INTERVAL '30 days'
 )
 RETURNS INTEGER
@@ -125,9 +125,9 @@ DECLARE
   batch_count   INTEGER;
 BEGIN
   LOOP
-    DELETE FROM clothos_core.raw_results
+    DELETE FROM reduto_core.raw_results
     WHERE id IN (
-      SELECT id FROM clothos_core.raw_results
+      SELECT id FROM reduto_core.raw_results
       WHERE created_at < now() - retention_interval
       LIMIT batch_size
     );
@@ -142,12 +142,12 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION clothos_core.purge_old_raw_results(INTERVAL) IS
+COMMENT ON FUNCTION reduto_core.purge_old_raw_results(INTERVAL) IS
   'Expurga raw_results mais antigos que retention_interval em batches de 2000. '
   'Padrão: 30 dias. Chamar semanalmente via pg_cron.';
 
 -- ---------------------------------------------------------------------------
--- VIEW: clothos_core.v_dlq
+-- VIEW: reduto_core.v_dlq
 --
 -- Dead Letter Queue: jobs que esgotaram todas as tentativas.
 -- ADR-0019 §9: "DLQ é só uma query (WHERE status='failed')".
@@ -156,33 +156,33 @@ COMMENT ON FUNCTION clothos_core.purge_old_raw_results(INTERVAL) IS
 -- ---------------------------------------------------------------------------
 -- Tabelas de rotulo: traduzem o numero de volta para o nome. A coluna e numerica
 -- (ADR-0024: indice, storage, sem typo); a VIEW e legivel. Quem opera le a view.
-CREATE OR REPLACE VIEW clothos_core.v_queue_label AS
+CREATE OR REPLACE VIEW reduto_core.v_queue_label AS
 SELECT * FROM (VALUES
   (0,'lite'), (1,'full'), (2,'monitor'), (3,'dossier'), (4,'export'), (5,'graph'), (6,'custom')
 ) AS q(queue, queue_label);
 
-CREATE OR REPLACE VIEW clothos_core.v_job_status_label AS
+CREATE OR REPLACE VIEW reduto_core.v_job_status_label AS
 SELECT * FROM (VALUES
   (0,'pending'), (1,'claimed'), (2,'completed'), (3,'partial'), (4,'failed')
 ) AS s(status, status_label);
 
-CREATE OR REPLACE VIEW clothos_core.v_dlq AS
+CREATE OR REPLACE VIEW reduto_core.v_dlq AS
 SELECT
   j.id, j.job_id,
   q.queue_label AS queue,
   j.query_type, j.tenant_slug, j.attempts, j.max_attempts,
   j.result, j.payload, j.correlation_id, j.updated_at
-FROM clothos_core.jobs j
-LEFT JOIN clothos_core.v_queue_label q ON q.queue = j.queue
+FROM reduto_core.jobs j
+LEFT JOIN reduto_core.v_queue_label q ON q.queue = j.queue
 WHERE j.status = 4                    -- JobStatus::FAILED
   AND j.attempts >= j.max_attempts
 ORDER BY j.updated_at DESC;
 
-COMMENT ON VIEW clothos_core.v_dlq IS
+COMMENT ON VIEW reduto_core.v_dlq IS
   'Dead Letter Queue: jobs que esgotaram max_attempts. '
   'Reprocessar: UPDATE jobs SET status=0, attempts=0, available_at=now() WHERE id=?.';
 
-CREATE OR REPLACE VIEW clothos_core.v_queue_stats AS
+CREATE OR REPLACE VIEW reduto_core.v_queue_stats AS
 SELECT
   q.queue_label                                   AS queue,
   s.status_label                                  AS status,
@@ -191,12 +191,12 @@ SELECT
   percentile_cont(0.5) WITHIN GROUP (
     ORDER BY EXTRACT(EPOCH FROM (now() - j.created_at))
   )                                               AS median_age_seconds
-FROM clothos_core.jobs j
-LEFT JOIN clothos_core.v_queue_label q      ON q.queue  = j.queue
-LEFT JOIN clothos_core.v_job_status_label s ON s.status = j.status
+FROM reduto_core.jobs j
+LEFT JOIN reduto_core.v_queue_label q      ON q.queue  = j.queue
+LEFT JOIN reduto_core.v_job_status_label s ON s.status = j.status
 GROUP BY q.queue_label, s.status_label
 ORDER BY q.queue_label, s.status_label;
 
-COMMENT ON VIEW clothos_core.v_queue_stats IS
+COMMENT ON VIEW reduto_core.v_queue_stats IS
   'Estatisticas da fila por (queue, status), com ROTULO legivel — a coluna e numerica '
   '(ADR-0024), a view traduz. Substitui Bull Board (ADR-0019).';

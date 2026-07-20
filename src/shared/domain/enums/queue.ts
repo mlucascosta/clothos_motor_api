@@ -1,5 +1,5 @@
 /**
- * @fileoverview Enums numéricos do contrato da fila `clothos_core` (ADR-0024 + ADR-0025).
+ * @fileoverview Enums numéricos do contrato da fila `reduto_core` (ADR-0024 + ADR-0025).
  *
  * ESTES NÚMEROS SÃO O PROTOCOLO entre Laravel e motor. O espelho vive em
  * `clothos_src/app/Enums/{JobStatus,JobQueue,JobEventType,SourceExecutionStatus,SourceErrorKind}.php`.
@@ -11,7 +11,7 @@
  * @module shared/domain/enums/queue
  */
 
-/** `clothos_core.jobs.status` */
+/** `reduto_core.jobs.status` */
 export const JobStatus = {
   PENDING: 0,
   CLAIMED: 1,
@@ -27,7 +27,7 @@ export const JobStatus = {
 } as const;
 export type JobStatusValue = (typeof JobStatus)[keyof typeof JobStatus];
 
-/** `clothos_core.jobs.queue` — cada fila tem um contrato de payload e um processador próprios. */
+/** `reduto_core.jobs.queue` — cada fila tem um contrato de payload e um processador próprios. */
 export const JobQueue = {
   LITE: 0,
   FULL: 1,
@@ -62,7 +62,7 @@ export function jobQueueFromName(name: string): JobQueueValue {
   return queue;
 }
 
-/** `clothos_core.job_events.event_type` */
+/** `reduto_core.job_events.event_type` */
 export const JobEventType = {
   PROGRESS: 0,
   SOURCE_COMPLETED: 1,
@@ -71,7 +71,7 @@ export const JobEventType = {
 } as const;
 export type JobEventTypeValue = (typeof JobEventType)[keyof typeof JobEventType];
 
-/** `clothos_core.job_source_executions.status` e `raw_results.status` */
+/** `reduto_core.job_source_executions.status` e `raw_results.status` */
 export const SourceExecutionStatus = {
   STARTED: 0,
   COMPLETED: 1,

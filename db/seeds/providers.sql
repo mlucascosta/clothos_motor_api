@@ -5,7 +5,7 @@
 -- ON CONFLICT DO NOTHING: idempotente — pode ser re-executado sem efeito.
 -- =============================================================================
 
-INSERT INTO clothos_core.providers (slug, name, circuit_breaker_state, enabled)
+INSERT INTO reduto_core.providers (slug, name, circuit_breaker_state, enabled)
 VALUES
   (
     'escavador',

@@ -1,6 +1,6 @@
 /**
  * @fileoverview Pool PostgreSQL singleton para o motor CLOTHOS.
- * Conecta exclusivamente ao banco clothos_core (ADR-0019: single-store PostgreSQL).
+ * Conecta exclusivamente ao banco reduto_core (ADR-0019: single-store PostgreSQL).
  *
  * Comportamento de ausência de banco:
  *   Se DATABASE_URL / MOTOR_DATABASE_URL não estiver configurado, `getPool()` retorna null.
@@ -34,8 +34,8 @@ export function getPool(): Pool | null {
   _pool = new Pool({
     connectionString: url,
     // Garante que cada conexão não herda search_path de sessão anterior.
-    // O motor NÃO é multi-tenant — apenas clothos_core é acessado (ADR-0019).
-    options: '-c search_path=clothos_core,public',
+    // O motor NÃO é multi-tenant — apenas reduto_core é acessado (ADR-0019).
+    options: '-c search_path=reduto_core,public',
   });
 
   _pool.on('error', (err) => {
