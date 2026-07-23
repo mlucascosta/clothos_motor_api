@@ -118,7 +118,13 @@ export class DirectDataExecutor implements ISourceExecutor {
    */
   private unsupportedIdentifierKind(kind: never): Promise<Either<SourceError, unknown>> {
     return Promise.resolve(
-      left(new SourceError('UPSTREAM_ERROR', this.sourceName, `Tipo de identificador não tratado: ${String(kind)}`)),
+      left(
+        new SourceError(
+          'UPSTREAM_ERROR',
+          this.sourceName,
+          `Tipo de identificador não tratado: ${String(kind)}`,
+        ),
+      ),
     );
   }
 }

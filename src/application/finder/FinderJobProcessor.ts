@@ -396,7 +396,11 @@ export class FinderJobProcessor {
     // Cache compartilhado: hit dentro do TTL reutiliza sem chamar provider nem cobrar.
     const cached = await this.repository.lookupCache(cacheKey);
     if (cached !== null) {
-      await this.repository.completeSourceExecution(executionId, { cacheHit: true, cacheKey, costCents: 0 });
+      await this.repository.completeSourceExecution(executionId, {
+        cacheHit: true,
+        cacheKey,
+        costCents: 0,
+      });
       await this.repository.appendEvent(job.job_id, JobEventType.SOURCE_COMPLETED, {
         source: source.id,
         stage: source.stage,

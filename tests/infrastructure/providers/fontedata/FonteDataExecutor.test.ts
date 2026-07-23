@@ -25,9 +25,9 @@ function executor(op: Partial<FonteDataQuery<Record<string, unknown>>>): FonteDa
 describe('FonteDataExecutor', () => {
   it('sucesso: devolve dados e o custo REAL em centavos do X-Request-Cost', async () => {
     const op = {
-      execute: jest.fn().mockResolvedValue(
-        right({ body: { razao_social: 'Acme Ltda' }, costCents: 16 }),
-      ),
+      execute: jest
+        .fn()
+        .mockResolvedValue(right({ body: { razao_social: 'Acme Ltda' }, costCents: 16 })),
     };
 
     const result = await executor(op).execute(context);

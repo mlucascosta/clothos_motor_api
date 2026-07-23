@@ -1,7 +1,7 @@
+import type { SourceContext } from '@application/queries/ports/ISourceExecutor.js';
 import { DirectDataExecutor } from '@infrastructure/providers/directdata/DirectDataExecutor.js';
 import type { DirectDataExecutorDeps } from '@infrastructure/providers/directdata/DirectDataExecutor.js';
 import type { IDirectDataOperation } from '@infrastructure/providers/directdata/ports/IDirectDataOperation.js';
-import type { SourceContext } from '@application/queries/ports/ISourceExecutor.js';
 import { isLeft, isRight, right } from '@shared/domain/Either.js';
 
 function context(kind: SourceContext['identifierKind'], identifier: string): SourceContext {

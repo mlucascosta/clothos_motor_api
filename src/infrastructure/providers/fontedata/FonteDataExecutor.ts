@@ -30,9 +30,7 @@ export class FonteDataExecutor implements ISourceExecutor {
   async execute(context: SourceContext): Promise<Either<SourceError, SourceResult>> {
     const params = this.paramsFor(context);
     if (params === null) {
-      return left(
-        new SourceError('UPSTREAM_ERROR', this.sourceName, 'identificador incompatível'),
-      );
+      return left(new SourceError('UPSTREAM_ERROR', this.sourceName, 'identificador incompatível'));
     }
 
     const started = Date.now();

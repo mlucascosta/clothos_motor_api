@@ -1,6 +1,6 @@
 import { FonteDataHttpClient } from '@infrastructure/providers/fontedata/FonteDataHttpClient.js';
-import { FonteDataQuery } from '@infrastructure/providers/fontedata/operations/FonteDataQuery.js';
 import { FonteDataObjectSchema } from '@infrastructure/providers/fontedata/dtos/FonteDataDtos.js';
+import { FonteDataQuery } from '@infrastructure/providers/fontedata/operations/FonteDataQuery.js';
 import { isLeft, isRight } from '@shared/domain/Either.js';
 
 function mockFetchOnce(status: number, body: unknown, headers: Record<string, string> = {}): void {
